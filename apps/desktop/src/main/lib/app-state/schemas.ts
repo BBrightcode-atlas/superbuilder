@@ -8,6 +8,12 @@ import type { Theme } from "shared/themes";
 // Re-export for convenience
 export type { BaseTabsState as TabsState, Pane } from "shared/tabs-types";
 
+export interface WindowTabsState {
+	activeTabIds: BaseTabsState["activeTabIds"];
+	focusedPaneIds: BaseTabsState["focusedPaneIds"];
+	tabHistoryStacks: BaseTabsState["tabHistoryStacks"];
+}
+
 export interface ThemeState {
 	activeThemeId: string;
 	customThemes: Theme[];
@@ -15,7 +21,7 @@ export interface ThemeState {
 
 export interface AppState {
 	tabsState: BaseTabsState;
-	tabsStateByWindow: Record<string, BaseTabsState>;
+	tabsStateByWindow: Record<string, WindowTabsState>;
 	themeState: ThemeState;
 	hotkeysState: HotkeysState;
 }
