@@ -129,14 +129,16 @@ describe("agent-wrappers copilot", () => {
 		const wrapper = readFileSync(wrapperPath, "utf-8");
 
 		expect(wrapper).toContain("export CODEX_TUI_RECORD_SESSION=1");
-		expect(wrapper).toContain('"type":"task_started"');
+		expect(wrapper).toContain('"msg":{"type":"task_started"');
 		expect(wrapper).toContain('_superset_last_turn_id=""');
 		expect(wrapper).toContain('_superset_last_approval_id=""');
 		expect(wrapper).toContain('_superset_debug_hooks="1"');
 		expect(wrapper).toContain('_superset_emit_event()');
 		expect(wrapper).toContain("_superset_turn_id=$(printf");
 		expect(wrapper).toContain("_superset_approval_id=$(printf");
+		expect(wrapper).toContain("_superset_exec_call_id=$(printf");
 		expect(wrapper).toContain('awk -F\'"turn_id":"\'');
+		expect(wrapper).toContain('"msg":{"type":"exec_command_begin"');
 		expect(wrapper).toContain('_approval_request"');
 		expect(wrapper).toContain('awk -F\'"approval_id":"\'');
 		expect(wrapper).toContain('_superset_emit_event "Start"');
