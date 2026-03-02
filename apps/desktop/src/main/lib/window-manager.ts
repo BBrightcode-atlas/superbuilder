@@ -85,6 +85,18 @@ function openWindowWithRoute({
 		window.focus();
 	});
 
+	window.webContents.once(
+		"did-fail-load",
+		(_event, errorCode, errorDescription, validatedURL) => {
+			console.error("[window-manager] Failed to load renderer window:");
+			console.error(`  Error code: ${errorCode}`);
+			console.error(`  Description: ${errorDescription}`);
+			console.error(`  URL: ${validatedURL}`);
+			// Show the window so failures are visible to users.
+			window.show();
+		},
+	);
+
 	window.on("close", () => {
 		ipcWindowHandler?.detachWindow(window);
 	});

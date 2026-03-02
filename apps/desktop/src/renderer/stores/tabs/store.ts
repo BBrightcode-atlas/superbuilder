@@ -6,11 +6,7 @@ import { trpcTabsStorage } from "renderer/lib/trpc-storage";
 import { acknowledgedStatus } from "shared/tabs-types";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import {
-	duplicatePaneToNewTab,
-	movePaneToNewTab,
-	movePaneToTab,
-} from "./actions/move-pane";
+import { movePaneToNewTab, movePaneToTab } from "./actions/move-pane";
 import type {
 	AddFileViewerPaneOptions,
 	AddTabWithMultiplePanesOptions,
@@ -1244,35 +1240,6 @@ export const useTabsStore = create<TabsStore>()(
 
 					set(moveResult.result);
 					return moveResult.newTabId;
-				},
-
-				duplicatePaneToNewTab: (paneId) => {
-					const state = get();
-					const duplicateResult = duplicatePaneToNewTab(state, paneId);
-					if (!duplicateResult) return null;
-
-					duplicateResult.tabs = duplicateResult.tabs.map((tab) => {
-						if (tab.id === duplicateResult.newTabId) {
-							return {
-								...tab,
-								name: deriveTabName(duplicateResult.panes, tab.id),
-							};
-						}
-						return tab;
-					});
-
-					set({
-						tabs: duplicateResult.tabs,
-						panes: duplicateResult.panes,
-						activeTabIds: duplicateResult.activeTabIds,
-						focusedPaneIds: duplicateResult.focusedPaneIds,
-						tabHistoryStacks: duplicateResult.tabHistoryStacks,
-					});
-
-					return {
-						tabId: duplicateResult.newTabId,
-						paneId: duplicateResult.newPaneId,
-					};
 				},
 
 				// Browser operations

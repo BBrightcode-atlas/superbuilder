@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { settings, workspaces } from "@superset/local-db";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import {
 	app,
 	BrowserWindow,
@@ -132,7 +132,12 @@ function openNewWindow(): void {
 			const workspace = localDb
 				.select({ id: workspaces.id })
 				.from(workspaces)
-				.where(eq(workspaces.id, lastActiveWorkspaceId))
+				.where(
+					and(
+						eq(workspaces.id, lastActiveWorkspaceId),
+						isNull(workspaces.deletingAt),
+					),
+				)
 				.get();
 
 			if (workspace?.id) {
