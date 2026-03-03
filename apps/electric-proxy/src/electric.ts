@@ -54,6 +54,5 @@ export function buildUpstreamUrl(
 	if (columns) {
 		upstream.searchParams.set("columns", columns);
 	}
-
 	return upstream;
 }
