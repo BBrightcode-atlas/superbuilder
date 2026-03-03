@@ -89,18 +89,25 @@ const electricHeaders = {
 	},
 };
 
-const organizationsCollection = createCollection(
-	electricCollectionOptions<SelectOrganization>({
-		id: "organizations",
-		shapeOptions: {
-			url: electricUrl,
-			params: { table: "auth.organizations" },
-			headers: electricHeaders,
-			columnMapper,
-		},
-		getKey: (item) => item.id,
-	}),
-);
+let organizationsCollection: Collection<SelectOrganization> | null = null;
+
+function getOrganizationsCollection(): Collection<SelectOrganization> {
+	if (!organizationsCollection) {
+		organizationsCollection = createCollection(
+			electricCollectionOptions<SelectOrganization>({
+				id: "organizations",
+				shapeOptions: {
+					url: electricUrl,
+					params: { table: "auth.organizations" },
+					headers: electricHeaders,
+					columnMapper,
+				},
+				getKey: (item) => item.id,
+			}),
+		);
+	}
+	return organizationsCollection;
+}
 
 function createOrgCollections(organizationId: string): OrgCollections {
 	const tasks = createCollection(
@@ -412,6 +419,6 @@ export function getCollections(organizationId: string) {
 
 	return {
 		...orgCollections,
-		organizations: organizationsCollection,
+		organizations: getOrganizationsCollection(),
 	};
 }
