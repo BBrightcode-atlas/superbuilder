@@ -1,0 +1,62 @@
+---
+title: Vercel AI Gateway
+description: Route agent requests through Vercel AI Gateway for unified billing and observability
+---
+
+## Overview
+
+[Vercel AI Gateway](https://vercel.com/docs/ai-gateway) gives you a single dashboard for spend tracking, access to 200+ models, and automatic provider fallbacks. Route your coding agents through the gateway by setting a few environment variables.
+
+## Prerequisites
+
+- A [Vercel](https://vercel.com) account
+- An AI Gateway API key ([create one here](https://vercel.com/dashboard/ai-gateway))
+
+## Configuration
+
+Since Superset runs agents in fully-featured terminal sessions, environment variables from your shell profile are available to every agent automatically.
+
+### Option A: Shell profile (all workspaces)
+
+Add the following to `~/.zshrc` or `~/.bashrc`:
+
+```bash
+export ANTHROPIC_BASE_URL="https://ai-gateway.vercel.sh"
+export ANTHROPIC_AUTH_TOKEN="your-vercel-ai-gateway-api-key"
+export ANTHROPIC_API_KEY=""
+```
+
+Setting `ANTHROPIC_API_KEY` to an empty string prevents Claude Code from authenticating with Anthropic directly.
+
+### Option B: Workspace setup script (per-project)
+
+Create a `.superset/setup.sh` in your repository to scope the gateway to a specific project:
+
+```bash
+#!/bin/bash
+export ANTHROPIC_BASE_URL="https://ai-gateway.vercel.sh"
+export ANTHROPIC_AUTH_TOKEN="your-vercel-ai-gateway-api-key"
+export ANTHROPIC_API_KEY=""
+```
+
+See [setup and teardown scripts](/docs/setup-teardown-scripts) for more on workspace configuration.
+
+## Verify
+
+Open Superset, create a workspace, and run an agent. Check the [AI Gateway Overview](https://vercel.com/dashboard/ai-gateway) in the Vercel dashboard to confirm requests are routed through the gateway.
+
+## Benefits
+
+| Feature | Description |
+|:--------|:------------|
+| **Spend tracking** | Single dashboard across all agents and workspaces |
+| **Model access** | 200+ models from Anthropic, OpenAI, Google, and more |
+| **Billing** | One Vercel invoice instead of multiple provider accounts |
+| **Reliability** | Automatic provider fallbacks |
+| **Observability** | Full request traces and metrics |
+
+## Learn more
+
+- [Vercel AI Gateway docs](https://vercel.com/docs/ai-gateway)
+- [Vercel coding agents](https://vercel.com/docs/agent-resources/coding-agents)
+- [Claude Code environment variables](https://docs.anthropic.com/en/docs/claude-code)
