@@ -31,7 +31,7 @@ export function PendingPlanApprovalMessage({
 	const [selectedAction, setSelectedAction] = useState<
 		"approved" | "rejected" | null
 	>(null);
-	const [renderMarkdown, setRenderMarkdown] = useState(false);
+	const [renderMarkdown, setRenderMarkdown] = useState(true);
 	const [resolvedPlanId, setResolvedPlanId] = useState<string | null>(null);
 	const inFlightResponseRef = useRef(false);
 	const previousPlanIdRef = useRef<string | null>(null);
@@ -44,7 +44,7 @@ export function PendingPlanApprovalMessage({
 		previousPlanIdRef.current = currentPlanId;
 		setFeedback("");
 		setSelectedAction(null);
-		setRenderMarkdown(false);
+		setRenderMarkdown(true);
 		setResolvedPlanId(null);
 	}, [planApproval]);
 
