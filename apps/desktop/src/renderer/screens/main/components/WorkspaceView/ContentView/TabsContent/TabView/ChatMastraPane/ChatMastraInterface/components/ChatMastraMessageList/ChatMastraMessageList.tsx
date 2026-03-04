@@ -19,6 +19,7 @@ import { PendingApprovalMessage } from "./components/PendingApprovalMessage";
 import { PendingPlanApprovalMessage } from "./components/PendingPlanApprovalMessage";
 import { PendingQuestionMessage } from "./components/PendingQuestionMessage";
 import { SubagentExecutionMessage } from "./components/SubagentExecutionMessage";
+import { isSubagentRunning } from "./components/SubagentExecutionMessage/utils/toSubagentViewModels";
 import { UserMessage } from "./components/UserMessage";
 import { useChatMessageSearch } from "./hooks/useChatMessageSearch";
 
@@ -155,24 +156,6 @@ function findLastUserMessageIndex(messages: MastraMessage[]): number {
 	return -1;
 }
 
-function isRunningSubagent(subagent: MastraActiveSubagent): boolean {
-	const subagentRecord = asRecord(subagent);
-	const status = asString(subagentRecord?.status);
-	if (status === "running") return true;
-	if (status === "completed" || status === "error") return false;
-
-	const hasDuration =
-		typeof subagentRecord?.durationMs === "number" &&
-		Number.isFinite(subagentRecord.durationMs) &&
-		subagentRecord.durationMs >= 0;
-	const hasError =
-		subagentRecord?.isError === true ||
-		asString(subagentRecord?.error) !== null;
-	const hasResult = subagentRecord?.result !== undefined;
-
-	return !hasDuration && !hasError && !hasResult;
-}
-
 function findLatestSubmitPlanToolCallId({
 	messages,
 	previewToolParts,
@@ -193,6 +176,37 @@ function findLatestSubmitPlanToolCallId({
 		latestToolCallId = part.toolCallId;
 	}
 	return latestToolCallId;
+}
+
+function resolvePendingPlanToolCallId({
+	pendingPlanApproval,
+	fallbackToolCallId,
+}: {
+	pendingPlanApproval: MastraPendingPlanApproval;
+	fallbackToolCallId: string | null;
+}): string | null {
+	if (!pendingPlanApproval) return null;
+	const pendingPlanRecord = asRecord(pendingPlanApproval);
+	const explicitToolCallId = asString(
+		pendingPlanRecord?.toolCallId ??
+			pendingPlanRecord?.tool_call_id ??
+			pendingPlanRecord?.callId,
+	);
+
+	if (
+		explicitToolCallId &&
+		fallbackToolCallId &&
+		explicitToolCallId === fallbackToolCallId
+	) {
+		return explicitToolCallId;
+	}
+
+	const pendingPlanId = asString(pendingPlanRecord?.planId);
+	if (pendingPlanId && pendingPlanId === fallbackToolCallId) {
+		return pendingPlanId;
+	}
+
+	return fallbackToolCallId;
 }
 
 function getStreamingPreviewToolParts({
@@ -296,7 +310,7 @@ export function ChatMastraMessageList({
 	const runningSubagentEntries = useMemo(
 		() =>
 			activeSubagentEntries.filter(([, subagent]) =>
-				isRunningSubagent(subagent),
+				isSubagentRunning(subagent),
 			),
 		[activeSubagentEntries],
 	);
@@ -315,25 +329,10 @@ export function ChatMastraMessageList({
 		});
 	}, [currentMessage, previewToolParts, renderedMessages]);
 	const pendingPlanToolCallId = useMemo(() => {
-		if (!pendingPlanApproval) return null;
-		const pendingPlanRecord = asRecord(pendingPlanApproval);
-		const explicitToolCallId = asString(
-			pendingPlanRecord?.toolCallId ??
-				pendingPlanRecord?.tool_call_id ??
-				pendingPlanRecord?.callId,
-		);
-		if (
-			explicitToolCallId &&
-			planToolCallIdCandidates &&
-			explicitToolCallId === planToolCallIdCandidates
-		) {
-			return explicitToolCallId;
-		}
-		const pendingPlanId = asString(pendingPlanRecord?.planId);
-		if (pendingPlanId && pendingPlanId === planToolCallIdCandidates) {
-			return pendingPlanId;
-		}
-		return planToolCallIdCandidates;
+		return resolvePendingPlanToolCallId({
+			pendingPlanApproval,
+			fallbackToolCallId: planToolCallIdCandidates,
+		});
 	}, [pendingPlanApproval, planToolCallIdCandidates]);
 	const shouldShowStandalonePendingPlan = Boolean(
 		pendingPlanApproval && !pendingPlanToolCallId,
@@ -348,6 +347,13 @@ export function ChatMastraMessageList({
 		canShowPendingAssistantUi && previewToolParts.length === 0;
 	const shouldShowToolPreview =
 		canShowPendingAssistantUi && previewToolParts.length > 0;
+	const inlineToolStateProps = {
+		activeSubagentsByToolCallId: runningSubagentsByToolCallId,
+		pendingPlanApproval,
+		pendingPlanToolCallId,
+		isPlanSubmitting,
+		onPlanRespond,
+	} as const;
 
 	return (
 		<Conversation className="flex-1">
@@ -381,11 +387,7 @@ export function ChatMastraMessageList({
 									workspaceCwd={workspaceCwd}
 									isStreaming={false}
 									previewToolParts={[]}
-									activeSubagentsByToolCallId={runningSubagentsByToolCallId}
-									pendingPlanApproval={pendingPlanApproval}
-									pendingPlanToolCallId={pendingPlanToolCallId}
-									isPlanSubmitting={isPlanSubmitting}
-									onPlanRespond={onPlanRespond}
+									{...inlineToolStateProps}
 								/>
 							);
 						})
@@ -400,11 +402,7 @@ export function ChatMastraMessageList({
 							workspaceCwd={workspaceCwd}
 							isStreaming={false}
 							previewToolParts={[]}
-							activeSubagentsByToolCallId={runningSubagentsByToolCallId}
-							pendingPlanApproval={pendingPlanApproval}
-							pendingPlanToolCallId={pendingPlanToolCallId}
-							isPlanSubmitting={isPlanSubmitting}
-							onPlanRespond={onPlanRespond}
+							{...inlineToolStateProps}
 							footer={
 								<div className="flex items-center gap-2 text-xs text-muted-foreground">
 									<span className="rounded border border-border bg-muted px-1.5 py-0.5 font-medium uppercase tracking-wide">
@@ -425,11 +423,7 @@ export function ChatMastraMessageList({
 							workspaceCwd={workspaceCwd}
 							isStreaming
 							previewToolParts={previewToolParts}
-							activeSubagentsByToolCallId={runningSubagentsByToolCallId}
-							pendingPlanApproval={pendingPlanApproval}
-							pendingPlanToolCallId={pendingPlanToolCallId}
-							isPlanSubmitting={isPlanSubmitting}
-							onPlanRespond={onPlanRespond}
+							{...inlineToolStateProps}
 						/>
 					)}
 					{shouldShowThinking && (
