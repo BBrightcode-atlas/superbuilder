@@ -32,6 +32,7 @@ interface WorkspaceSectionProps {
 	shortcutBaseIndex: number;
 	isSidebarCollapsed?: boolean;
 	allSections?: { id: string; name: string }[];
+	orderedWorkspaceIds?: string[];
 }
 
 export function WorkspaceSection({
@@ -44,6 +45,7 @@ export function WorkspaceSection({
 	shortcutBaseIndex,
 	isSidebarCollapsed = false,
 	allSections = [],
+	orderedWorkspaceIds,
 }: WorkspaceSectionProps) {
 	const utils = electronTrpc.useUtils();
 	const [isRenaming, setIsRenaming] = useState(false);
@@ -195,6 +197,8 @@ export function WorkspaceSection({
 				sectionId={sectionId}
 				sections={allSections}
 				isCollapsed={isSidebarCollapsed}
+				projectId={projectId}
+				orderedWorkspaceIds={orderedWorkspaceIds}
 			/>
 		);
 	}
@@ -283,6 +287,7 @@ export function WorkspaceSection({
 								shortcutBaseIndex={shortcutBaseIndex}
 								sectionId={sectionId}
 								sections={allSections}
+								orderedWorkspaceIds={orderedWorkspaceIds}
 							/>
 						</div>
 					</motion.div>

@@ -1,5 +1,5 @@
 import { workspaceSections, workspaces } from "@superset/local-db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { localDb } from "main/lib/local-db";
 import { z } from "zod";
 import { publicProcedure, router } from "../../..";
@@ -149,6 +149,52 @@ export const createSectionsProcedures = () => {
 						.update(workspaces)
 						.set({ tabOrder: ws.tabOrder })
 						.where(eq(workspaces.id, ws.id))
+						.run();
+				}
+
+				return { success: true };
+			}),
+
+		moveWorkspacesToSection: publicProcedure
+			.input(
+				z.object({
+					workspaceIds: z.array(z.string()).min(1),
+					sectionId: z.string().nullable(),
+				}),
+			)
+			.mutation(({ input }) => {
+				if (input.sectionId) {
+					const section = localDb
+						.select()
+						.from(workspaceSections)
+						.where(eq(workspaceSections.id, input.sectionId))
+						.get();
+
+					if (!section) {
+						throw new Error(`Section ${input.sectionId} not found`);
+					}
+
+					const targetProjectId = section.projectId;
+					const matchingWorkspaces = localDb
+						.select()
+						.from(workspaces)
+						.where(inArray(workspaces.id, input.workspaceIds))
+						.all();
+
+					for (const ws of matchingWorkspaces) {
+						if (ws.projectId !== targetProjectId) {
+							throw new Error(
+								"Cannot move workspace to a section in a different project",
+							);
+						}
+					}
+				}
+
+				for (const workspaceId of input.workspaceIds) {
+					localDb
+						.update(workspaces)
+						.set({ sectionId: input.sectionId })
+						.where(eq(workspaces.id, workspaceId))
 						.run();
 				}
 

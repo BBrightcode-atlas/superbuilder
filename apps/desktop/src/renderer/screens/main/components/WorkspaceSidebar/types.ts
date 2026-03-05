@@ -17,6 +17,8 @@ export interface DragItem {
 	originalIndex: number;
 	/** Set by native drop handlers to prevent the end handler from reordering */
 	handled?: boolean;
+	/** IDs of all selected workspaces when multi-dragging */
+	selectedIds?: string[];
 }
 
 export interface SectionDragItem {

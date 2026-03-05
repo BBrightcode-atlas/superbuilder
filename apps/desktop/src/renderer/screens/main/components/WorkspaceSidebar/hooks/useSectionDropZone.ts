@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useMoveWorkspaceToSection } from "renderer/react-query/workspaces";
+import {
+	useMoveWorkspacesToSection,
+	useMoveWorkspaceToSection,
+} from "renderer/react-query/workspaces";
 import { getActiveDragItem } from "renderer/stores/active-drag-item";
 import type { DragItem } from "../types";
 
@@ -18,6 +21,7 @@ export function useSectionDropZone({
 	const dragEnterCount = useRef(0);
 	const autoExpandTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const moveToSection = useMoveWorkspaceToSection();
+	const bulkMoveToSection = useMoveWorkspacesToSection();
 
 	useEffect(() => {
 		return () => {
@@ -44,16 +48,23 @@ export function useSectionDropZone({
 			}
 			const item = getActiveDragItem();
 			if (item && canAccept(item)) {
-				moveToSection.mutate({
-					workspaceId: item.id,
-					sectionId: targetSectionId,
-				});
+				if (item.selectedIds && item.selectedIds.length > 1) {
+					bulkMoveToSection.mutate({
+						workspaceIds: item.selectedIds,
+						sectionId: targetSectionId,
+					});
+				} else {
+					moveToSection.mutate({
+						workspaceId: item.id,
+						sectionId: targetSectionId,
+					});
+				}
 				item.handled = true;
 			}
 			dragEnterCount.current = 0;
 			setIsDragOver(false);
 		},
-		[canAccept, targetSectionId, moveToSection],
+		[canAccept, targetSectionId, moveToSection, bulkMoveToSection],
 	);
 
 	const handleDragEnter = useCallback(

@@ -5,6 +5,7 @@ export { useCreateWorkspace } from "./useCreateWorkspace";
 export { useDeleteWorkspace } from "./useDeleteWorkspace";
 export { useDeleteWorktree } from "./useDeleteWorktree";
 export { useImportAllWorktrees } from "./useImportAllWorktrees";
+export { useMoveWorkspacesToSection } from "./useMoveWorkspacesToSection";
 export { useMoveWorkspaceToSection } from "./useMoveWorkspaceToSection";
 export { useOpenExternalWorktree } from "./useOpenExternalWorktree";
 export { useOpenWorktree } from "./useOpenWorktree";

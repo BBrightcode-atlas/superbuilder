@@ -7,6 +7,8 @@ interface WorkspaceListProps {
 	sectionId: string | null;
 	sections: Pick<SidebarSection, "id" | "name">[];
 	isCollapsed?: boolean;
+	projectId?: string;
+	orderedWorkspaceIds?: string[];
 }
 
 export function WorkspaceList({
@@ -15,6 +17,7 @@ export function WorkspaceList({
 	sectionId,
 	sections,
 	isCollapsed,
+	orderedWorkspaceIds,
 }: WorkspaceListProps) {
 	return (
 		<>
@@ -33,6 +36,7 @@ export function WorkspaceList({
 					isCollapsed={isCollapsed}
 					sectionId={sectionId}
 					sections={sections}
+					orderedWorkspaceIds={orderedWorkspaceIds}
 				/>
 			))}
 		</>

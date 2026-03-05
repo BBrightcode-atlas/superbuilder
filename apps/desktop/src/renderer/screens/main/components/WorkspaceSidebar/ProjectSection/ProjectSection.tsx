@@ -68,6 +68,16 @@ export function ProjectSection({
 		return map;
 	}, [shortcutBaseIndex, workspaces.length, sections]);
 
+	const orderedWorkspaceIds = useMemo(() => {
+		const ids = workspaces.map((w) => w.id);
+		for (const section of sections) {
+			for (const w of section.workspaces) {
+				ids.push(w.id);
+			}
+		}
+		return ids;
+	}, [workspaces, sections]);
+
 	const ungroupedDropZone = useSectionDropZone({
 		canAccept: (item) =>
 			item.sectionId !== null && item.projectId === projectId,
@@ -182,6 +192,8 @@ export function ProjectSection({
 									sectionId={null}
 									sections={sections}
 									isCollapsed={isSidebarCollapsed}
+									projectId={projectId}
+									orderedWorkspaceIds={orderedWorkspaceIds}
 								/>
 								{sections.map((section, sectionIndex) => (
 									<WorkspaceSection
@@ -195,6 +207,7 @@ export function ProjectSection({
 										shortcutBaseIndex={sectionBaseIndices.get(section.id) ?? 0}
 										isSidebarCollapsed
 										allSections={sections}
+										orderedWorkspaceIds={orderedWorkspaceIds}
 									/>
 								))}
 							</div>
@@ -257,6 +270,8 @@ export function ProjectSection({
 									shortcutBaseIndex={shortcutBaseIndex}
 									sectionId={null}
 									sections={sections}
+									projectId={projectId}
+									orderedWorkspaceIds={orderedWorkspaceIds}
 								/>
 							</div>
 							{sections.map((section, sectionIndex) => (
@@ -270,6 +285,7 @@ export function ProjectSection({
 									workspaces={section.workspaces}
 									shortcutBaseIndex={sectionBaseIndices.get(section.id) ?? 0}
 									allSections={sections}
+									orderedWorkspaceIds={orderedWorkspaceIds}
 								/>
 							))}
 						</div>

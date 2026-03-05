@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useWorkspaceShortcuts } from "renderer/hooks/useWorkspaceShortcuts";
+import { useWorkspaceSelectionStore } from "renderer/stores/workspace-selection";
+import { MultiDragPreview } from "./MultiDragPreview";
 import { PortsList } from "./PortsList";
 import { ProjectSection } from "./ProjectSection";
 import { SetupScriptCard } from "./SetupScriptCard";
@@ -19,6 +21,7 @@ export function WorkspaceSidebar({
 	activeProjectName,
 }: WorkspaceSidebarProps) {
 	const { groups } = useWorkspaceShortcuts();
+	const clearSelection = useWorkspaceSelectionStore((s) => s.clearSelection);
 
 	const projectShortcutIndices = useMemo(
 		() =>
@@ -38,11 +41,37 @@ export function WorkspaceSidebar({
 		[groups],
 	);
 
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				clearSelection();
+			}
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [clearSelection]);
+
+	const handleSidebarMouseDown = useCallback(
+		(e: React.MouseEvent) => {
+			if (
+				(e.target as HTMLElement).closest("[role='button'], button, a, input")
+			) {
+				return;
+			}
+			clearSelection();
+		},
+		[clearSelection],
+	);
+
 	return (
 		<SidebarDropZone className="flex flex-col h-full bg-muted/45 dark:bg-muted/35">
 			<WorkspaceSidebarHeader isCollapsed={isCollapsed} />
 
-			<div className="flex-1 overflow-y-auto hide-scrollbar">
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: mousedown on empty sidebar space clears selection */}
+			<div
+				className="flex-1 overflow-y-auto hide-scrollbar"
+				onMouseDown={handleSidebarMouseDown}
+			>
 				{groups.map((group, index) => (
 					<ProjectSection
 						key={group.project.id}
@@ -80,6 +109,7 @@ export function WorkspaceSidebar({
 			/>
 
 			<WorkspaceSidebarFooter isCollapsed={isCollapsed} />
+			<MultiDragPreview />
 		</SidebarDropZone>
 	);
 }

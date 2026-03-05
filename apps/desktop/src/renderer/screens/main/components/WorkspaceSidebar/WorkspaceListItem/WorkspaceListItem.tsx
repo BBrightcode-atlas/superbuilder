@@ -32,6 +32,7 @@ import {
 } from "react-icons/lu";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import {
+	useMoveWorkspacesToSection,
 	useMoveWorkspaceToSection,
 	useReorderWorkspaces,
 	useReorderWorkspacesInSection,
@@ -44,6 +45,7 @@ import { useWorkspaceRename } from "renderer/screens/main/hooks/useWorkspaceRena
 import { useActiveDragItemStore } from "renderer/stores/active-drag-item";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { extractPaneIdsFromLayout } from "renderer/stores/tabs/utils";
+import { useWorkspaceSelectionStore } from "renderer/stores/workspace-selection";
 import { getHighestPriorityStatus } from "shared/tabs-types";
 import { STROKE_WIDTH } from "../constants";
 import type { DragItem } from "../types";
@@ -75,6 +77,7 @@ interface WorkspaceListItemProps {
 	isCollapsed?: boolean;
 	sectionId?: string | null;
 	sections?: { id: string; name: string }[];
+	orderedWorkspaceIds?: string[];
 }
 
 export function WorkspaceListItem({
@@ -90,6 +93,7 @@ export function WorkspaceListItem({
 	isCollapsed = false,
 	sectionId = null,
 	sections = [],
+	orderedWorkspaceIds = [],
 }: WorkspaceListItemProps) {
 	const isBranchWorkspace = type === "branch";
 	const navigate = useNavigate();
@@ -98,6 +102,7 @@ export function WorkspaceListItem({
 	const reorderWorkspacesInSection = useReorderWorkspacesInSection();
 	const [hasHovered, setHasHovered] = useState(false);
 	const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+	const contextMenuSelectionRef = useRef<string[]>([]);
 	const rename = useWorkspaceRename(id, name, branch);
 	const tabs = useTabsStore((s) => s.tabs);
 	const panes = useTabsStore((s) => s.panes);
@@ -106,6 +111,12 @@ export function WorkspaceListItem({
 	);
 	const resetWorkspaceStatus = useTabsStore((s) => s.resetWorkspaceStatus);
 	const utils = electronTrpc.useUtils();
+	const isSelected = useWorkspaceSelectionStore((s) => s.selectedIds.has(id));
+	const selectionStore = useWorkspaceSelectionStore;
+	const isMultiDragging = useActiveDragItemStore(
+		(s) =>
+			s.activeDragItem?.selectedIds?.includes(id) && s.activeDragItem.id !== id,
+	);
 
 	const isActive = !!matchRoute({
 		to: "/workspace/$workspaceId",
@@ -130,6 +141,29 @@ export function WorkspaceListItem({
 	});
 
 	const moveToSection = useMoveWorkspaceToSection();
+	const bulkMoveToSection = useMoveWorkspacesToSection();
+
+	const handleContextMenuOpenChange = (open: boolean) => {
+		setIsContextMenuOpen(open);
+		if (open) {
+			const { selectedIds } = selectionStore.getState();
+			contextMenuSelectionRef.current =
+				selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [];
+		}
+	};
+
+	const handleMoveToSection = (targetSectionId: string | null) => {
+		const captured = contextMenuSelectionRef.current;
+		if (captured.length > 1) {
+			bulkMoveToSection.mutate({
+				workspaceIds: captured,
+				sectionId: targetSectionId,
+			});
+			selectionStore.getState().clearSelection();
+		} else {
+			moveToSection.mutate({ workspaceId: id, sectionId: targetSectionId });
+		}
+	};
 
 	const { showDeleteDialog, setShowDeleteDialog, handleDeleteClick } =
 		useWorkspaceDeleteHandler();
@@ -194,11 +228,38 @@ export function WorkspaceListItem({
 		return getHighestPriorityStatus(paneStatuses());
 	}, [tabs, panes, id]);
 
-	const handleClick = () => {
-		if (!rename.isRenaming) {
-			clearWorkspaceAttentionStatus(id);
-			navigateToWorkspace(id, navigate);
+	const handleClick = (e?: React.MouseEvent) => {
+		if (rename.isRenaming) return;
+
+		if (e?.metaKey) {
+			selectionStore.getState().toggle(id, projectId);
+			return;
 		}
+
+		if (e?.shiftKey) {
+			const { lastClickedId } = selectionStore.getState();
+			if (lastClickedId) {
+				const lastIdx = orderedWorkspaceIds.indexOf(lastClickedId);
+				const currIdx = orderedWorkspaceIds.indexOf(id);
+				if (lastIdx !== -1 && currIdx !== -1) {
+					const [start, end] = [
+						Math.min(lastIdx, currIdx),
+						Math.max(lastIdx, currIdx),
+					];
+					const rangeIds = orderedWorkspaceIds.slice(start, end + 1);
+					selectionStore.getState().selectRange(rangeIds, projectId);
+					return;
+				}
+			}
+		}
+
+		selectionStore.setState({
+			selectedIds: new Set(),
+			selectedProjectId: projectId,
+			lastClickedId: id,
+		});
+		clearWorkspaceAttentionStatus(id);
+		navigateToWorkspace(id, navigate);
 	};
 
 	const handleMouseEnter = () => {
@@ -251,18 +312,29 @@ export function WorkspaceListItem({
 		() => ({
 			type: WORKSPACE_DND_TYPE,
 			item: () => {
+				const selection = selectionStore.getState();
+				const isPartOfSelection = selection.selectedIds.has(id);
+				if (!isPartOfSelection) {
+					selection.clearSelection();
+				}
+				const selectedIds =
+					isPartOfSelection && selection.selectedIds.size > 1
+						? [...selection.selectedIds]
+						: undefined;
 				const dragItem: DragItem = {
 					id,
 					projectId,
 					sectionId,
 					index,
 					originalIndex: index,
+					selectedIds,
 				};
 				useActiveDragItemStore.getState().setActiveDragItem(dragItem);
 				return dragItem;
 			},
 			end: (item, monitor) => {
 				useActiveDragItemStore.getState().clearActiveDragItem();
+				selectionStore.getState().clearSelection();
 				if (!item) return;
 				if (item.handled || monitor.didDrop()) return;
 				handleReorder(item);
@@ -282,6 +354,7 @@ export function WorkspaceListItem({
 	const [, drop] = useDrop({
 		accept: WORKSPACE_DND_TYPE,
 		hover: (item: DragItem) => {
+			if (item.selectedIds && item.selectedIds.length > 1) return;
 			if (
 				item.projectId !== projectId ||
 				item.sectionId !== sectionId ||
@@ -379,7 +452,8 @@ export function WorkspaceListItem({
 				"group relative",
 				showBranchSubtitle ? "py-1.5" : "py-2 items-center",
 				isActive && "bg-muted",
-				isDragging && "opacity-30",
+				isSelected && "bg-primary/10 ring-1 ring-inset ring-primary/30",
+				(isDragging || isMultiDragging) && "opacity-30",
 			)}
 			style={{ cursor: isDragging ? "grabbing" : "pointer" }}
 		>
@@ -562,26 +636,14 @@ export function WorkspaceListItem({
 							Move to Section
 						</ContextMenuSubTrigger>
 						<ContextMenuSubContent>
-							<ContextMenuItem
-								onSelect={() =>
-									moveToSection.mutate({
-										workspaceId: id,
-										sectionId: null,
-									})
-								}
-							>
+							<ContextMenuItem onSelect={() => handleMoveToSection(null)}>
 								No Section
 							</ContextMenuItem>
 							<ContextMenuSeparator />
 							{sections.map((section) => (
 								<ContextMenuItem
 									key={section.id}
-									onSelect={() =>
-										moveToSection.mutate({
-											workspaceId: id,
-											sectionId: section.id,
-										})
-									}
+									onSelect={() => handleMoveToSection(section.id)}
 								>
 									{section.name}
 								</ContextMenuItem>
@@ -604,7 +666,7 @@ export function WorkspaceListItem({
 	if (isBranchWorkspace) {
 		return (
 			<>
-				<ContextMenu>
+				<ContextMenu onOpenChange={handleContextMenuOpenChange}>
 					<ContextMenuTrigger asChild>{content}</ContextMenuTrigger>
 					<ContextMenuContent>{commonContextMenuItems}</ContextMenuContent>
 				</ContextMenu>
@@ -626,7 +688,7 @@ export function WorkspaceListItem({
 				openDelay={HOVER_CARD_OPEN_DELAY}
 				closeDelay={HOVER_CARD_CLOSE_DELAY}
 			>
-				<ContextMenu onOpenChange={setIsContextMenuOpen}>
+				<ContextMenu onOpenChange={handleContextMenuOpenChange}>
 					<HoverCardTrigger asChild>
 						<ContextMenuTrigger asChild>{content}</ContextMenuTrigger>
 					</HoverCardTrigger>
