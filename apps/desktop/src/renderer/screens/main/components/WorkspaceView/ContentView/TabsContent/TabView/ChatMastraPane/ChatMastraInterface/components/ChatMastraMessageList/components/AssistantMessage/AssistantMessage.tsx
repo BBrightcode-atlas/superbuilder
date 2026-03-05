@@ -1,7 +1,7 @@
 import type { UseMastraChatDisplayReturn } from "@superset/chat-mastra/client";
 import { Message, MessageContent } from "@superset/ui/ai-elements/message";
 import { ShimmerLabel } from "@superset/ui/ai-elements/shimmer-label";
-import { FileSearchIcon } from "lucide-react";
+import { FileIcon, FileSearchIcon, FileTextIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { MastraToolCallBlock } from "../../../../../../ChatPane/ChatInterface/components/MastraToolCallBlock";
 import { StreamingMessageText } from "../../../../../../ChatPane/ChatInterface/components/MessagePartsRenderer/components/StreamingMessageText";
@@ -27,13 +27,37 @@ interface AssistantMessageProps {
 	footer?: ReactNode;
 }
 
-function ImagePart({ data, mimeType }: { data: string; mimeType: string }) {
+function AttachmentChip({
+	data,
+	mediaType,
+	filename,
+	onClick,
+}: {
+	data: string;
+	mediaType: string;
+	filename?: string;
+	onClick?: () => void;
+}) {
+	const isImage = mediaType.startsWith("image/");
+	const label = filename || (isImage ? "Image" : "Attachment");
+
 	return (
-		<img
-			src={`data:${mimeType};base64,${data}`}
-			alt="Attached"
-			className="max-h-48 rounded-lg object-contain"
-		/>
+		<button
+			type="button"
+			className="flex h-8 items-center gap-1.5 rounded-md border border-foreground/20 bg-background/50 px-1.5 text-sm font-medium transition-colors hover:bg-background"
+			onClick={onClick}
+		>
+			<div className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded bg-background">
+				{isImage && data ? (
+					<img src={data} alt={label} className="size-5 object-cover" />
+				) : mediaType === "application/pdf" ? (
+					<FileIcon className="size-3 text-muted-foreground" />
+				) : (
+					<FileTextIcon className="size-3 text-muted-foreground" />
+				)}
+			</div>
+			<span className="max-w-[200px] truncate">{label}</span>
+		</button>
 	);
 }
 
@@ -130,13 +154,37 @@ export function AssistantMessage({
 			continue;
 		}
 
-		if (part.type === "image") {
-			nodes.push(
-				<div key={`${message.id}-${partIndex}`} className="max-w-[85%]">
-					<ImagePart data={part.data} mimeType={part.mimeType} />
-				</div>,
-			);
-			continue;
+		{
+			const rawPart = part as Record<string, unknown>;
+			if (rawPart.type === "file" || rawPart.type === "image") {
+				const mime =
+					(rawPart.mediaType as string) ||
+					(rawPart.mimeType as string) ||
+					"application/octet-stream";
+				const data =
+					(rawPart.data as string) || (rawPart.image as string) || "";
+				if (mime.startsWith("image/") && data) {
+					nodes.push(
+						<div key={`${message.id}-${partIndex}`} className="max-w-[85%]">
+							<img
+								src={data}
+								alt="Generated"
+								className="max-h-48 rounded-lg object-contain"
+							/>
+						</div>,
+					);
+				} else if (data) {
+					nodes.push(
+						<AttachmentChip
+							key={`${message.id}-${partIndex}`}
+							data={data}
+							filename={rawPart.filename as string | undefined}
+							mediaType={mime}
+						/>,
+					);
+				}
+				continue;
+			}
 		}
 
 		if (part.type === "tool_call") {
