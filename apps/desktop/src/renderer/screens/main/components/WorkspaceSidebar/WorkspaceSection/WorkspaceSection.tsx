@@ -8,7 +8,7 @@ import {
 import { toast } from "@superset/ui/sonner";
 import { cn } from "@superset/ui/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { HiChevronRight } from "react-icons/hi2";
 import { LuPencil, LuTrash2 } from "react-icons/lu";
@@ -146,9 +146,24 @@ export function WorkspaceSection({
 		},
 	});
 
-	const handleToggleCollapse = () => {
-		toggleCollapsed.mutate({ id: sectionId });
-	};
+	const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const handleClick = useCallback(() => {
+		if (clickTimer.current) return;
+		clickTimer.current = setTimeout(() => {
+			clickTimer.current = null;
+			toggleCollapsed.mutate({ id: sectionId });
+		}, 250);
+	}, [sectionId, toggleCollapsed]);
+
+	const handleDoubleClick = useCallback(() => {
+		if (clickTimer.current) {
+			clearTimeout(clickTimer.current);
+			clickTimer.current = null;
+		}
+		setRenameValue(name);
+		setIsRenaming(true);
+	}, [name]);
 
 	const handleStartRename = () => {
 		setRenameValue(name);
@@ -215,8 +230,8 @@ export function WorkspaceSection({
 						) : (
 							<button
 								type="button"
-								onClick={handleToggleCollapse}
-								onDoubleClick={handleStartRename}
+								onClick={handleClick}
+								onDoubleClick={handleDoubleClick}
 								className="flex items-center gap-1.5 flex-1 min-w-0 text-left cursor-pointer"
 							>
 								<HiChevronRight

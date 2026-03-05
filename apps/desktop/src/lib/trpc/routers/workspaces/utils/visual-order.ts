@@ -38,13 +38,18 @@ export function computeVisualOrder(
 			.filter((w) => w.projectId === project.id)
 			.sort((a, b) => a.tabOrder - b.tabOrder);
 
-		for (const ws of projectWorkspaces.filter((w) => w.sectionId === null)) {
-			orderedIds.push(ws.id);
-		}
-
 		const projectSections = sections
 			.filter((s) => s.projectId === project.id)
 			.sort((a, b) => a.tabOrder - b.tabOrder);
+
+		const sectionIds = new Set(projectSections.map((s) => s.id));
+
+		// Ungrouped workspaces: null sectionId OR orphaned (sectionId not in project)
+		for (const ws of projectWorkspaces.filter(
+			(w) => w.sectionId === null || !sectionIds.has(w.sectionId),
+		)) {
+			orderedIds.push(ws.id);
+		}
 
 		for (const section of projectSections) {
 			for (const ws of projectWorkspaces.filter(
