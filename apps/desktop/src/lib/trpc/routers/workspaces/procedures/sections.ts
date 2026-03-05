@@ -163,6 +163,34 @@ export const createSectionsProcedures = () => {
 				}),
 			)
 			.mutation(({ input }) => {
+				const workspace = localDb
+					.select()
+					.from(workspaces)
+					.where(eq(workspaces.id, input.workspaceId))
+					.get();
+
+				if (!workspace) {
+					throw new Error(`Workspace ${input.workspaceId} not found`);
+				}
+
+				if (input.sectionId) {
+					const section = localDb
+						.select()
+						.from(workspaceSections)
+						.where(eq(workspaceSections.id, input.sectionId))
+						.get();
+
+					if (!section) {
+						throw new Error(`Section ${input.sectionId} not found`);
+					}
+
+					if (section.projectId !== workspace.projectId) {
+						throw new Error(
+							"Cannot move workspace to a section in a different project",
+						);
+					}
+				}
+
 				localDb
 					.update(workspaces)
 					.set({ sectionId: input.sectionId })

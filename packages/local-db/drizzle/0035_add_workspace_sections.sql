@@ -9,4 +9,4 @@ CREATE TABLE `workspace_sections` (
 );
 --> statement-breakpoint
 CREATE INDEX `workspace_sections_project_id_idx` ON `workspace_sections` (`project_id`);--> statement-breakpoint
-ALTER TABLE `workspaces` ADD `section_id` text REFERENCES workspace_sections(id);
+ALTER TABLE `workspaces` ADD `section_id` text REFERENCES workspace_sections(id) ON DELETE SET NULL;

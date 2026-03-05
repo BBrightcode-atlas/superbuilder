@@ -97,8 +97,10 @@ export function WorkspaceSection({
 				toIndex: item.index,
 			},
 			{
-				onError: (error) =>
-					toast.error(`Failed to reorder sections: ${error.message}`),
+				onError: (error) => {
+					void utils.workspaces.getAllGrouped.invalidate();
+					toast.error(`Failed to reorder sections: ${error.message}`);
+				},
 			},
 		);
 	};
