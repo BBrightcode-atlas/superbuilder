@@ -623,11 +623,14 @@ function WorkspacePage() {
 				scope={commandPalette.scope}
 				onScopeChange={commandPalette.setScope}
 				workspaceName={
-					workspace?.project?.name
-						? [workspace.project.name, workspace.name]
+					workspace
+						? [
+								workspace.project?.name,
+								workspace.type === "branch" ? "local" : workspace.name,
+							]
 								.filter(Boolean)
 								.join(" - ")
-						: workspace?.name
+						: undefined
 				}
 			/>
 			<KeywordSearch

@@ -69,12 +69,16 @@ export function useCommandPalette({
 				id: string;
 				worktreePath: string;
 				name: string;
+				type: "worktree" | "branch";
 			}) => {
 				if (ws.worktreePath) {
 					result.push({
 						rootPath: ws.worktreePath,
 						workspaceId: ws.id,
-						workspaceName: [group.project.name, ws.name]
+						workspaceName: [
+							group.project.name,
+							ws.type === "branch" ? "local" : ws.name,
+						]
 							.filter(Boolean)
 							.join(" - "),
 					});

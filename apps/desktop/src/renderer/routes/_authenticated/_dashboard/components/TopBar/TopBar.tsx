@@ -40,7 +40,10 @@ export function TopBar() {
 						<SearchBarTrigger
 							workspaceName={
 								workspace
-									? [workspace.project?.name, workspace.name]
+									? [
+											workspace.project?.name,
+											workspace.type === "branch" ? "local" : workspace.name,
+										]
 											.filter(Boolean)
 											.join(" - ")
 									: undefined
