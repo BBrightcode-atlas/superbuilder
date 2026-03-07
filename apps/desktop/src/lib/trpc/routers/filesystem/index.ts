@@ -1,5 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import {
+	searchFiles as searchWorkspaceFiles,
+	searchKeyword as searchWorkspaceKeyword,
+} from "@superset/workspace-fs";
 import { shell } from "electron";
 import fg from "fast-glob";
 import Fuse from "fuse.js";
@@ -155,7 +159,7 @@ interface PathFilterMatcher {
 	hasFilters: boolean;
 }
 
-function createPathFilterMatcher({
+function _createPathFilterMatcher({
 	includePattern,
 	excludePattern,
 }: {
@@ -223,7 +227,7 @@ async function buildSearchIndex(rootPath: string): Promise<FileSearchIndex> {
 	return { items, fuse };
 }
 
-async function getSearchIndex(rootPath: string): Promise<FileSearchIndex> {
+async function _getSearchIndex(rootPath: string): Promise<FileSearchIndex> {
 	const cacheKey = getSearchCacheKey(rootPath);
 	const cached = searchIndexCache.get(cacheKey);
 	const now = Date.now();
@@ -327,7 +331,7 @@ interface SearchKeywordWithRipgrepOptions {
 	limit: number;
 }
 
-async function searchKeywordWithRipgrep({
+async function _searchKeywordWithRipgrep({
 	rootPath,
 	query,
 	includePattern,
@@ -486,7 +490,7 @@ interface SearchKeywordWithScanOptions {
 	limit: number;
 }
 
-async function searchKeywordWithScan({
+async function _searchKeywordWithScan({
 	index,
 	query,
 	pathMatcher,
@@ -619,35 +623,22 @@ export const createFilesystemRouter = () => {
 				}
 
 				try {
-					const index = await getSearchIndex(rootPath);
-					const pathMatcher = createPathFilterMatcher({
+					const results = await searchWorkspaceFiles({
+						rootPath,
+						query: trimmedQuery,
+						includeHidden: true,
 						includePattern,
 						excludePattern,
-					});
-					const searchableItems = pathMatcher.hasFilters
-						? index.items.filter((item) =>
-								matchesPathFilters(item.relativePath, pathMatcher),
-							)
-						: index.items;
-					if (searchableItems.length === 0) {
-						return [];
-					}
-
-					const safeLimit = Math.max(1, Math.min(limit, MAX_SEARCH_RESULTS));
-					const fuse = pathMatcher.hasFilters
-						? createFileSearchFuse(searchableItems)
-						: index.fuse;
-					const results = fuse.search(trimmedQuery, {
-						limit: safeLimit,
+						limit,
 					});
 
 					return results.map((result) => ({
-						id: result.item.id,
-						name: result.item.name,
-						relativePath: result.item.relativePath,
-						path: result.item.path,
+						id: result.id,
+						name: result.name,
+						relativePath: result.relativePath,
+						path: result.absolutePath,
 						isDirectory: false,
-						score: 1 - (result.score ?? 0),
+						score: result.score,
 					}));
 				} catch (error) {
 					console.error("[filesystem/searchFiles] Failed:", {
@@ -679,27 +670,33 @@ export const createFilesystemRouter = () => {
 				}
 
 				try {
-					const index = await getSearchIndex(rootPath);
-					const pathMatcher = createPathFilterMatcher({
+					const results = await searchWorkspaceKeyword({
+						rootPath,
+						query: trimmedQuery,
+						includeHidden: true,
 						includePattern,
 						excludePattern,
+						limit,
+						runRipgrep: async (args, options) => {
+							const result = await execWithShellEnv("rg", args, {
+								cwd: options.cwd,
+								maxBuffer: options.maxBuffer,
+								windowsHide: true,
+							});
+
+							return { stdout: result.stdout };
+						},
 					});
-					try {
-						return await searchKeywordWithRipgrep({
-							rootPath,
-							query: trimmedQuery,
-							includePattern,
-							excludePattern,
-							limit,
-						});
-					} catch {
-						return await searchKeywordWithScan({
-							index,
-							query: trimmedQuery,
-							pathMatcher,
-							limit,
-						});
-					}
+
+					return results.map((result) => ({
+						id: result.id,
+						name: result.name,
+						relativePath: result.relativePath,
+						path: result.absolutePath,
+						line: result.line,
+						column: result.column,
+						preview: result.preview,
+					}));
 				} catch (error) {
 					console.error("[filesystem/searchKeyword] Failed:", {
 						rootPath,

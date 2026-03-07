@@ -87,6 +87,7 @@
 		"@superset/shared": "workspace:*",
 		"@superset/trpc": "workspace:*",
 		"@superset/ui": "workspace:*",
+		"@superset/workspace-fs": "workspace:*",
 		"@t3-oss/env-core": "^0.13.8",
 		"@tanstack/db": "0.5.27",
 		"@tanstack/electric-db-collection": "0.2.34",
