@@ -250,6 +250,8 @@ export function useTerminalLifecycle({
 
 		if (isFocusedRef.current) {
 			xterm.focus();
+		} else {
+			xterm.blur();
 		}
 
 		// Wait for first render before applying restoration

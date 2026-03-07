@@ -423,8 +423,19 @@ export const Terminal = ({
 		const frame = requestAnimationFrame(() => {
 			if (xtermRef.current !== xterm || fitAddonRef.current !== fitAddon)
 				return;
-			fitAddon.fit();
-			resizeRef.current({ paneId, cols: xterm.cols, rows: xterm.rows });
+			const proposed = fitAddon.proposeDimensions();
+			if (proposed) {
+				const sizeChanged =
+					proposed.cols !== xterm.cols || proposed.rows !== xterm.rows;
+				if (sizeChanged) {
+					resizeRef.current({
+						paneId,
+						cols: proposed.cols,
+						rows: proposed.rows,
+					});
+					xterm.resize(proposed.cols, proposed.rows);
+				}
+			}
 			if (isFocusedRef.current) {
 				xterm.focus();
 			}

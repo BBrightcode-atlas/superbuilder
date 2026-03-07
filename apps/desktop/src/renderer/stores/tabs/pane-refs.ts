@@ -1,9 +1,11 @@
 // Global registry so CMD+D hotkey handler can access focused pane dimensions
 // without prop-drilling refs through the component tree
 const paneRefs = new Map<string, HTMLElement>();
-const listeners = new Set<() => void>();
+const listenersByPaneId = new Map<string, Set<() => void>>();
 
-function emitChange() {
+function emitChange(paneId: string) {
+	const listeners = listenersByPaneId.get(paneId);
+	if (!listeners) return;
 	for (const listener of listeners) {
 		listener();
 	}
@@ -11,22 +13,35 @@ function emitChange() {
 
 export function registerPaneRef(paneId: string, element: HTMLElement) {
 	paneRefs.set(paneId, element);
-	emitChange();
+	emitChange(paneId);
 }
 
 export function unregisterPaneRef(paneId: string) {
 	if (!paneRefs.delete(paneId)) return;
-	emitChange();
+	emitChange(paneId);
 }
 
 export function getPaneRef(paneId: string): HTMLElement | null {
 	return paneRefs.get(paneId) ?? null;
 }
 
-export function subscribePaneRefs(listener: () => void): () => void {
+export function subscribePaneRef(
+	paneId: string,
+	listener: () => void,
+): () => void {
+	let listeners = listenersByPaneId.get(paneId);
+	if (!listeners) {
+		listeners = new Set();
+		listenersByPaneId.set(paneId, listeners);
+	}
 	listeners.add(listener);
 	return () => {
-		listeners.delete(listener);
+		const current = listenersByPaneId.get(paneId);
+		if (!current) return;
+		current.delete(listener);
+		if (current.size === 0) {
+			listenersByPaneId.delete(paneId);
+		}
 	};
 }
 

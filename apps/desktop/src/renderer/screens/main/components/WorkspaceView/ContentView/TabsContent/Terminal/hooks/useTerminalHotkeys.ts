@@ -28,14 +28,6 @@ export function useTerminalHotkeys({
 		}
 	}, [isFocused]);
 
-	useEffect(() => {
-		const xterm = xtermRef.current;
-		if (!xterm) return;
-		if (isFocused) {
-			xterm.focus();
-		}
-	}, [isFocused, xtermRef]);
-
 	useAppHotkey(
 		"FIND_IN_TERMINAL",
 		() => setIsSearchOpen((prev) => !prev),

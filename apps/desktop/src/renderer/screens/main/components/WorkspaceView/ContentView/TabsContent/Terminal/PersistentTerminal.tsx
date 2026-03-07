@@ -6,13 +6,13 @@ import {
 	useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
-import { getPaneRef, subscribePaneRefs } from "renderer/stores/tabs/pane-refs";
+import { getPaneRef, subscribePaneRef } from "renderer/stores/tabs/pane-refs";
 import { Terminal } from "./Terminal";
 import type { TerminalProps } from "./types";
 
 function usePaneHost(paneId: string): HTMLElement | null {
 	return useSyncExternalStore(
-		subscribePaneRefs,
+		(listener) => subscribePaneRef(paneId, listener),
 		() => getPaneRef(paneId),
 		() => null,
 	);
