@@ -619,6 +619,15 @@ function WorkspacePage() {
 				isLoading={commandPalette.isFetching}
 				searchResults={commandPalette.searchResults}
 				onSelectFile={commandPalette.selectFile}
+				scope={commandPalette.scope}
+				onScopeChange={commandPalette.setScope}
+				workspaceName={
+					workspace?.project?.name
+						? [workspace.project.name, workspace.name]
+								.filter(Boolean)
+								.join(" - ")
+						: workspace?.name
+				}
 			/>
 			<KeywordSearch
 				open={keywordSearch.open}

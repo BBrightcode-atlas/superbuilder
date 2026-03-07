@@ -6,6 +6,7 @@ import { NavigationControls } from "./components/NavigationControls";
 import { OpenInMenuButton } from "./components/OpenInMenuButton";
 import { OrganizationDropdown } from "./components/OrganizationDropdown";
 import { ResourceConsumption } from "./components/ResourceConsumption";
+import { SearchBarTrigger } from "./components/SearchBarTrigger";
 import { SidebarToggle } from "./components/SidebarToggle";
 import { WindowControls } from "./components/WindowControls";
 
@@ -33,13 +34,19 @@ export function TopBar() {
 				<ResourceConsumption />
 			</div>
 
-			{workspace?.project?.name && (
+			{workspaceId && (
 				<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-					<span className="text-sm text-muted-foreground font-medium truncate max-w-[calc(100vw-36rem)] lg:max-w-[calc(100vw-52rem)]">
-						{[workspace.project.name, workspace.name]
-							.filter(Boolean)
-							.join(" - ")}
-					</span>
+					<div className="pointer-events-auto">
+						<SearchBarTrigger
+							workspaceName={
+								workspace?.project?.name
+									? [workspace.project.name, workspace.name]
+											.filter(Boolean)
+											.join(" - ")
+									: undefined
+							}
+						/>
+					</div>
 				</div>
 			)}
 

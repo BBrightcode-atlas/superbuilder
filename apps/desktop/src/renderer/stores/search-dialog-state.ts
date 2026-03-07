@@ -2,11 +2,13 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 export type SearchDialogMode = "quickOpen" | "keywordSearch";
+export type SearchScope = "workspace" | "global";
 
 interface SearchDialogModeState {
 	includePattern: string;
 	excludePattern: string;
 	filtersOpen: boolean;
+	scope: SearchScope;
 }
 
 interface SearchDialogState {
@@ -14,12 +16,14 @@ interface SearchDialogState {
 	setIncludePattern: (mode: SearchDialogMode, value: string) => void;
 	setExcludePattern: (mode: SearchDialogMode, value: string) => void;
 	setFiltersOpen: (mode: SearchDialogMode, open: boolean) => void;
+	setScope: (mode: SearchDialogMode, scope: SearchScope) => void;
 }
 
 const DEFAULT_MODE_STATE: SearchDialogModeState = {
 	includePattern: "",
 	excludePattern: "",
 	filtersOpen: false,
+	scope: "workspace",
 };
 
 export const useSearchDialogStore = create<SearchDialogState>()(
@@ -62,6 +66,18 @@ export const useSearchDialogStore = create<SearchDialogState>()(
 							[mode]: {
 								...state.byMode[mode],
 								filtersOpen: open,
+							},
+						},
+					}));
+				},
+
+				setScope: (mode, scope) => {
+					set((state) => ({
+						byMode: {
+							...state.byMode,
+							[mode]: {
+								...state.byMode[mode],
+								scope,
 							},
 						},
 					}));
