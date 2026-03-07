@@ -5,8 +5,9 @@ import { and, eq } from "@tanstack/db";
 import { useLiveQuery } from "@tanstack/react-db";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { GoGitPullRequest, GoGitPullRequestDraft } from "react-icons/go";
+import { GoArrowUpRight, GoGitPullRequest, GoGitPullRequestDraft } from "react-icons/go";
 import { SiGithub } from "react-icons/si";
+import { electronTrpc } from "renderer/lib/electron-trpc";
 import { GATED_FEATURES, usePaywall } from "renderer/components/Paywall";
 import { useCreateFromPr } from "renderer/react-query/workspaces/useCreateFromPr";
 import { useCollections } from "renderer/routes/_authenticated/providers/CollectionsProvider";
@@ -58,6 +59,19 @@ export function PullRequestsGroup({
 				)
 				.select(({ prs }) => ({ ...prs })),
 		[collections, githubRepositoryId],
+	);
+
+	const { data: allWorkspaces = [] } =
+		electronTrpc.workspaces.getAll.useQuery();
+
+	const openBranches = useMemo(
+		() =>
+			new Set(
+				allWorkspaces
+					.filter((w) => w.projectId === projectId)
+					.map((w) => w.branch),
+			),
+		[allWorkspaces, projectId],
 	);
 
 	const openPrs = useMemo(
@@ -140,9 +154,11 @@ export function PullRequestsGroup({
 							},
 						);
 					}}
-					className="group"
+					className="group h-12"
 				>
-					{pr.isDraft ? (
+					{openBranches.has(pr.headBranch) ? (
+						<GoArrowUpRight className="size-4 shrink-0 text-muted-foreground" />
+					) : pr.isDraft ? (
 						<GoGitPullRequestDraft className="size-4 shrink-0 text-muted-foreground" />
 					) : (
 						<GoGitPullRequest className="size-4 shrink-0 text-emerald-500" />
@@ -158,7 +174,7 @@ export function PullRequestsGroup({
 						{pr.authorLogin}
 					</span>
 					<span className="text-xs text-muted-foreground shrink-0 hidden group-data-[selected=true]:inline">
-						Open →
+						{openBranches.has(pr.headBranch) ? "Open" : "Create"} ↵
 					</span>
 				</CommandItem>
 			))}

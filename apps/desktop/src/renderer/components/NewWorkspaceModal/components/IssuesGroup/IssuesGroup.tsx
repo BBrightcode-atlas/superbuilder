@@ -3,12 +3,14 @@ import { Button } from "@superset/ui/button";
 import { CommandEmpty, CommandGroup, CommandItem } from "@superset/ui/command";
 import { toast } from "@superset/ui/sonner";
 import { useNavigate } from "@tanstack/react-router";
+import { GoArrowUpRight } from "react-icons/go";
 import { HiOutlineUserCircle } from "react-icons/hi2";
 import { SiLinear } from "react-icons/si";
 import { GATED_FEATURES, usePaywall } from "renderer/components/Paywall";
 import { eq, isNull } from "@tanstack/db";
 import { useLiveQuery } from "@tanstack/react-db";
 import { useMemo } from "react";
+import { electronTrpc } from "renderer/lib/electron-trpc";
 import { getSlugColumnWidth } from "renderer/lib/slug-width";
 import { useCreateWorkspace } from "renderer/react-query/workspaces";
 import { useCollections } from "renderer/routes/_authenticated/providers/CollectionsProvider";
@@ -62,6 +64,19 @@ export function IssuesGroup({ projectId, onClose }: IssuesGroupProps) {
 				}))
 				.where(({ tasks }) => isNull(tasks.deletedAt)),
 		[collections],
+	);
+
+	const { data: allWorkspaces = [] } =
+		electronTrpc.workspaces.getAll.useQuery();
+
+	const openBranches = useMemo(
+		() =>
+			new Set(
+				allWorkspaces
+					.filter((w) => w.projectId === projectId)
+					.map((w) => w.branch),
+			),
+		[allWorkspaces, projectId],
 	);
 
 	const tasks = useMemo(() => data ?? [], [data]);
@@ -126,13 +141,18 @@ export function IssuesGroup({ projectId, onClose }: IssuesGroupProps) {
 							},
 						);
 					}}
-					className="group"
+					className="group h-12"
 				>
-					<StatusIcon
-						type={task.status.type as StatusType}
-						color={task.status.color}
-						className="size-4 shrink-0"
-					/>
+					{openBranches.has(task.slug.toLowerCase()) ? (
+						<GoArrowUpRight className="size-4 shrink-0 text-muted-foreground" />
+					) : (
+						<StatusIcon
+							type={task.status.type as StatusType}
+							color={task.status.color}
+							progress={task.status.progressPercent ?? undefined}
+							className="size-4 shrink-0"
+						/>
+					)}
 					<span
 						className="text-muted-foreground shrink-0 text-xs tabular-nums truncate"
 						style={{ width: slugWidth }}
@@ -152,7 +172,7 @@ export function IssuesGroup({ projectId, onClose }: IssuesGroupProps) {
 						)}
 					</span>
 					<span className="text-xs text-muted-foreground shrink-0 hidden group-data-[selected=true]:inline">
-						Open →
+						{openBranches.has(task.slug.toLowerCase()) ? "Open" : "Create"} ↵
 					</span>
 				</CommandItem>
 			))}
