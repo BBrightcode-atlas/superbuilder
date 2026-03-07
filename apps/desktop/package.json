@@ -30,7 +30,7 @@
 		"release": "electron-builder --publish always",
 		"clean:dev": "rimraf ./node_modules/.dev",
 		"generate:routes": "tsr generate",
-		"pretypecheck": "bun run generate:routes",
+		"pretypecheck": "bun run generate:icons && bun run generate:routes",
 		"typecheck": "tsc --noEmit",
 		"test": "bun test"
 	},
