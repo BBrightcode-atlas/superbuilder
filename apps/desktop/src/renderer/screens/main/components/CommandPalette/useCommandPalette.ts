@@ -30,7 +30,9 @@ export function useCommandPalette({
 	const filtersOpen = useSearchDialogStore(
 		(state) => state.byMode.quickOpen.filtersOpen,
 	);
-	const scope = useSearchDialogStore((state) => state.byMode.quickOpen.scope);
+	const scope =
+		useSearchDialogStore((state) => state.byMode.quickOpen.scope) ??
+		"workspace";
 	const setIncludePatternByMode = useSearchDialogStore(
 		(state) => state.setIncludePattern,
 	);

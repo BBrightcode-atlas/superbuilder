@@ -85,6 +85,23 @@ export const useSearchDialogStore = create<SearchDialogState>()(
 			}),
 			{
 				name: "search-dialog-store",
+				version: 1,
+				migrate: (persisted, version) => {
+					if (version === 0) {
+						const state = persisted as Record<string, unknown>;
+						const byMode = state.byMode as
+							| Record<string, Record<string, unknown>>
+							| undefined;
+						if (byMode) {
+							for (const mode of Object.values(byMode)) {
+								if (mode.scope === undefined) {
+									mode.scope = "workspace";
+								}
+							}
+						}
+					}
+					return persisted as SearchDialogState;
+				},
 			},
 		),
 		{ name: "SearchDialogStore" },
