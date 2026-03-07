@@ -11,7 +11,6 @@ import {
 } from "react-mosaic-component";
 import { dragDropManager } from "renderer/lib/dnd";
 import { electronTrpc } from "renderer/lib/electron-trpc";
-import { useDragPaneStore } from "renderer/stores/drag-pane-store";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import type { Tab } from "renderer/stores/tabs/types";
 import { useTabsWithPresets } from "renderer/stores/tabs/useTabsWithPresets";
@@ -33,7 +32,6 @@ interface TabViewProps {
 
 export function TabView({ tab }: TabViewProps) {
 	const activeTheme = useTheme();
-	const setResizing = useDragPaneStore((s) => s.setResizing);
 	const updateTabLayout = useTabsStore((s) => s.updateTabLayout);
 	const removePane = useTabsStore((s) => s.removePane);
 	const removeTab = useTabsStore((s) => s.removeTab);
@@ -97,27 +95,6 @@ export function TabView({ tab }: TabViewProps) {
 			removeTab(tab.id);
 		}
 	}, [cleanedLayout, removeTab, tab.id]);
-
-	// Disable pointer events on pane content while dragging a mosaic split divider.
-	// Without this, webview elements (Electron browser panes) absorb mouse events
-	// during resize, causing the drag to break or behave unpredictably.
-	useEffect(() => {
-		const handleMouseDown = (e: MouseEvent) => {
-			if ((e.target as Element).closest(".mosaic-split")) {
-				setResizing(true);
-			}
-		};
-		const handleMouseUp = () => {
-			setResizing(false);
-		};
-		document.addEventListener("mousedown", handleMouseDown);
-		document.addEventListener("mouseup", handleMouseUp);
-		return () => {
-			document.removeEventListener("mousedown", handleMouseDown);
-			document.removeEventListener("mouseup", handleMouseUp);
-			setResizing(false);
-		};
-	}, [setResizing]);
 
 	const handleLayoutChange = useCallback(
 		(newLayout: MosaicNode<string> | null) => {

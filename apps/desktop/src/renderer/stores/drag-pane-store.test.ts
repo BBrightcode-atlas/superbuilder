@@ -31,11 +31,8 @@ describe("drag-pane-store", () => {
 		});
 	});
 
-	describe("isResizing state (fix for split-pane resize bug)", () => {
-		// Regression test for: https://github.com/superset-sh/superset/issues/2035
-		// Bug: webview elements inside browser panes capture mouse events during mosaic
-		// split divider drag, preventing resize. Fix: track isResizing and apply
-		// pointer-events: none to pane content while a resize drag is in progress.
+	describe("isResizing state", () => {
+		// Regression: https://github.com/superset-sh/superset/issues/2035
 
 		it("starts as false", () => {
 			expect(useDragPaneStore.getState().isResizing).toBe(false);
