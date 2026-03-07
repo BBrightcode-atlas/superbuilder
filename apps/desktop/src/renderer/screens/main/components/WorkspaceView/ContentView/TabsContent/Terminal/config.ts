@@ -1,4 +1,5 @@
 import type { ITerminalOptions } from "ghostty-web";
+import { BUNDLED_TERMINAL_FONT_CSS_FAMILY } from "./fonts";
 
 // Use user's theme
 export const TERMINAL_THEME: ITerminalOptions["theme"] = undefined;
@@ -6,22 +7,16 @@ export const TERMINAL_THEME: ITerminalOptions["theme"] = undefined;
 // Fallback timeout for first render (in case xterm doesn't emit onRender)
 export const FIRST_RENDER_RESTORE_FALLBACK_MS = 250;
 
-// Nerd Fonts first for shell theme compatibility (Oh My Posh, Powerlevel10k, etc.)
+// Bundled Nerd Font first so terminal glyphs and metrics are deterministic.
 export const DEFAULT_TERMINAL_FONT_FAMILY = [
-	"MesloLGM Nerd Font",
-	"MesloLGM NF",
-	"MesloLGS NF",
-	"MesloLGS Nerd Font",
-	"Hack Nerd Font",
-	"FiraCode Nerd Font",
-	"JetBrainsMono Nerd Font",
-	"CaskaydiaCove Nerd Font",
+	BUNDLED_TERMINAL_FONT_CSS_FAMILY,
+	'"JetBrainsMono Nerd Font Mono"',
+	'"JetBrainsMonoNerdFontMono"',
+	'"JetBrains Mono"',
+	'"SF Mono"',
 	"Menlo",
 	"Monaco",
 	'"Courier New"',
-	// SF fonts for Apple tools (swift, xcodebuild) that use SF Symbols private use area characters
-	"SF Mono",
-	"SF Pro",
 	"monospace",
 ].join(", ");
 

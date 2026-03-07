@@ -4,10 +4,8 @@ import { electronTrpc } from "renderer/lib/electron-trpc";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { useTerminalTheme } from "renderer/stores/theme";
 import { SessionKilledOverlay } from "./components";
-import {
-	DEFAULT_TERMINAL_FONT_FAMILY,
-	DEFAULT_TERMINAL_FONT_SIZE,
-} from "./config";
+import { DEFAULT_TERMINAL_FONT_SIZE } from "./config";
+import { preloadTerminalFonts, resolveTerminalFontFamily } from "./font-family";
 import { ensureGhosttyRuntime } from "./ghostty-runtime";
 import { getDefaultTerminalBg, type TerminalRendererRef } from "./helpers";
 import {
@@ -398,17 +396,51 @@ export const Terminal = ({
 			staleTime: 30_000,
 		},
 	);
+	const terminalFontFamily = resolveTerminalFontFamily(
+		fontSettings?.terminalFontFamily,
+	);
+	const terminalFontSize =
+		fontSettings?.terminalFontSize ?? DEFAULT_TERMINAL_FONT_SIZE;
 
 	useEffect(() => {
 		const xterm = xtermRef.current;
-		if (!xterm || !fontSettings) return;
-		const family =
-			fontSettings.terminalFontFamily || DEFAULT_TERMINAL_FONT_FAMILY;
-		const size = fontSettings.terminalFontSize ?? DEFAULT_TERMINAL_FONT_SIZE;
-		xterm.options.fontFamily = family;
-		xterm.options.fontSize = size;
-		fitAddonRef.current?.fit();
-	}, [fontSettings]);
+		const fitAddon = fitAddonRef.current;
+		if (!xterm || !fitAddon) return;
+
+		let isCancelled = false;
+
+		const applyTerminalFont = async () => {
+			await preloadTerminalFonts(terminalFontFamily, terminalFontSize);
+			if (
+				isCancelled ||
+				xtermRef.current !== xterm ||
+				fitAddonRef.current !== fitAddon
+			) {
+				return;
+			}
+
+			xterm.options.fontFamily = terminalFontFamily;
+			xterm.options.fontSize = terminalFontSize;
+
+			if (!isVisible) return;
+
+			const proposed = fitAddon.proposeDimensions();
+			if (!proposed || proposed.cols <= 0 || proposed.rows <= 0) return;
+
+			resizeRef.current({
+				paneId,
+				cols: proposed.cols,
+				rows: proposed.rows,
+			});
+			xterm.resize(proposed.cols, proposed.rows);
+		};
+
+		void applyTerminalFont();
+
+		return () => {
+			isCancelled = true;
+		};
+	}, [isVisible, paneId, resizeRef, terminalFontFamily, terminalFontSize]);
 
 	useEffect(() => {
 		const xterm = xtermRef.current;
