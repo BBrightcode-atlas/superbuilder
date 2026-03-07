@@ -26,6 +26,7 @@ import { useSectionDropZone } from "../hooks";
 import { RenameInput } from "../RenameInput";
 import type { SectionDragItem, SidebarWorkspace } from "../types";
 import { WorkspaceList } from "../WorkspaceList";
+import { useSectionMutations } from "./useSectionMutations";
 
 export const SECTION_DND_TYPE = "SECTION";
 
@@ -59,60 +60,15 @@ export function WorkspaceSection({
 	const utils = electronTrpc.useUtils();
 	const [isRenaming, setIsRenaming] = useState(false);
 	const [renameValue, setRenameValue] = useState(name);
+	const mutations = useSectionMutations(sectionId);
 
 	const hasColor = color && color !== PROJECT_COLOR_DEFAULT;
-
-	const toggleCollapsed =
-		electronTrpc.workspaces.toggleSectionCollapsed.useMutation({
-			onSuccess: () => {
-				utils.workspaces.getAllGrouped.invalidate();
-			},
-			onError: (error) => {
-				toast.error(`Failed to toggle section: ${error.message}`);
-			},
-		});
-
-	const renameSection = electronTrpc.workspaces.renameSection.useMutation({
-		onSuccess: () => {
-			utils.workspaces.getAllGrouped.invalidate();
-		},
-		onError: (error) => {
-			toast.error(`Failed to rename section: ${error.message}`);
-		},
-	});
-
-	const deleteSection = electronTrpc.workspaces.deleteSection.useMutation({
-		onSuccess: () => {
-			utils.workspaces.getAllGrouped.invalidate();
-		},
-		onError: (error) => {
-			toast.error(`Failed to delete section: ${error.message}`);
-		},
-	});
-
-	const setSectionColor = electronTrpc.workspaces.setSectionColor.useMutation({
-		onSuccess: () => {
-			utils.workspaces.getAllGrouped.invalidate();
-		},
-		onError: (error) => {
-			toast.error(`Failed to set color: ${error.message}`);
-		},
-	});
-
-	const handleColorChange = (newColor: string) => {
-		setSectionColor.mutate({
-			id: sectionId,
-			color: newColor === PROJECT_COLOR_DEFAULT ? null : newColor,
-		});
-	};
 
 	const dropZone = useSectionDropZone({
 		canAccept: (item) =>
 			item.projectId === projectId && item.sectionId !== sectionId,
 		targetSectionId: sectionId,
-		onAutoExpand: isCollapsed
-			? () => toggleCollapsed.mutate({ id: sectionId })
-			: undefined,
+		onAutoExpand: isCollapsed ? () => mutations.toggle() : undefined,
 	});
 
 	const reorderSections = useReorderSections();
@@ -181,9 +137,9 @@ export function WorkspaceSection({
 		if (clickTimer.current) return;
 		clickTimer.current = setTimeout(() => {
 			clickTimer.current = null;
-			toggleCollapsed.mutate({ id: sectionId });
+			mutations.toggle();
 		}, 250);
-	}, [sectionId, toggleCollapsed]);
+	}, [mutations]);
 
 	const handleDoubleClick = useCallback(() => {
 		if (clickTimer.current) {
@@ -202,7 +158,7 @@ export function WorkspaceSection({
 	const handleSubmitRename = () => {
 		const trimmed = renameValue.trim();
 		if (trimmed && trimmed !== name) {
-			renameSection.mutate({ id: sectionId, name: trimmed });
+			mutations.rename(trimmed);
 		}
 		setIsRenaming(false);
 	};
@@ -210,10 +166,6 @@ export function WorkspaceSection({
 	const handleCancelRename = () => {
 		setRenameValue(name);
 		setIsRenaming(false);
-	};
-
-	const handleDelete = () => {
-		deleteSection.mutate({ id: sectionId });
 	};
 
 	if (isSidebarCollapsed) {
@@ -303,7 +255,7 @@ export function WorkspaceSection({
 								return (
 									<ContextMenuItem
 										key={c.value}
-										onSelect={() => handleColorChange(c.value)}
+										onSelect={() => mutations.setColor(c.value)}
 										className="flex items-center gap-2"
 									>
 										<span
@@ -330,15 +282,15 @@ export function WorkspaceSection({
 					</ContextMenuSub>
 					<ContextMenuSeparator />
 					<ContextMenuItem
-						onSelect={handleDelete}
-						disabled={deleteSection.isPending}
+						onSelect={mutations.remove}
+						disabled={mutations.isDeleting}
 						className="text-destructive focus:text-destructive"
 					>
 						<LuTrash2
 							className="size-4 mr-2 text-destructive"
 							strokeWidth={STROKE_WIDTH}
 						/>
-						{deleteSection.isPending ? "Deleting..." : "Delete Section"}
+						{mutations.isDeleting ? "Deleting..." : "Delete Section"}
 					</ContextMenuItem>
 				</ContextMenuContent>
 			</ContextMenu>

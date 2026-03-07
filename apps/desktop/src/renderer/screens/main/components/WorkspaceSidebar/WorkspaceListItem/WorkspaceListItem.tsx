@@ -1,45 +1,12 @@
-import {
-	ContextMenu,
-	ContextMenuContent,
-	ContextMenuItem,
-	ContextMenuSeparator,
-	ContextMenuSub,
-	ContextMenuSubContent,
-	ContextMenuSubTrigger,
-	ContextMenuTrigger,
-} from "@superset/ui/context-menu";
-import {
-	HoverCard,
-	HoverCardContent,
-	HoverCardTrigger,
-} from "@superset/ui/hover-card";
 import { Input } from "@superset/ui/input";
 import { toast } from "@superset/ui/sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { cn } from "@superset/ui/utils";
 import { useMatchRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useDrag, useDrop } from "react-dnd";
 import { HiMiniXMark } from "react-icons/hi2";
-import {
-	LuArrowRightLeft,
-	LuBellOff,
-	LuCopy,
-	LuEye,
-	LuEyeOff,
-	LuFolderOpen,
-	LuFolderPlus,
-	LuPencil,
-} from "react-icons/lu";
 import { electronTrpc } from "renderer/lib/electron-trpc";
-import {
-	useCreateSectionFromWorkspaces,
-	useMoveWorkspacesToSection,
-	useMoveWorkspaceToSection,
-	useReorderWorkspaces,
-	useReorderWorkspacesInSection,
-	useWorkspaceDeleteHandler,
-} from "renderer/react-query/workspaces";
+import { useWorkspaceDeleteHandler } from "renderer/react-query/workspaces";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
 import { useBranchSyncInvalidation } from "renderer/screens/main/hooks/useBranchSyncInvalidation";
 import { useGitChangesStatus } from "renderer/screens/main/hooks/useGitChangesStatus";
@@ -49,22 +16,18 @@ import { useTabsStore } from "renderer/stores/tabs/store";
 import { extractPaneIdsFromLayout } from "renderer/stores/tabs/utils";
 import { useWorkspaceSelectionStore } from "renderer/stores/workspace-selection";
 import { getHighestPriorityStatus } from "shared/tabs-types";
-import { STROKE_WIDTH } from "../constants";
-import type { DragItem } from "../types";
 import { CollapsedWorkspaceItem } from "./CollapsedWorkspaceItem";
-import { DeleteWorkspaceDialog, WorkspaceHoverCardContent } from "./components";
+import { DeleteWorkspaceDialog } from "./components";
 import {
 	GITHUB_STATUS_STALE_TIME,
-	HOVER_CARD_CLOSE_DELAY,
-	HOVER_CARD_OPEN_DELAY,
 	MAX_KEYBOARD_SHORTCUT_INDEX,
 } from "./constants";
+import { useWorkspaceDnD } from "./useWorkspaceDnD";
 import { WorkspaceAheadBehind } from "./WorkspaceAheadBehind";
+import { WorkspaceContextMenu } from "./WorkspaceContextMenu";
 import { WorkspaceDiffStats } from "./WorkspaceDiffStats";
 import { WorkspaceIcon } from "./WorkspaceIcon";
 import { WorkspaceStatusBadge } from "./WorkspaceStatusBadge";
-
-export const WORKSPACE_DND_TYPE = "WORKSPACE";
 
 interface WorkspaceListItemProps {
 	id: string;
@@ -100,11 +63,7 @@ export function WorkspaceListItem({
 	const isBranchWorkspace = type === "branch";
 	const navigate = useNavigate();
 	const matchRoute = useMatchRoute();
-	const reorderWorkspaces = useReorderWorkspaces();
-	const reorderWorkspacesInSection = useReorderWorkspacesInSection();
 	const [hasHovered, setHasHovered] = useState(false);
-	const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
-	const contextMenuSelectionRef = useRef<string[]>([]);
 	const rename = useWorkspaceRename(id, name, branch);
 	const workspaceStatus = useTabsStore((state) => {
 		function* paneStatuses() {
@@ -142,6 +101,13 @@ export function WorkspaceListItem({
 		}
 	}, [isActive]);
 
+	const { isDragging, drag, drop } = useWorkspaceDnD({
+		id,
+		projectId,
+		sectionId,
+		index,
+	});
+
 	const openInFinder = electronTrpc.external.openInFinder.useMutation({
 		onError: (error) => toast.error(`Failed to open: ${error.message}`),
 	});
@@ -150,43 +116,6 @@ export function WorkspaceListItem({
 		onError: (error) =>
 			toast.error(`Failed to update unread status: ${error.message}`),
 	});
-
-	const moveToSection = useMoveWorkspaceToSection();
-	const bulkMoveToSection = useMoveWorkspacesToSection();
-	const createSectionFromWorkspaces = useCreateSectionFromWorkspaces();
-
-	const handleContextMenuOpenChange = (open: boolean) => {
-		setIsContextMenuOpen(open);
-		if (open) {
-			const { selectedIds } = selectionStore.getState();
-			contextMenuSelectionRef.current =
-				selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [];
-		}
-	};
-
-	const handleMoveToSection = (targetSectionId: string | null) => {
-		const captured = contextMenuSelectionRef.current;
-		if (captured.length > 1) {
-			bulkMoveToSection.mutate({
-				workspaceIds: captured,
-				sectionId: targetSectionId,
-			});
-			selectionStore.getState().clearSelection();
-		} else {
-			moveToSection.mutate({ workspaceId: id, sectionId: targetSectionId });
-		}
-	};
-
-	const handleCreateSectionFromSelection = () => {
-		const captured = contextMenuSelectionRef.current;
-		if (captured.length > 1) {
-			createSectionFromWorkspaces.mutate({
-				projectId,
-				workspaceIds: captured,
-			});
-			selectionStore.getState().clearSelection();
-		}
-	};
 
 	const { showDeleteDialog, setShowDeleteDialog, handleDeleteClick } =
 		useWorkspaceDeleteHandler();
@@ -287,131 +216,6 @@ export function WorkspaceListItem({
 			toast.error("Failed to copy path");
 		}
 	};
-
-	const handleReorder = (item: DragItem) => {
-		if (item.originalIndex === item.index) return;
-		const callbacks = {
-			onError: (error: { message: string }) =>
-				toast.error(`Failed to reorder workspace: ${error.message}`),
-		};
-		if (item.sectionId !== null) {
-			reorderWorkspacesInSection.mutate(
-				{
-					sectionId: item.sectionId,
-					fromIndex: item.originalIndex,
-					toIndex: item.index,
-				},
-				callbacks,
-			);
-		} else {
-			reorderWorkspaces.mutate(
-				{
-					projectId: item.projectId,
-					fromIndex: item.originalIndex,
-					toIndex: item.index,
-				},
-				callbacks,
-			);
-		}
-	};
-
-	const [{ isDragging }, drag] = useDrag(
-		() => ({
-			type: WORKSPACE_DND_TYPE,
-			item: () => {
-				const selection = selectionStore.getState();
-				const isPartOfSelection = selection.selectedIds.has(id);
-				if (!isPartOfSelection) {
-					selection.clearSelection();
-				}
-				const selectedIds =
-					isPartOfSelection && selection.selectedIds.size > 1
-						? [...selection.selectedIds]
-						: undefined;
-				const dragItem: DragItem = {
-					id,
-					projectId,
-					sectionId,
-					index,
-					originalIndex: index,
-					selectedIds,
-				};
-				useActiveDragItemStore.getState().setActiveDragItem(dragItem);
-				return dragItem;
-			},
-			end: (item, monitor) => {
-				useActiveDragItemStore.getState().clearActiveDragItem();
-				selectionStore.getState().clearSelection();
-				if (!item) return;
-				if (item.handled || monitor.didDrop()) return;
-				handleReorder(item);
-			},
-			collect: (monitor) => ({ isDragging: monitor.isDragging() }),
-		}),
-		[
-			id,
-			projectId,
-			sectionId,
-			index,
-			reorderWorkspaces,
-			reorderWorkspacesInSection,
-		],
-	);
-
-	const [, drop] = useDrop({
-		accept: WORKSPACE_DND_TYPE,
-		hover: (item: DragItem) => {
-			if (item.selectedIds && item.selectedIds.length > 1) return;
-			if (
-				item.projectId !== projectId ||
-				item.sectionId !== sectionId ||
-				item.index === index
-			)
-				return;
-			utils.workspaces.getAllGrouped.setData(undefined, (oldData) => {
-				if (!oldData) return oldData;
-				return oldData.map((group) => {
-					if (group.project.id !== projectId) return group;
-					if (sectionId === null) {
-						const workspaces = [...group.workspaces];
-						const [moved] = workspaces.splice(item.index, 1);
-						workspaces.splice(index, 0, moved);
-						return { ...group, workspaces };
-					}
-					const sections = group.sections.map((section) => {
-						if (section.id !== sectionId) return section;
-						const workspaces = [...section.workspaces];
-						const [moved] = workspaces.splice(item.index, 1);
-						workspaces.splice(index, 0, moved);
-						return { ...section, workspaces };
-					});
-					return { ...group, sections };
-				});
-			});
-			item.index = index;
-		},
-		drop: (item: DragItem) => {
-			if (item.projectId !== projectId) return;
-			if (item.sectionId === sectionId) {
-				handleReorder(item);
-				if (item.originalIndex !== item.index) return { reordered: true };
-			} else if (!item.handled) {
-				if (item.selectedIds && item.selectedIds.length > 1) {
-					bulkMoveToSection.mutate({
-						workspaceIds: item.selectedIds,
-						sectionId,
-					});
-				} else {
-					moveToSection.mutate({
-						workspaceId: item.id,
-						sectionId,
-					});
-				}
-				item.handled = true;
-				return { moved: true };
-			}
-		},
-	});
 
 	const pr = githubStatus?.pr;
 	const diffStats =
@@ -617,126 +421,24 @@ export function WorkspaceListItem({
 		</div>
 	);
 
-	const unreadMenuItem = (
-		<ContextMenuItem
-			onSelect={() => setUnread.mutate({ id, isUnread: !isUnread })}
-		>
-			{isUnread ? (
-				<>
-					<LuEye className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
-					Mark as Read
-				</>
-			) : (
-				<>
-					<LuEyeOff className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
-					Mark as Unread
-				</>
-			)}
-		</ContextMenuItem>
-	);
-
-	const isMultiSelectContext = contextMenuSelectionRef.current.length > 1;
-
-	const commonContextMenuItems = (
-		<>
-			<ContextMenuItem onSelect={handleOpenInFinder}>
-				<LuFolderOpen className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
-				Open in Finder
-			</ContextMenuItem>
-			<ContextMenuItem onSelect={handleCopyPath}>
-				<LuCopy className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
-				Copy Path
-			</ContextMenuItem>
-			{sections.length > 0 && (
-				<>
-					<ContextMenuSeparator />
-					<ContextMenuSub>
-						<ContextMenuSubTrigger>
-							<LuArrowRightLeft
-								className="size-4 mr-2"
-								strokeWidth={STROKE_WIDTH}
-							/>
-							Move to Section
-						</ContextMenuSubTrigger>
-						<ContextMenuSubContent>
-							<ContextMenuItem onSelect={() => handleMoveToSection(null)}>
-								No Section
-							</ContextMenuItem>
-							<ContextMenuSeparator />
-							{sections.map((section) => (
-								<ContextMenuItem
-									key={section.id}
-									onSelect={() => handleMoveToSection(section.id)}
-								>
-									{section.name}
-								</ContextMenuItem>
-							))}
-						</ContextMenuSubContent>
-					</ContextMenuSub>
-				</>
-			)}
-			{isMultiSelectContext && (
-				<>
-					{sections.length === 0 && <ContextMenuSeparator />}
-					<ContextMenuItem onSelect={handleCreateSectionFromSelection}>
-						<LuFolderPlus className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
-						Create Section from Selection
-					</ContextMenuItem>
-				</>
-			)}
-			<ContextMenuSeparator />
-			{unreadMenuItem}
-			{workspaceStatus && (
-				<ContextMenuItem onSelect={() => resetWorkspaceStatus(id)}>
-					<LuBellOff className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
-					Clear Status
-				</ContextMenuItem>
-			)}
-		</>
-	);
-
-	if (isBranchWorkspace) {
-		return (
-			<>
-				<ContextMenu onOpenChange={handleContextMenuOpenChange}>
-					<ContextMenuTrigger asChild>{content}</ContextMenuTrigger>
-					<ContextMenuContent>{commonContextMenuItems}</ContextMenuContent>
-				</ContextMenu>
-				<DeleteWorkspaceDialog
-					workspaceId={id}
-					workspaceName={name}
-					workspaceType={type}
-					open={showDeleteDialog}
-					onOpenChange={setShowDeleteDialog}
-				/>
-			</>
-		);
-	}
-
 	return (
 		<>
-			<HoverCard
-				open={isContextMenuOpen ? false : undefined}
-				openDelay={HOVER_CARD_OPEN_DELAY}
-				closeDelay={HOVER_CARD_CLOSE_DELAY}
+			<WorkspaceContextMenu
+				id={id}
+				projectId={projectId}
+				name={name}
+				isBranchWorkspace={isBranchWorkspace}
+				isUnread={isUnread}
+				workspaceStatus={workspaceStatus}
+				sections={sections}
+				onRename={rename.startRename}
+				onOpenInFinder={handleOpenInFinder}
+				onCopyPath={handleCopyPath}
+				onSetUnread={(unread) => setUnread.mutate({ id, isUnread: unread })}
+				onResetStatus={() => resetWorkspaceStatus(id)}
 			>
-				<ContextMenu onOpenChange={handleContextMenuOpenChange}>
-					<HoverCardTrigger asChild>
-						<ContextMenuTrigger asChild>{content}</ContextMenuTrigger>
-					</HoverCardTrigger>
-					<ContextMenuContent>
-						<ContextMenuItem onSelect={rename.startRename}>
-							<LuPencil className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
-							Rename
-						</ContextMenuItem>
-						<ContextMenuSeparator />
-						{commonContextMenuItems}
-					</ContextMenuContent>
-				</ContextMenu>
-				<HoverCardContent side="right" align="start" className="w-72">
-					<WorkspaceHoverCardContent workspaceId={id} workspaceAlias={name} />
-				</HoverCardContent>
-			</HoverCard>
+				{content}
+			</WorkspaceContextMenu>
 			<DeleteWorkspaceDialog
 				workspaceId={id}
 				workspaceName={name}
