@@ -7,6 +7,16 @@ interface SearchBarTriggerProps {
 	workspaceName?: string;
 }
 
+function keyToCode(key: string): string {
+	if (key.length === 1 && /^[a-z]$/i.test(key)) {
+		return `Key${key.toUpperCase()}`;
+	}
+	if (key.length === 1 && /^\d$/.test(key)) {
+		return `Digit${key}`;
+	}
+	return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
 function dispatchHotkeyEvent(keys: string) {
 	const parts = keys.toLowerCase().split("+");
 	const key = parts[parts.length - 1] ?? "";
@@ -15,7 +25,7 @@ function dispatchHotkeyEvent(keys: string) {
 	document.dispatchEvent(
 		new KeyboardEvent("keydown", {
 			key,
-			code: `Key${key.toUpperCase()}`,
+			code: keyToCode(key),
 			metaKey: modifiers.has("meta"),
 			ctrlKey: modifiers.has("ctrl"),
 			altKey: modifiers.has("alt"),
