@@ -37,6 +37,16 @@ const mockListBranches = mock(async (_repoPath: string) => ({
 
 // ─── Module mocks ──────────────────────────────────────────────────────────────
 
+// @superset/local-db uses drizzle-orm/sqlite-core (native bindings) — must mock
+// the schema table references that create.ts imports at the top level.
+const mockTable = (name: string) => ({ id: `${name}_id` });
+mock.module("@superset/local-db", () => ({
+	projects: mockTable("projects"),
+	workspaces: mockTable("workspaces"),
+	worktrees: mockTable("worktrees"),
+	settings: mockTable("settings"),
+}));
+
 mock.module("lib/trpc/routers/workspaces/utils/db-helpers", () => ({
 	getBranchWorkspace: mockGetBranchWorkspace,
 	touchWorkspace: mockTouchWorkspace,
