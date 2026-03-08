@@ -153,11 +153,6 @@ const config: Configuration = {
 			to: "node_modules/@neon-rs",
 			filter: ["**/*"],
 		},
-		{
-			from: "node_modules/detect-libc",
-			to: "node_modules/detect-libc",
-			filter: ["**/*"],
-		},
 		// friendly-words is a CommonJS module that Vite doesn't bundle
 		{
 			from: "node_modules/friendly-words",

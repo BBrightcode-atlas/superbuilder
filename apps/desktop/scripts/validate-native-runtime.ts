@@ -3,7 +3,8 @@
  *
  * This fails early when:
  * 1) libsql internals are accidentally bundled into dist/main (dynamic require risk)
- * 2) required native runtime packages are missing from apps/desktop/node_modules
+ * 2) @parcel/watcher internals are accidentally bundled into dist/main
+ * 3) required native runtime packages are missing from apps/desktop/node_modules
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -73,6 +74,56 @@ function validateLibsqlNotBundled(): void {
 	);
 }
 
+function validateParcelWatcherNotBundled(): void {
+	const sourceMapPath = join(projectRoot, "dist", "main", "index.js.map");
+	assertExists(
+		sourceMapPath,
+		"Main bundle sourcemap not found. Run `bun run compile:app` first.",
+	);
+
+	const sourceMap = readFileSync(sourceMapPath, "utf8");
+	if (sourceMap.includes("node_modules/.bun/@parcel+watcher@")) {
+		fail(
+			[
+				"Detected bundled `@parcel/watcher` sources in dist/main/index.js.map.",
+				"This usually causes runtime dynamic require failures in packaged apps.",
+				"Ensure `@parcel/watcher` stays in `rollupOptions.external` for the main process.",
+			].join("\n"),
+		);
+	}
+
+	const distMainDir = join(projectRoot, "dist", "main");
+	assertExists(
+		distMainDir,
+		"Main bundle output not found. Run `bun run compile:app` first.",
+	);
+
+	const jsFiles = collectFiles(distMainDir).filter((filePath) =>
+		filePath.endsWith(".js"),
+	);
+
+	for (const filePath of jsFiles) {
+		const content = readFileSync(filePath, "utf8");
+		if (
+			content.includes('commonjsRequire("@parcel/watcher-') ||
+			content.includes("commonjsRequire(`@parcel/watcher-") ||
+			content.includes('Could not dynamically require "@parcel/watcher-')
+		) {
+			fail(
+				[
+					"Detected bundled dynamic `@parcel/watcher-<platform>` require logic in dist/main output.",
+					"This indicates watcher internals were bundled instead of externalized.",
+					`Offending file: ${filePath}`,
+				].join("\n"),
+			);
+		}
+	}
+
+	console.log(
+		"[validate:native-runtime] OK: @parcel/watcher is not bundled into the main output",
+	);
+}
+
 function collectFiles(rootDir: string): string[] {
 	const entries = readdirSync(rootDir, { withFileTypes: true });
 	const files: string[] = [];
@@ -123,6 +174,10 @@ function validateNativeModulesPrepared(): void {
 		"libsql/package.json",
 		"@neon-rs/load/package.json",
 		"detect-libc/package.json",
+		"is-glob/package.json",
+		"is-extglob/package.json",
+		"picomatch/package.json",
+		"node-addon-api/package.json",
 	];
 	for (const modulePath of requiredModules) {
 		assertExists(
@@ -236,6 +291,7 @@ function validateParcelWatcherPrepared(): void {
 
 function main(): void {
 	validateLibsqlNotBundled();
+	validateParcelWatcherNotBundled();
 	validateNativeModulesPrepared();
 	validateParcelWatcherPrepared();
 	console.log("[validate:native-runtime] All checks passed");

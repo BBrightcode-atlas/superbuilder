@@ -41,7 +41,20 @@ const sentryPlugin = process.env.SENTRY_AUTH_TOKEN
 
 export default defineConfig({
 	main: {
-		plugins: [tsconfigPaths, copyResourcesPlugin()],
+		plugins: [
+			tsconfigPaths,
+			copyResourcesPlugin(),
+			externalizeDepsPlugin({
+				include: [
+					"better-sqlite3",
+					"node-pty",
+					"pg-native",
+					"@ast-grep/napi",
+					"@parcel/watcher",
+					"libsql",
+				],
+			}),
+		],
 
 		define: {
 			"process.env.NODE_ENV": defineEnv(process.env.NODE_ENV, "production"),
@@ -107,15 +120,7 @@ export default defineConfig({
 				output: {
 					dir: resolve(devPath, "main"),
 				},
-				external: [
-					"electron",
-					"better-sqlite3",
-					"node-pty",
-					"pg-native",
-					"@ast-grep/napi",
-					"@parcel/watcher",
-					"libsql",
-				],
+				external: ["electron"],
 				plugins: [sentryPlugin].filter(Boolean),
 			},
 		},
