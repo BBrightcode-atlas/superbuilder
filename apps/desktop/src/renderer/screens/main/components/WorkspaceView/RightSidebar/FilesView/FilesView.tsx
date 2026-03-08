@@ -16,7 +16,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LuFile, LuFolder } from "react-icons/lu";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { useTabsStore } from "renderer/stores/tabs/store";
-import type { DirectoryEntry } from "shared/file-tree-types";
+import type {
+	DirectoryEntry,
+	FileSystemChangeEvent,
+} from "shared/file-tree-types";
 import { DeleteConfirmDialog } from "./components/DeleteConfirmDialog";
 import { FileSearchResultItem } from "./components/FileSearchResultItem";
 import { FileTreeItem } from "./components/FileTreeItem";
@@ -42,6 +45,8 @@ export function FilesView() {
 	// Refs avoid stale closure in dataLoader callbacks
 	const worktreePathRef = useRef(worktreePath);
 	worktreePathRef.current = worktreePath;
+	const entryCacheRef = useRef(new Map<string, DirectoryEntry>());
+	const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const trpcUtils = electronTrpc.useUtils();
 
@@ -62,21 +67,32 @@ export function FilesView() {
 						isDirectory: true,
 					};
 				}
-				const parts = itemId.split(":::");
+
+				const cachedEntry = entryCacheRef.current.get(itemId);
+				if (cachedEntry) {
+					return cachedEntry;
+				}
+
+				const currentPath = worktreePathRef.current;
+				const name = itemId.split(/[/\\]/).pop() ?? itemId;
+				const relativePath =
+					currentPath && itemId.startsWith(currentPath)
+						? itemId.slice(currentPath.length).replace(/^[/\\]/, "")
+						: itemId;
+
 				return {
 					id: itemId,
-					name: parts[1] ?? itemId,
-					path: parts[0] ?? itemId,
-					relativePath: parts[2] ?? "",
-					isDirectory: parts[3] === "true",
+					name,
+					path: itemId,
+					relativePath,
+					isDirectory: false,
 				};
 			},
 			getChildren: async (itemId: string): Promise<string[]> => {
 				const currentPath = worktreePathRef.current;
 				if (!currentPath) return [];
 
-				const dirPath =
-					itemId === "root" ? currentPath : itemId.split(":::")[0];
+				const dirPath = itemId === "root" ? currentPath : itemId;
 				if (!dirPath) return [];
 
 				try {
@@ -84,10 +100,10 @@ export function FilesView() {
 						dirPath,
 						rootPath: currentPath,
 					});
-					return entries.map(
-						(e) =>
-							`${e.path}:::${e.name}:::${e.relativePath}:::${e.isDirectory}`,
-					);
+					for (const entry of entries) {
+						entryCacheRef.current.set(entry.path, entry);
+					}
+					return entries.map((entry) => entry.path);
 				} catch (error) {
 					console.error("[FilesView] Failed to load children:", error);
 					return [];
@@ -104,10 +120,56 @@ export function FilesView() {
 			prevWorktreePathRef.current !== worktreePath &&
 			prevWorktreePathRef.current !== undefined
 		) {
+			entryCacheRef.current.clear();
 			tree.getItemInstance("root")?.invalidateChildrenIds();
 		}
 		prevWorktreePathRef.current = worktreePath;
 	}, [worktreePath, tree]);
+
+	const refreshVisibleDirectories = useCallback(() => {
+		entryCacheRef.current.clear();
+		tree.getItemInstance("root")?.invalidateChildrenIds();
+		for (const item of tree.getItems()) {
+			if (item.getItemData()?.isDirectory) {
+				item.invalidateChildrenIds();
+			}
+		}
+		void trpcUtils.filesystem.searchFiles.invalidate();
+	}, [tree, trpcUtils]);
+
+	const scheduleRefresh = useCallback(
+		(_event?: FileSystemChangeEvent) => {
+			if (refreshTimerRef.current) {
+				clearTimeout(refreshTimerRef.current);
+			}
+			refreshTimerRef.current = setTimeout(() => {
+				refreshTimerRef.current = null;
+				refreshVisibleDirectories();
+			}, 75);
+		},
+		[refreshVisibleDirectories],
+	);
+
+	useEffect(() => {
+		return () => {
+			if (refreshTimerRef.current) {
+				clearTimeout(refreshTimerRef.current);
+			}
+		};
+	}, []);
+
+	electronTrpc.filesystem.subscribe.useSubscription(
+		{
+			workspaceId: workspaceId ?? "",
+			rootPath: worktreePath ?? "",
+		},
+		{
+			enabled: Boolean(workspaceId && worktreePath),
+			onData: (event) => {
+				scheduleRefresh(event);
+			},
+		},
+	);
 
 	const { createFile, createDirectory, rename, deleteItems, isDeleting } =
 		useFileTreeActions({
@@ -262,15 +324,8 @@ export function FilesView() {
 	}, [tree]);
 
 	const handleRefresh = useCallback(() => {
-		// Invalidate root explicitly (getItems() may not include it)
-		tree.getItemInstance("root")?.invalidateChildrenIds();
-		// Also invalidate all expanded directories so new files in nested folders appear
-		for (const item of tree.getItems()) {
-			if (item.getItemData()?.isDirectory) {
-				item.invalidateChildrenIds();
-			}
-		}
-	}, [tree]);
+		refreshVisibleDirectories();
+	}, [refreshVisibleDirectories]);
 
 	const searchResultEntries = useMemo(() => {
 		return searchResults.map((result) => ({

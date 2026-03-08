@@ -3,11 +3,18 @@ import path from "node:path";
 import {
 	searchFiles as searchWorkspaceFiles,
 	searchKeyword as searchWorkspaceKeyword,
+	toFileSystemChangeEvent,
+	type WorkspaceFsWatchEvent,
+	WorkspaceFsWatcherManager,
 } from "@superset/workspace-fs";
+import { observable } from "@trpc/server/observable";
 import { shell } from "electron";
 import fg from "fast-glob";
 import Fuse from "fuse.js";
-import type { DirectoryEntry } from "shared/file-tree-types";
+import type {
+	DirectoryEntry,
+	FileSystemChangeEvent,
+} from "shared/file-tree-types";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
 import { execWithShellEnv } from "../workspaces/utils/shell-env";
@@ -38,6 +45,8 @@ const FILE_SEARCH_FUSE_OPTIONS = {
 	includeScore: true,
 	ignoreLocation: true,
 };
+
+const filesystemWatcherManager = new WorkspaceFsWatcherManager();
 
 interface FileSearchItem {
 	id: string;
@@ -581,7 +590,7 @@ export const createFilesystemRouter = () => {
 							const fullPath = path.join(dirPath, entry.name);
 							const relativePath = path.relative(rootPath, fullPath);
 							return {
-								id: relativePath,
+								id: fullPath,
 								name: entry.name,
 								path: fullPath,
 								relativePath,
@@ -601,6 +610,58 @@ export const createFilesystemRouter = () => {
 					});
 					return [];
 				}
+			}),
+
+		subscribe: publicProcedure
+			.input(
+				z.object({
+					workspaceId: z.string(),
+					rootPath: z.string(),
+				}),
+			)
+			.subscription(({ input }) => {
+				return observable<FileSystemChangeEvent>((emit) => {
+					let unsubscribe: (() => Promise<void>) | null = null;
+					let isDisposed = false;
+
+					const handleEvent = (event: WorkspaceFsWatchEvent) => {
+						emit.next(toFileSystemChangeEvent(event, input.rootPath));
+					};
+
+					void filesystemWatcherManager
+						.subscribe(
+							{
+								workspaceId: input.workspaceId,
+								rootPath: input.rootPath,
+							},
+							handleEvent,
+						)
+						.then((cleanup) => {
+							if (isDisposed) {
+								void cleanup();
+								return;
+							}
+							unsubscribe = cleanup;
+						})
+						.catch((error) => {
+							console.error("[filesystem/subscribe] Failed:", {
+								workspaceId: input.workspaceId,
+								rootPath: input.rootPath,
+								error,
+							});
+							emit.next({
+								type: "overflow",
+								revision: 0,
+							});
+						});
+
+					return () => {
+						isDisposed = true;
+						if (unsubscribe) {
+							void unsubscribe();
+						}
+					};
+				});
 			}),
 
 		searchFiles: publicProcedure
