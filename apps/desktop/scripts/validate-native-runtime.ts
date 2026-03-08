@@ -119,6 +119,7 @@ function validateNativeModulesPrepared(): void {
 	);
 
 	const requiredModules = [
+		"@parcel/watcher/package.json",
 		"libsql/package.json",
 		"@neon-rs/load/package.json",
 		"detect-libc/package.json",
@@ -156,9 +157,87 @@ function validateNativeModulesPrepared(): void {
 	);
 }
 
+function getPlatformParcelWatcherCandidates(): string[] {
+	if (process.platform === "darwin") {
+		return [
+			process.arch === "arm64"
+				? "@parcel/watcher-darwin-arm64"
+				: "@parcel/watcher-darwin-x64",
+		];
+	}
+
+	if (process.platform === "linux") {
+		if (process.arch === "arm64") {
+			return [
+				"@parcel/watcher-linux-arm64-glibc",
+				"@parcel/watcher-linux-arm64-musl",
+			];
+		}
+		if (process.arch === "arm") {
+			return [
+				"@parcel/watcher-linux-arm-glibc",
+				"@parcel/watcher-linux-arm-musl",
+			];
+		}
+		return [
+			"@parcel/watcher-linux-x64-glibc",
+			"@parcel/watcher-linux-x64-musl",
+		];
+	}
+
+	if (process.platform === "win32") {
+		if (process.arch === "arm64") {
+			return ["@parcel/watcher-win32-arm64"];
+		}
+		if (process.arch === "ia32") {
+			return ["@parcel/watcher-win32-ia32"];
+		}
+		return ["@parcel/watcher-win32-x64"];
+	}
+
+	if (process.platform === "android") {
+		return ["@parcel/watcher-android-arm64"];
+	}
+
+	if (process.platform === "freebsd") {
+		return ["@parcel/watcher-freebsd-x64"];
+	}
+
+	return [];
+}
+
+function validateParcelWatcherPrepared(): void {
+	const nodeModulesDir = join(projectRoot, "node_modules");
+	const platformCandidates = getPlatformParcelWatcherCandidates();
+	if (platformCandidates.length === 0) {
+		console.warn(
+			`[validate:native-runtime] Skipping platform-specific @parcel/watcher check for ${process.platform}/${process.arch}`,
+		);
+		return;
+	}
+
+	const hasPlatformPackage = platformCandidates.some((pkg) =>
+		existsSync(join(nodeModulesDir, pkg, "package.json")),
+	);
+	if (!hasPlatformPackage) {
+		fail(
+			[
+				"Missing platform-specific @parcel/watcher package.",
+				`Expected one of: ${platformCandidates.join(", ")}`,
+				"Run `bun run copy:native-modules` and ensure optional dependencies are materialized.",
+			].join("\n"),
+		);
+	}
+
+	console.log(
+		`[validate:native-runtime] OK: platform parcel watcher package present (${platformCandidates.join(" | ")})`,
+	);
+}
+
 function main(): void {
 	validateLibsqlNotBundled();
 	validateNativeModulesPrepared();
+	validateParcelWatcherPrepared();
 	console.log("[validate:native-runtime] All checks passed");
 }
 
