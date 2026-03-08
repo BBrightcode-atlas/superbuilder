@@ -129,8 +129,11 @@ function fetchNpmPackage(
 	version: string,
 	destPath: string,
 ): boolean {
-	const scopedName = packageName.replace(/^@/, "").replace("/", "-");
-	const url = `https://registry.npmjs.org/${packageName}/-/${scopedName}-${version}.tgz`;
+	// npm tarball URL: @scope/pkg/-/pkg-version.tgz (filename uses pkg name without scope)
+	const barePackageName = packageName.includes("/")
+		? packageName.split("/")[1]
+		: packageName;
+	const url = `https://registry.npmjs.org/${packageName}/-/${barePackageName}-${version}.tgz`;
 	console.log(`  ${packageName}: fetching from npm (${version})`);
 	try {
 		mkdirSync(destPath, { recursive: true });
