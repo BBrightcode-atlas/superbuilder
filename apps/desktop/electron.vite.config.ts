@@ -9,7 +9,7 @@ import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import injectProcessEnvPlugin from "rollup-plugin-inject-process-env";
 import tsconfigPathsPlugin from "vite-tsconfig-paths";
 
-import { resources, version } from "./package.json";
+import { dependencies, resources, version } from "./package.json";
 import {
 	copyResourcesPlugin,
 	defineEnv,
@@ -28,6 +28,10 @@ await import("./src/main/env.main");
 const tsconfigPaths = tsconfigPathsPlugin({
 	projects: [resolve("tsconfig.json")],
 });
+
+const workspaceDependencies = Object.keys(dependencies).filter((dependency) =>
+	dependency.startsWith("@superset/"),
+);
 
 // Sentry plugin for uploading sourcemaps (only in CI with auth token)
 const sentryPlugin = process.env.SENTRY_AUTH_TOKEN
@@ -53,6 +57,7 @@ export default defineConfig({
 					"@parcel/watcher",
 					"libsql",
 				],
+				exclude: workspaceDependencies,
 			}),
 		],
 
@@ -137,7 +142,11 @@ export default defineConfig({
 		plugins: [
 			tsconfigPaths,
 			externalizeDepsPlugin({
-				exclude: ["trpc-electron", "@sentry/electron"],
+				exclude: [
+					"trpc-electron",
+					"@sentry/electron",
+					...workspaceDependencies,
+				],
 			}),
 		],
 

@@ -124,6 +124,37 @@ function validateParcelWatcherNotBundled(): void {
 	);
 }
 
+function validateWorkspacePackagesBundled(): void {
+	const distMainDir = join(projectRoot, "dist", "main");
+	assertExists(
+		distMainDir,
+		"Main bundle output not found. Run `bun run compile:app` first.",
+	);
+
+	const jsFiles = collectFiles(distMainDir).filter((filePath) =>
+		filePath.endsWith(".js"),
+	);
+
+	for (const filePath of jsFiles) {
+		const content = readFileSync(filePath, "utf8");
+		const match = content.match(/require\(["']@superset\/[^"']+["']\)/);
+		if (match) {
+			fail(
+				[
+					"Detected externalized workspace package require in dist/main output.",
+					"Workspace packages should be bundled for the desktop main process.",
+					`Offending file: ${filePath}`,
+					`Match: ${match[0]}`,
+				].join("\n"),
+			);
+		}
+	}
+
+	console.log(
+		"[validate:native-runtime] OK: workspace packages are bundled into the main output",
+	);
+}
+
 function collectFiles(rootDir: string): string[] {
 	const entries = readdirSync(rootDir, { withFileTypes: true });
 	const files: string[] = [];
@@ -290,6 +321,7 @@ function validateParcelWatcherPrepared(): void {
 }
 
 function main(): void {
+	validateWorkspacePackagesBundled();
 	validateLibsqlNotBundled();
 	validateParcelWatcherNotBundled();
 	validateNativeModulesPrepared();
