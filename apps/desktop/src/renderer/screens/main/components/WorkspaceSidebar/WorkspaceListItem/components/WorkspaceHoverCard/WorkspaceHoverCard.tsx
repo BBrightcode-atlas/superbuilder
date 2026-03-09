@@ -45,6 +45,20 @@ export function WorkspaceHoverCardContent({
 		openPRDisplay.length === 1 && openPRDisplay[0] === "Unassigned"
 	);
 
+	const previewButton = previewUrl ? (
+		<Button
+			variant="outline"
+			size="sm"
+			className="w-full h-7 text-xs gap-1.5"
+			asChild
+		>
+			<a href={previewUrl} target="_blank" rel="noopener noreferrer">
+				<LuGlobe className="size-3" strokeWidth={STROKE_WIDTH} />
+				Open Preview
+			</a>
+		</Button>
+	) : null;
+
 	const needsRebase = worktreeInfo?.gitStatus?.needsRebase;
 	const behindCount = worktreeInfo?.gitStatus?.behind;
 
@@ -168,23 +182,14 @@ export function WorkspaceHoverCardContent({
 							)}
 						</a>
 					</Button>
-					{previewUrl && (
-						<Button
-							variant="outline"
-							size="sm"
-							className="w-full h-7 text-xs gap-1.5"
-							asChild
-						>
-							<a href={previewUrl} target="_blank" rel="noopener noreferrer">
-								<LuGlobe className="size-3" strokeWidth={STROKE_WIDTH} />
-								Open Preview
-							</a>
-						</Button>
-					)}
+					{previewButton}
 				</div>
 			) : repoUrl ? (
-				<div className="text-xs text-muted-foreground pt-2 border-t border-border">
-					No PR for this branch
+				<div className="pt-2 border-t border-border space-y-2">
+					<div className="text-xs text-muted-foreground">
+						No PR for this branch
+					</div>
+					{previewButton}
 				</div>
 			) : null}
 		</div>

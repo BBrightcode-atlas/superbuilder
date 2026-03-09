@@ -35,25 +35,41 @@ export async function fetchGitHubPRStatus(
 			return null;
 		}
 
-		const { stdout: branchOutput } = await execFileAsync(
-			"git",
-			["rev-parse", "--abbrev-ref", "HEAD"],
-			{ cwd: worktreePath },
+		const [{ stdout: branchOutput }, { stdout: shaOutput }] = await Promise.all(
+			[
+				execFileAsync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+					cwd: worktreePath,
+				}),
+				execFileAsync("git", ["rev-parse", "HEAD"], {
+					cwd: worktreePath,
+				}),
+			],
 		);
 		const branchName = branchOutput.trim();
-
-		const { stdout: shaOutput } = await execFileAsync(
-			"git",
-			["rev-parse", "HEAD"],
-			{ cwd: worktreePath },
-		);
 		const headSha = shaOutput.trim();
 
 		const [branchCheck, prInfo, previewUrl] = await Promise.all([
 			branchExistsOnRemote(worktreePath, branchName),
-			getPRForBranch(worktreePath, repoContext),
-			fetchPreviewDeploymentUrl(worktreePath, headSha, repoContext),
+			getPRForBranch(worktreePath, repoContext, headSha),
+			fetchPreviewDeploymentUrl(worktreePath, headSha, branchName, repoContext),
 		]);
+
+		// If no preview URL found via SHA/branch, try the PR merge ref
+		// (GitHub Actions pull_request triggers use refs/pull/N/merge)
+		let finalPreviewUrl = previewUrl;
+		if (!finalPreviewUrl && prInfo?.number) {
+			const targetUrl = repoContext.isFork
+				? repoContext.upstreamUrl
+				: repoContext.repoUrl;
+			const nwo = extractNwoFromUrl(targetUrl);
+			if (nwo) {
+				finalPreviewUrl = await queryDeploymentUrl(
+					worktreePath,
+					nwo,
+					`ref=${encodeURIComponent(`refs/pull/${prInfo.number}/merge`)}`,
+				);
+			}
+		}
 
 		const result: GitHubStatus = {
 			pr: prInfo,
@@ -61,7 +77,7 @@ export async function fetchGitHubPRStatus(
 			upstreamUrl: repoContext.upstreamUrl,
 			isFork: repoContext.isFork,
 			branchExistsOnRemote: branchCheck.status === "exists",
-			previewUrl: previewUrl ?? undefined,
+			previewUrl: finalPreviewUrl,
 			lastRefreshed: Date.now(),
 		};
 
@@ -199,13 +215,14 @@ const PR_JSON_FIELDS =
 async function getPRForBranch(
 	worktreePath: string,
 	repoContext?: RepoContext,
+	headSha?: string,
 ): Promise<GitHubStatus["pr"]> {
 	const byTracking = await getPRByBranchTracking(worktreePath);
 	if (byTracking) {
 		return byTracking;
 	}
 
-	return findPRByHeadCommit(worktreePath, repoContext);
+	return findPRByHeadCommit(worktreePath, repoContext, headSha);
 }
 
 /**
@@ -250,14 +267,18 @@ async function getPRByBranchTracking(
 async function findPRByHeadCommit(
 	worktreePath: string,
 	repoContext?: RepoContext,
+	providedSha?: string,
 ): Promise<GitHubStatus["pr"]> {
 	try {
-		const { stdout: headOutput } = await execFileAsync(
-			"git",
-			["-C", worktreePath, "rev-parse", "HEAD"],
-			{ timeout: 10_000 },
-		);
-		const headSha = headOutput.trim();
+		let headSha = providedSha;
+		if (!headSha) {
+			const { stdout: headOutput } = await execFileAsync(
+				"git",
+				["-C", worktreePath, "rev-parse", "HEAD"],
+				{ timeout: 10_000 },
+			);
+			headSha = headOutput.trim();
+		}
 		if (!headSha) {
 			return null;
 		}
@@ -473,64 +494,95 @@ function parseChecks(rollup: GHPRResponse["statusCheckRollup"]): CheckItem[] {
 }
 
 /**
- * Fetches the preview deployment URL for a commit using the GitHub Deployments API.
- * Queries by SHA since providers like Vercel use the commit SHA as the deployment ref.
- * Returns the environment_url from the most recent successful deployment, or null.
+ * Low-level helper: query deployments matching the given params and return
+ * the environment_url of the first successful deployment. Status lookups
+ * are parallelized to minimize latency.
+ */
+async function queryDeploymentUrl(
+	worktreePath: string,
+	nwo: string,
+	queryParams: string,
+): Promise<string | undefined> {
+	const { stdout } = await execWithShellEnv(
+		"gh",
+		["api", `repos/${nwo}/deployments?${queryParams}&per_page=5`],
+		{ cwd: worktreePath },
+	);
+
+	const rawDeployments: unknown = JSON.parse(stdout.trim());
+	if (!Array.isArray(rawDeployments) || rawDeployments.length === 0) {
+		return undefined;
+	}
+
+	const deploymentIds: number[] = [];
+	for (const raw of rawDeployments) {
+		const result = GHDeploymentSchema.safeParse(raw);
+		if (result.success) deploymentIds.push(result.data.id);
+	}
+	if (deploymentIds.length === 0) return undefined;
+
+	const urls = await Promise.all(
+		deploymentIds.map(async (id): Promise<string | undefined> => {
+			try {
+				const { stdout: out } = await execWithShellEnv(
+					"gh",
+					["api", `repos/${nwo}/deployments/${id}/statuses?per_page=1`],
+					{ cwd: worktreePath },
+				);
+				const rawStatuses: unknown = JSON.parse(out.trim());
+				if (!Array.isArray(rawStatuses) || rawStatuses.length === 0)
+					return undefined;
+				const statusResult = GHDeploymentStatusSchema.safeParse(rawStatuses[0]);
+				if (!statusResult.success) return undefined;
+				if (
+					statusResult.data.state === "success" &&
+					statusResult.data.environment_url
+				) {
+					return statusResult.data.environment_url;
+				}
+				return undefined;
+			} catch {
+				return undefined;
+			}
+		}),
+	);
+
+	// Return the first successful URL (preserves deployment order: most recent first)
+	return urls.find((u): u is string => u !== undefined);
+}
+
+/**
+ * Fetches the preview deployment URL by trying multiple query strategies:
+ * 1. By commit SHA (works for Vercel, Netlify official integrations)
+ * 2. By branch name ref (works for some CI configurations)
+ * The PR merge ref (refs/pull/N/merge) is handled in fetchGitHubPRStatus
+ * after the PR number is known.
  */
 async function fetchPreviewDeploymentUrl(
 	worktreePath: string,
 	headSha: string,
+	branchName: string,
 	repoContext: RepoContext,
-): Promise<string | null> {
+): Promise<string | undefined> {
 	try {
-		// For forks, query upstream repo's deployments
 		const targetUrl = repoContext.isFork
 			? repoContext.upstreamUrl
 			: repoContext.repoUrl;
 		const nwo = extractNwoFromUrl(targetUrl);
-		if (!nwo) return null;
+		if (!nwo) return undefined;
 
-		const { stdout: deploymentsOutput } = await execWithShellEnv(
-			"gh",
-			["api", `repos/${nwo}/deployments?sha=${headSha}&per_page=5`],
-			{ cwd: worktreePath },
+		// Try by commit SHA (works for Vercel, Netlify official integrations)
+		const bySha = await queryDeploymentUrl(worktreePath, nwo, `sha=${headSha}`);
+		if (bySha) return bySha;
+
+		// Fall back to branch name (works for some CI configurations)
+		return await queryDeploymentUrl(
+			worktreePath,
+			nwo,
+			`ref=${encodeURIComponent(branchName)}`,
 		);
-
-		const rawDeployments: unknown = JSON.parse(deploymentsOutput.trim());
-		if (!Array.isArray(rawDeployments) || rawDeployments.length === 0) {
-			return null;
-		}
-
-		for (const rawDep of rawDeployments) {
-			const depResult = GHDeploymentSchema.safeParse(rawDep);
-			if (!depResult.success) continue;
-
-			const { stdout: statusOutput } = await execWithShellEnv(
-				"gh",
-				[
-					"api",
-					`repos/${nwo}/deployments/${depResult.data.id}/statuses?per_page=1`,
-				],
-				{ cwd: worktreePath },
-			);
-
-			const rawStatuses: unknown = JSON.parse(statusOutput.trim());
-			if (!Array.isArray(rawStatuses) || rawStatuses.length === 0) continue;
-
-			const statusResult = GHDeploymentStatusSchema.safeParse(rawStatuses[0]);
-			if (!statusResult.success) continue;
-
-			if (
-				statusResult.data.state === "success" &&
-				statusResult.data.environment_url
-			) {
-				return statusResult.data.environment_url;
-			}
-		}
-
-		return null;
 	} catch {
-		return null;
+		return undefined;
 	}
 }
 

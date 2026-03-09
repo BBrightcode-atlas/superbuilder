@@ -81,5 +81,5 @@ export const GHDeploymentStatusSchema = z.object({
 		"pending",
 		"success",
 	]),
-	environment_url: z.string().optional().default(""),
+	environment_url: z.string().optional(),
 });
