@@ -130,6 +130,7 @@ export function TaskContextMenu({
 							<AssigneeMenuItems
 								users={users}
 								currentAssigneeId={task.assigneeId}
+								hasExternalAssignee={!!task.assigneeExternalId}
 								onSelect={handleAssigneeChange}
 								MenuItem={ContextMenuItem}
 							/>

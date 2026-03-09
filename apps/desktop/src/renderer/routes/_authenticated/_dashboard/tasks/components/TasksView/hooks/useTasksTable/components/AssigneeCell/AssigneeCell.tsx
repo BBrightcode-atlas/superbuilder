@@ -31,7 +31,7 @@ export function AssigneeCell({ info }: AssigneeCellProps) {
 	const users = useMemo(() => allUsers || [], [allUsers]);
 
 	const handleSelectUser = (userId: string | null) => {
-		if (userId === assigneeId) {
+		if (userId === assigneeId && !task.assigneeExternalId) {
 			setOpen(false);
 			return;
 		}
@@ -83,7 +83,7 @@ export function AssigneeCell({ info }: AssigneeCellProps) {
 					>
 						<HiOutlineUserCircle className="size-5 text-muted-foreground shrink-0" />
 						<span className="text-sm">No assignee</span>
-						{!assigneeId && (
+						{!assigneeId && !task.assigneeExternalId && (
 							<span className="ml-auto text-xs text-muted-foreground">✓</span>
 						)}
 					</DropdownMenuItem>

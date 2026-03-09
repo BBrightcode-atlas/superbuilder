@@ -98,7 +98,7 @@ export function AssigneeProperty({ task }: AssigneePropertyProps) {
 					>
 						<HiOutlineUserCircle className="w-5 h-5 text-muted-foreground shrink-0" />
 						<span className="text-sm">No assignee</span>
-						{!task.assigneeId && (
+						{!task.assigneeId && !task.assigneeExternalId && (
 							<span className="ml-auto text-xs text-muted-foreground">✓</span>
 						)}
 					</DropdownMenuItem>
