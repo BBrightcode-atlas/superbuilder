@@ -6,10 +6,13 @@ import simpleGit from "simple-git";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
 import {
-	registeredWorktreeFsService,
+	readRegisteredWorktreeFileBuffer,
+	readRegisteredWorktreeTextFile,
+	statRegisteredWorktreeFile,
+	toRegisteredWorktreeRelativePath,
 	type WorkspaceFsPathError,
+	writeRegisteredWorktreeTextFile,
 } from "../workspace-fs-service";
-import { assertRegisteredWorktree } from "./security/path-validation";
 import { clearStatusCacheForWorktree } from "./utils/status-cache";
 
 /** Maximum file size for reading (2 MiB) */
@@ -90,16 +93,17 @@ export const createFileContentsRouter = () => {
 				}),
 			)
 			.query(async ({ input }): Promise<FileContents> => {
-				assertRegisteredWorktree(input.worktreePath);
-
 				const git = simpleGit(input.worktreePath);
 				const defaultBranch = input.defaultBranch || "main";
-				const filePath = toGitRelativePath(
+				const filePath = toRegisteredWorktreeRelativePath(
 					input.worktreePath,
 					input.absolutePath,
 				);
 				const originalPath = input.oldAbsolutePath
-					? toGitRelativePath(input.worktreePath, input.oldAbsolutePath)
+					? toRegisteredWorktreeRelativePath(
+							input.worktreePath,
+							input.oldAbsolutePath,
+						)
 					: filePath;
 
 				const { original, modified } = await getFileVersions(
@@ -131,8 +135,8 @@ export const createFileContentsRouter = () => {
 			.mutation(async ({ input }): Promise<SaveFileResult> => {
 				if (input.expectedContent !== undefined) {
 					try {
-						const currentContent = await registeredWorktreeFsService.readTextFile({
-							workspaceId: input.worktreePath,
+						const currentContent = await readRegisteredWorktreeTextFile({
+							worktreePath: input.worktreePath,
 							absolutePath: input.absolutePath,
 						});
 
@@ -165,8 +169,8 @@ export const createFileContentsRouter = () => {
 					}
 				}
 
-				await registeredWorktreeFsService.writeTextFile({
-					workspaceId: input.worktreePath,
+				await writeRegisteredWorktreeTextFile({
+					worktreePath: input.worktreePath,
 					absolutePath: input.absolutePath,
 					content: input.content,
 				});
@@ -187,20 +191,18 @@ export const createFileContentsRouter = () => {
 			)
 			.query(async ({ input }): Promise<ReadWorkingFileResult> => {
 				try {
-					const stats = await registeredWorktreeFsService.stat({
-						workspaceId: input.worktreePath,
+					const stats = await statRegisteredWorktreeFile({
+						worktreePath: input.worktreePath,
 						absolutePath: input.absolutePath,
 					});
 					if (stats.size > MAX_FILE_SIZE) {
 						return { ok: false, reason: "too-large" };
 					}
 
-					const buffer = Buffer.from(
-						await registeredWorktreeFsService.readFileBuffer({
-							workspaceId: input.worktreePath,
-							absolutePath: input.absolutePath,
-						}),
-					);
+					const buffer = await readRegisteredWorktreeFileBuffer({
+						worktreePath: input.worktreePath,
+						absolutePath: input.absolutePath,
+					});
 
 					if (isBinaryContent(buffer)) {
 						return { ok: false, reason: "binary" };
@@ -241,20 +243,18 @@ export const createFileContentsRouter = () => {
 				}
 
 				try {
-					const stats = await registeredWorktreeFsService.stat({
-						workspaceId: input.worktreePath,
+					const stats = await statRegisteredWorktreeFile({
+						worktreePath: input.worktreePath,
 						absolutePath: input.absolutePath,
 					});
 					if (stats.size > MAX_IMAGE_SIZE) {
 						return { ok: false, reason: "too-large" };
 					}
 
-					const buffer = Buffer.from(
-						await registeredWorktreeFsService.readFileBuffer({
-							workspaceId: input.worktreePath,
-							absolutePath: input.absolutePath,
-						}),
-					);
+					const buffer = await readRegisteredWorktreeFileBuffer({
+						worktreePath: input.worktreePath,
+						absolutePath: input.absolutePath,
+					});
 
 					const base64 = buffer.toString("base64");
 					const dataUrl = `data:${mimeType};base64,${base64}`;
@@ -282,27 +282,6 @@ type DiffCategory = "against-base" | "committed" | "staged" | "unstaged";
 interface FileVersions {
 	original: string;
 	modified: string;
-}
-
-function toGitRelativePath(worktreePath: string, absolutePath: string): string {
-	const normalizedWorktreePath = path.resolve(worktreePath);
-	const normalizedAbsolutePath = path.resolve(absolutePath);
-	const relativePath = path.relative(
-		normalizedWorktreePath,
-		normalizedAbsolutePath,
-	);
-
-	if (
-		relativePath === "" ||
-		relativePath === "." ||
-		relativePath === ".." ||
-		relativePath.startsWith(`..${path.sep}`) ||
-		path.isAbsolute(relativePath)
-	) {
-		throw new Error(`Path is outside worktree: ${absolutePath}`);
-	}
-
-	return relativePath.replace(/\\/g, "/");
 }
 
 async function getFileVersions(
@@ -413,13 +392,13 @@ async function getUnstagedVersions(
 	let modified = "";
 	try {
 		const absolutePath = path.resolve(worktreePath, filePath);
-		const stats = await registeredWorktreeFsService.stat({
-			workspaceId: worktreePath,
+		const stats = await statRegisteredWorktreeFile({
+			worktreePath,
 			absolutePath,
 		});
 		if (stats.size <= MAX_FILE_SIZE) {
-			modified = await registeredWorktreeFsService.readTextFile({
-				workspaceId: worktreePath,
+			modified = await readRegisteredWorktreeTextFile({
+				worktreePath,
 				absolutePath,
 			});
 		} else {

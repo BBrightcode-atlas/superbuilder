@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import simpleGit from "simple-git";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
-import { registeredWorktreeFsService } from "../workspace-fs-service";
+import { deleteRegisteredWorktreePaths } from "../workspace-fs-service";
 import {
 	gitCheckoutFile,
 	gitDiscardAllStaged,
@@ -43,14 +43,11 @@ async function deleteFiles(
 ): Promise<void> {
 	await Promise.all(
 		filePaths.map(async (filePath) => {
-			const result = await registeredWorktreeFsService.deletePaths({
-				workspaceId: worktreePath,
+			await deleteRegisteredWorktreePaths({
+				worktreePath,
 				absolutePaths: [resolve(worktreePath, filePath)],
 				permanent: true,
 			});
-			if (result.errors.length > 0) {
-				throw new Error(result.errors[0]?.error ?? `Failed to delete ${filePath}`);
-			}
 		}),
 	);
 }
@@ -146,17 +143,11 @@ export const createStagingRouter = () => {
 				}),
 			)
 			.mutation(async ({ input }): Promise<{ success: boolean }> => {
-				const result = await registeredWorktreeFsService.deletePaths({
-					workspaceId: input.worktreePath,
+				await deleteRegisteredWorktreePaths({
+					worktreePath: input.worktreePath,
 					absolutePaths: [resolve(input.worktreePath, input.filePath)],
 					permanent: true,
 				});
-				if (result.errors.length > 0) {
-					throw new Error(
-						result.errors[0]?.error ??
-							`Failed to delete ${input.filePath}`,
-					);
-				}
 				clearStatusCacheForWorktree(input.worktreePath);
 				return { success: true };
 			}),

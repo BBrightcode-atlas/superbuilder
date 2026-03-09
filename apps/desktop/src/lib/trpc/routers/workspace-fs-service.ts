@@ -5,6 +5,7 @@ import {
 	type WorkspaceFsPathError,
 } from "@superset/workspace-fs/host";
 import { shell } from "electron";
+import path from "node:path";
 import type {
 	DirectoryEntry,
 	FileSystemChangeEvent,
@@ -92,6 +93,92 @@ export const registeredWorktreeFsService = createWorkspaceFsHostService({
 	resolveRootPath: resolveRegisteredWorktreeRootPath,
 	...sharedHostServiceOptions,
 });
+
+export function toRegisteredWorktreeRelativePath(
+	worktreePath: string,
+	absolutePath: string,
+): string {
+	const normalizedWorktreePath = path.resolve(worktreePath);
+	const normalizedAbsolutePath = path.resolve(absolutePath);
+	const relativePath = path.relative(
+		normalizedWorktreePath,
+		normalizedAbsolutePath,
+	);
+
+	if (
+		relativePath === "" ||
+		relativePath === "." ||
+		relativePath === ".." ||
+		relativePath.startsWith(`..${path.sep}`) ||
+		path.isAbsolute(relativePath)
+	) {
+		throw new Error(`Path is outside worktree: ${absolutePath}`);
+	}
+
+	return relativePath.replace(/\\/g, "/");
+}
+
+export async function readRegisteredWorktreeTextFile(input: {
+	worktreePath: string;
+	absolutePath: string;
+}): Promise<string> {
+	return await registeredWorktreeFsService.readTextFile({
+		workspaceId: input.worktreePath,
+		absolutePath: input.absolutePath,
+	});
+}
+
+export async function writeRegisteredWorktreeTextFile(input: {
+	worktreePath: string;
+	absolutePath: string;
+	content: string;
+}): Promise<void> {
+	await registeredWorktreeFsService.writeTextFile({
+		workspaceId: input.worktreePath,
+		absolutePath: input.absolutePath,
+		content: input.content,
+	});
+}
+
+export async function readRegisteredWorktreeFileBuffer(input: {
+	worktreePath: string;
+	absolutePath: string;
+}): Promise<Buffer> {
+	return Buffer.from(
+		await registeredWorktreeFsService.readFileBuffer({
+			workspaceId: input.worktreePath,
+			absolutePath: input.absolutePath,
+		}),
+	);
+}
+
+export async function statRegisteredWorktreeFile(input: {
+	worktreePath: string;
+	absolutePath: string;
+}) {
+	return await registeredWorktreeFsService.stat({
+		workspaceId: input.worktreePath,
+		absolutePath: input.absolutePath,
+	});
+}
+
+export async function deleteRegisteredWorktreePaths(input: {
+	worktreePath: string;
+	absolutePaths: string[];
+	permanent?: boolean;
+}): Promise<void> {
+	const result = await registeredWorktreeFsService.deletePaths({
+		workspaceId: input.worktreePath,
+		absolutePaths: input.absolutePaths,
+		permanent: input.permanent ?? true,
+	});
+	if (result.errors.length > 0) {
+		throw new Error(
+			result.errors[0]?.error ??
+				`Failed to delete ${input.absolutePaths[0] ?? "path"}`,
+		);
+	}
+}
 
 export async function readWorkspaceDirectory(input: {
 	workspaceId: string;
