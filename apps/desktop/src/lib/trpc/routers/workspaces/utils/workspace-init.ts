@@ -1,6 +1,7 @@
 import { projects, worktrees } from "@superset/local-db";
 import { eq } from "drizzle-orm";
 import { track } from "main/lib/analytics";
+import { backgroundFetchManager } from "main/lib/background-fetch-manager";
 import { localDb } from "main/lib/local-db";
 import { workspaceInitManager } from "main/lib/workspace-init-manager";
 import type { WorkspaceInitStep } from "shared/types/workspace-init";
@@ -182,239 +183,285 @@ export async function initializeWorkspaceWorktree({
 			return;
 		}
 
-		manager.updateProgress(workspaceId, "syncing", "Syncing with remote...");
-		const remoteDefaultBranch = await refreshDefaultBranch(mainRepoPath);
+		let startPoint = "";
 
-		if (remoteDefaultBranch) {
-			if (project && remoteDefaultBranch !== project.defaultBranch) {
+		if (backgroundFetchManager.isFetchRecent(projectId)) {
+			manager.updateProgress(workspaceId, "syncing", "Synced (cached)");
+			const cachedDefaultBranch =
+				backgroundFetchManager.getLastDefaultBranch(projectId);
+			if (
+				cachedDefaultBranch &&
+				project &&
+				cachedDefaultBranch !== project.defaultBranch
+			) {
 				localDb
 					.update(projects)
-					.set({ defaultBranch: remoteDefaultBranch })
+					.set({ defaultBranch: cachedDefaultBranch })
 					.where(eq(projects.id, projectId))
 					.run();
 			}
-		}
 
-		if (manager.isCancellationRequested(workspaceId)) {
-			return;
-		}
-
-		manager.updateProgress(
-			workspaceId,
-			"verifying",
-			"Verifying base branch...",
-		);
-		const hasRemote = await hasOriginRemote(mainRepoPath);
-
-		type LocalStartPointResult = {
-			ref: string;
-			fallbackBranch?: string;
-		} | null;
-
-		const resolveLocalStartPoint = async (
-			reason: string,
-			checkOriginRefs: boolean,
-		): Promise<LocalStartPointResult> => {
-			if (checkOriginRefs) {
-				const originRef = `origin/${effectiveBaseBranch}`;
-				if (await refExistsLocally(mainRepoPath, originRef)) {
-					console.log(
-						`[workspace-init] ${reason}. Using local tracking ref: ${originRef}`,
-					);
-					return { ref: originRef };
-				}
-			}
-
-			if (await refExistsLocally(mainRepoPath, effectiveBaseBranch)) {
-				console.log(
-					`[workspace-init] ${reason}. Using local branch: ${effectiveBaseBranch}`,
-				);
-				return { ref: effectiveBaseBranch };
-			}
-
-			if (baseBranchWasExplicit) {
-				console.log(
-					`[workspace-init] ${reason}. Base branch "${effectiveBaseBranch}" was explicitly set, not using fallback.`,
-				);
-				return null;
-			}
-
-			const commonBranches = ["main", "master", "develop", "trunk"];
-			for (const branch of commonBranches) {
-				if (branch === effectiveBaseBranch) continue;
-				if (checkOriginRefs) {
-					const fallbackOriginRef = `origin/${branch}`;
-					if (await refExistsLocally(mainRepoPath, fallbackOriginRef)) {
-						console.log(
-							`[workspace-init] ${reason}. Using fallback tracking ref: ${fallbackOriginRef}`,
-						);
-						return { ref: fallbackOriginRef, fallbackBranch: branch };
-					}
-				}
-				if (await refExistsLocally(mainRepoPath, branch)) {
-					console.log(
-						`[workspace-init] ${reason}. Using fallback local branch: ${branch}`,
-					);
-					return { ref: branch, fallbackBranch: branch };
-				}
-			}
-
-			return null;
-		};
-
-		const resolveLocalRef = async ({
-			reason,
-			checkOriginRefs,
-			progressStep,
-		}: {
-			reason: string;
-			checkOriginRefs: boolean;
-			progressStep: WorkspaceInitStep;
-		}): Promise<string | null> => {
-			const result = await resolveLocalStartPoint(reason, checkOriginRefs);
-			if (!result) return null;
-
-			if (result.fallbackBranch) {
-				const originalBranch = effectiveBaseBranch;
-				console.log(
-					`[workspace-init] Updating baseBranch from "${originalBranch}" to "${result.fallbackBranch}" for workspace ${workspaceId}`,
-				);
-				effectiveBaseBranch = result.fallbackBranch;
-				await setBranchBaseConfig({
-					repoPath: mainRepoPath,
-					branch,
-					baseBranch: result.fallbackBranch,
-					isExplicit: false,
-				});
-				localDb
-					.update(worktrees)
-					.set({ baseBranch: result.fallbackBranch })
-					.where(eq(worktrees.id, worktreeId))
-					.run();
-				manager.updateProgress(
-					workspaceId,
-					progressStep,
-					`Using "${result.fallbackBranch}" branch`,
-					`Branch "${originalBranch}" not found. Using "${result.fallbackBranch}" instead.`,
-				);
-			}
-			return result.ref;
-		};
-
-		let startPoint: string;
-		if (hasRemote) {
-			const branchCheck = await branchExistsOnRemote(
-				mainRepoPath,
-				effectiveBaseBranch,
-			);
-
-			if (branchCheck.status === "exists") {
-				startPoint = `origin/${effectiveBaseBranch}`;
-			} else {
-				const isNetworkError = branchCheck.status === "error";
-				const fallbackReason = isNetworkError
-					? sanitizeGitError(branchCheck.message)
-					: `Branch "${effectiveBaseBranch}" not found on remote`;
-
-				console.warn(
-					`[workspace-init] ${fallbackReason}. Falling back to local ref.`,
-				);
-				manager.updateProgress(
-					workspaceId,
-					"verifying",
-					isNetworkError
-						? "Using local reference (remote unavailable)"
-						: "Using local reference (not on remote)",
-					fallbackReason,
-				);
-
-				const ref = await resolveLocalRef({
-					reason: isNetworkError ? "Remote unavailable" : "Not found on remote",
-					checkOriginRefs: true,
-					progressStep: "verifying",
-				});
-				if (!ref) {
-					const failureDetail = isNetworkError
-						? "Cannot reach remote"
-						: "Does not exist on remote";
-					manager.updateProgress(
-						workspaceId,
-						"failed",
-						"No local reference available",
-						baseBranchWasExplicit
-							? `${failureDetail} and branch "${effectiveBaseBranch}" doesn't exist locally.${isNetworkError ? " Please check your network connection and try again." : " Please try again with a different base branch."}`
-							: `${failureDetail} and no local ref for "${effectiveBaseBranch}" exists.${isNetworkError ? " Please check your network connection and try again." : ""}`,
-					);
-					return;
-				}
-				startPoint = ref;
-			}
-		} else {
-			const ref = await resolveLocalRef({
-				reason: "No remote configured",
-				checkOriginRefs: false,
-				progressStep: "verifying",
-			});
-			if (!ref) {
-				manager.updateProgress(
-					workspaceId,
-					"failed",
-					"No local reference available",
-					baseBranchWasExplicit
-						? `No remote configured and branch "${effectiveBaseBranch}" doesn't exist locally.`
-						: `No remote configured and no local ref for "${effectiveBaseBranch}" exists.`,
-				);
+			if (manager.isCancellationRequested(workspaceId)) {
 				return;
 			}
-			startPoint = ref;
+
+			manager.updateProgress(workspaceId, "verifying", "Verified (cached)");
+			const originRef = `origin/${effectiveBaseBranch}`;
+			if (await refExistsLocally(mainRepoPath, originRef)) {
+				startPoint = originRef;
+			} else if (await refExistsLocally(mainRepoPath, effectiveBaseBranch)) {
+				startPoint = effectiveBaseBranch;
+			}
+
+			if (startPoint) {
+				if (manager.isCancellationRequested(workspaceId)) {
+					return;
+				}
+
+				manager.updateProgress(workspaceId, "fetching", "Up to date (cached)");
+
+				if (manager.isCancellationRequested(workspaceId)) {
+					return;
+				}
+			}
 		}
 
-		if (manager.isCancellationRequested(workspaceId)) {
-			return;
-		}
+		if (!startPoint) {
+			manager.updateProgress(workspaceId, "syncing", "Syncing with remote...");
+			const remoteDefaultBranch = await refreshDefaultBranch(mainRepoPath);
 
-		manager.updateProgress(
-			workspaceId,
-			"fetching",
-			"Fetching latest changes...",
-		);
-		if (hasRemote) {
-			try {
-				await fetchDefaultBranch(mainRepoPath, effectiveBaseBranch);
-			} catch (fetchError) {
-				const originRef = `origin/${effectiveBaseBranch}`;
-				if (!(await refExistsLocally(mainRepoPath, originRef))) {
-					console.warn(
-						`[workspace-init] Fetch failed and local ref "${originRef}" doesn't exist. Attempting local fallback.`,
+			if (remoteDefaultBranch) {
+				if (project && remoteDefaultBranch !== project.defaultBranch) {
+					localDb
+						.update(projects)
+						.set({ defaultBranch: remoteDefaultBranch })
+						.where(eq(projects.id, projectId))
+						.run();
+				}
+			}
+
+			if (manager.isCancellationRequested(workspaceId)) {
+				return;
+			}
+
+			manager.updateProgress(
+				workspaceId,
+				"verifying",
+				"Verifying base branch...",
+			);
+			const hasRemote = await hasOriginRemote(mainRepoPath);
+
+			type LocalStartPointResult = {
+				ref: string;
+				fallbackBranch?: string;
+			} | null;
+
+			const resolveLocalStartPoint = async (
+				reason: string,
+				checkOriginRefs: boolean,
+			): Promise<LocalStartPointResult> => {
+				if (checkOriginRefs) {
+					const originRef = `origin/${effectiveBaseBranch}`;
+					if (await refExistsLocally(mainRepoPath, originRef)) {
+						console.log(
+							`[workspace-init] ${reason}. Using local tracking ref: ${originRef}`,
+						);
+						return { ref: originRef };
+					}
+				}
+
+				if (await refExistsLocally(mainRepoPath, effectiveBaseBranch)) {
+					console.log(
+						`[workspace-init] ${reason}. Using local branch: ${effectiveBaseBranch}`,
 					);
+					return { ref: effectiveBaseBranch };
+				}
+
+				if (baseBranchWasExplicit) {
+					console.log(
+						`[workspace-init] ${reason}. Base branch "${effectiveBaseBranch}" was explicitly set, not using fallback.`,
+					);
+					return null;
+				}
+
+				const commonBranches = ["main", "master", "develop", "trunk"];
+				for (const branch of commonBranches) {
+					if (branch === effectiveBaseBranch) continue;
+					if (checkOriginRefs) {
+						const fallbackOriginRef = `origin/${branch}`;
+						if (await refExistsLocally(mainRepoPath, fallbackOriginRef)) {
+							console.log(
+								`[workspace-init] ${reason}. Using fallback tracking ref: ${fallbackOriginRef}`,
+							);
+							return { ref: fallbackOriginRef, fallbackBranch: branch };
+						}
+					}
+					if (await refExistsLocally(mainRepoPath, branch)) {
+						console.log(
+							`[workspace-init] ${reason}. Using fallback local branch: ${branch}`,
+						);
+						return { ref: branch, fallbackBranch: branch };
+					}
+				}
+
+				return null;
+			};
+
+			const resolveLocalRef = async ({
+				reason,
+				checkOriginRefs,
+				progressStep,
+			}: {
+				reason: string;
+				checkOriginRefs: boolean;
+				progressStep: WorkspaceInitStep;
+			}): Promise<string | null> => {
+				const result = await resolveLocalStartPoint(reason, checkOriginRefs);
+				if (!result) return null;
+
+				if (result.fallbackBranch) {
+					const originalBranch = effectiveBaseBranch;
+					console.log(
+						`[workspace-init] Updating baseBranch from "${originalBranch}" to "${result.fallbackBranch}" for workspace ${workspaceId}`,
+					);
+					effectiveBaseBranch = result.fallbackBranch;
+					await setBranchBaseConfig({
+						repoPath: mainRepoPath,
+						branch,
+						baseBranch: result.fallbackBranch,
+						isExplicit: false,
+					});
+					localDb
+						.update(worktrees)
+						.set({ baseBranch: result.fallbackBranch })
+						.where(eq(worktrees.id, worktreeId))
+						.run();
+					manager.updateProgress(
+						workspaceId,
+						progressStep,
+						`Using "${result.fallbackBranch}" branch`,
+						`Branch "${originalBranch}" not found. Using "${result.fallbackBranch}" instead.`,
+					);
+				}
+				return result.ref;
+			};
+
+			if (hasRemote) {
+				const branchCheck = await branchExistsOnRemote(
+					mainRepoPath,
+					effectiveBaseBranch,
+				);
+
+				if (branchCheck.status === "exists") {
+					startPoint = `origin/${effectiveBaseBranch}`;
+				} else {
+					const isNetworkError = branchCheck.status === "error";
+					const fallbackReason = isNetworkError
+						? sanitizeGitError(branchCheck.message)
+						: `Branch "${effectiveBaseBranch}" not found on remote`;
+
+					console.warn(
+						`[workspace-init] ${fallbackReason}. Falling back to local ref.`,
+					);
+					manager.updateProgress(
+						workspaceId,
+						"verifying",
+						isNetworkError
+							? "Using local reference (remote unavailable)"
+							: "Using local reference (not on remote)",
+						fallbackReason,
+					);
+
 					const ref = await resolveLocalRef({
-						reason: "Fetch failed and remote tracking ref unavailable",
+						reason: isNetworkError
+							? "Remote unavailable"
+							: "Not found on remote",
 						checkOriginRefs: true,
-						progressStep: "fetching",
+						progressStep: "verifying",
 					});
 					if (!ref) {
-						const sanitizedError = sanitizeGitError(
-							fetchError instanceof Error
-								? fetchError.message
-								: String(fetchError),
-						);
+						const failureDetail = isNetworkError
+							? "Cannot reach remote"
+							: "Does not exist on remote";
 						manager.updateProgress(
 							workspaceId,
 							"failed",
-							"Cannot fetch branch",
-							`Failed to fetch "${effectiveBaseBranch}" and no local reference exists. ` +
-								`Please check your network connection or try running "git fetch origin ${effectiveBaseBranch}" manually. ` +
-								`Error: ${sanitizedError}`,
+							"No local reference available",
+							baseBranchWasExplicit
+								? `${failureDetail} and branch "${effectiveBaseBranch}" doesn't exist locally.${isNetworkError ? " Please check your network connection and try again." : " Please try again with a different base branch."}`
+								: `${failureDetail} and no local ref for "${effectiveBaseBranch}" exists.${isNetworkError ? " Please check your network connection and try again." : ""}`,
 						);
 						return;
 					}
 					startPoint = ref;
 				}
+			} else {
+				const ref = await resolveLocalRef({
+					reason: "No remote configured",
+					checkOriginRefs: false,
+					progressStep: "verifying",
+				});
+				if (!ref) {
+					manager.updateProgress(
+						workspaceId,
+						"failed",
+						"No local reference available",
+						baseBranchWasExplicit
+							? `No remote configured and branch "${effectiveBaseBranch}" doesn't exist locally.`
+							: `No remote configured and no local ref for "${effectiveBaseBranch}" exists.`,
+					);
+					return;
+				}
+				startPoint = ref;
 			}
-		}
 
-		if (manager.isCancellationRequested(workspaceId)) {
-			return;
+			if (manager.isCancellationRequested(workspaceId)) {
+				return;
+			}
+
+			manager.updateProgress(
+				workspaceId,
+				"fetching",
+				"Fetching latest changes...",
+			);
+			if (hasRemote) {
+				try {
+					await fetchDefaultBranch(mainRepoPath, effectiveBaseBranch);
+				} catch (fetchError) {
+					const originRef = `origin/${effectiveBaseBranch}`;
+					if (!(await refExistsLocally(mainRepoPath, originRef))) {
+						console.warn(
+							`[workspace-init] Fetch failed and local ref "${originRef}" doesn't exist. Attempting local fallback.`,
+						);
+						const ref = await resolveLocalRef({
+							reason: "Fetch failed and remote tracking ref unavailable",
+							checkOriginRefs: true,
+							progressStep: "fetching",
+						});
+						if (!ref) {
+							const sanitizedError = sanitizeGitError(
+								fetchError instanceof Error
+									? fetchError.message
+									: String(fetchError),
+							);
+							manager.updateProgress(
+								workspaceId,
+								"failed",
+								"Cannot fetch branch",
+								`Failed to fetch "${effectiveBaseBranch}" and no local reference exists. ` +
+									`Please check your network connection or try running "git fetch origin ${effectiveBaseBranch}" manually. ` +
+									`Error: ${sanitizedError}`,
+							);
+							return;
+						}
+						startPoint = ref;
+					}
+				}
+			}
+
+			if (manager.isCancellationRequested(workspaceId)) {
+				return;
+			}
 		}
 
 		manager.updateProgress(

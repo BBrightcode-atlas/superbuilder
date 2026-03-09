@@ -17,7 +17,6 @@ import {
 	KeywordSearch,
 	useKeywordSearch,
 } from "renderer/screens/main/components/KeywordSearch";
-import { WorkspaceInitializingView } from "renderer/screens/main/components/WorkspaceView/WorkspaceInitializingView";
 import { WorkspaceLayout } from "renderer/screens/main/components/WorkspaceView/WorkspaceLayout";
 import { useCreateOrOpenPR, usePRStatus } from "renderer/screens/main/hooks";
 import { useAppHotkey } from "renderer/stores/hotkeys";
@@ -33,10 +32,6 @@ import {
 	getPreviousPaneId,
 	resolveActiveTabIdForWorkspace,
 } from "renderer/stores/tabs/utils";
-import {
-	useHasWorkspaceFailed,
-	useIsWorkspaceInitializing,
-} from "renderer/stores/workspace-init";
 
 const EMPTY_HISTORY_STACK: string[] = [];
 
@@ -102,22 +97,6 @@ function WorkspacePage() {
 
 		routeNavigate({ search: {}, replace: true });
 	}, [searchTabId, searchPaneId, workspaceId, routeNavigate]);
-
-	// Check if workspace is initializing or failed
-	const isInitializing = useIsWorkspaceInitializing(workspaceId);
-	const hasFailed = useHasWorkspaceFailed(workspaceId);
-
-	// Check for incomplete init after app restart
-	const gitStatus = workspace?.worktree?.gitStatus;
-	const hasIncompleteInit =
-		workspace?.type === "worktree" &&
-		(gitStatus === null || gitStatus === undefined);
-
-	// Show full-screen initialization view for:
-	// - Actively initializing workspaces (shows progress)
-	// - Failed workspaces (shows error with retry)
-	// - Interrupted workspaces that aren't currently initializing (shows resume option)
-	const showInitView = isInitializing || hasFailed || hasIncompleteInit;
 
 	const allTabs = useTabsStore((s) => s.tabs);
 	const activeTabIdForWorkspace = useTabsStore(
@@ -593,19 +572,11 @@ function WorkspacePage() {
 	return (
 		<div className="flex-1 h-full flex flex-col overflow-hidden">
 			<div className="flex-1 min-h-0 flex overflow-hidden">
-				{showInitView ? (
-					<WorkspaceInitializingView
-						workspaceId={workspaceId}
-						workspaceName={workspace?.name ?? "Workspace"}
-						isInterrupted={hasIncompleteInit && !isInitializing}
-					/>
-				) : (
-					<WorkspaceLayout
-						defaultExternalApp={defaultApp}
-						onOpenInApp={handleOpenInApp}
-						onOpenQuickOpen={handleQuickOpen}
-					/>
-				)}
+				<WorkspaceLayout
+					defaultExternalApp={defaultApp}
+					onOpenInApp={handleOpenInApp}
+					onOpenQuickOpen={handleQuickOpen}
+				/>
 			</div>
 			<CommandPalette
 				open={commandPalette.open}

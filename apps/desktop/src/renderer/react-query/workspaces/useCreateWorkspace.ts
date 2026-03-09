@@ -54,7 +54,6 @@ export function useCreateWorkspace(options?: UseCreateWorkspaceOptions) {
 				pendingSetupOverridesByCallKey.current.delete(callKey);
 			}
 
-			// Set optimistic progress before navigation to prevent "Setup incomplete" flash
 			if (data.isInitializing) {
 				const optimisticProgress: WorkspaceInitProgress = {
 					workspaceId: data.workspace.id,
@@ -124,7 +123,11 @@ export function useCreateWorkspace(options?: UseCreateWorkspaceOptions) {
 				callKeyByVariables.current.set(variablesKey, callKey);
 			}
 			try {
-				return await mutation.mutateAsync(variables);
+				const result = await mutation.mutateAsync(variables);
+				if (result.isInitializing) {
+					await createInitCompletionPromise(result.workspace.id);
+				}
+				return result;
 			} finally {
 				if (variablesKey) {
 					callKeyByVariables.current.delete(variablesKey);
@@ -141,4 +144,29 @@ export function useCreateWorkspace(options?: UseCreateWorkspaceOptions) {
 		...mutation,
 		mutateAsyncWithPendingSetup,
 	};
+}
+
+function createInitCompletionPromise(workspaceId: string): Promise<void> {
+	return new Promise((resolve, reject) => {
+		const check = (progress: WorkspaceInitProgress | undefined) => {
+			if (progress?.step === "ready") {
+				resolve();
+				return true;
+			}
+			if (progress?.step === "failed") {
+				reject(new Error(progress.error || progress.message));
+				return true;
+			}
+			return false;
+		};
+
+		const current = useWorkspaceInitStore.getState().initProgress[workspaceId];
+		if (check(current)) return;
+
+		const unsubscribe = useWorkspaceInitStore.subscribe((state) => {
+			if (check(state.initProgress[workspaceId])) {
+				unsubscribe();
+			}
+		});
+	});
 }
