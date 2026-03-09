@@ -11,6 +11,8 @@ We need to replace the current ad hoc filesystem setup with a single workspace f
 - consolidates file search, keyword/content search, and watching in one module
 - removes duplicated search and indexing code
 
+This does not require a fresh architecture rewrite anymore. The current `packages/workspace-fs` boundary is already close to the right shape. The remaining work is to tighten that boundary so the package is explicitly split into transport-neutral core contracts and host-side implementations.
+
 This should behave more like VS Code:
 
 - files are identified by absolute path
@@ -47,6 +49,13 @@ The goal is to make the system simpler to reason about during implementation:
 - one identity model
 - one watcher system
 - one security model
+
+At this point, the practical refactor target is:
+
+- keep `packages/workspace-fs` as the boundary
+- make `core` vs `host` explicit in code layout and exports
+- keep the current desktop-main host shape
+- avoid broad API churn unless it improves transport neutrality or host ownership
 
 It also needs to be deployable in more than one place:
 
@@ -133,26 +142,29 @@ Suggested structure:
 packages/workspace-fs/
   src/
     index.ts
-    types/
-    paths/
-    security/
-    queries/
-    mutations/
-    search/
-    watch/
+    core/
+    host/
+    client/
+    types.ts
+    paths.ts
+    fs.ts
+    search.ts
+    watch.ts
 ```
 
-The package should be split so the core logic is reusable in a remote host:
+The package should be split explicitly, but without forcing a rewrite of every existing file:
 
 ```text
 packages/workspace-fs/
   src/
-    core/        # path rules, security rules, event model, search logic, watchers
-    server/      # local node host adapter, future remote host adapter
-    client/      # desktop/renderer client adapter
+    core/        # path rules, shared types, service contracts
+    host/        # local node host implementation, future remote host implementation
+    client/      # transport/client-side interfaces and adapters
 ```
 
-`core/` should not import Electron APIs or desktop app state.
+`core/` should not import Electron APIs, Node filesystem APIs, or desktop app state.
+
+The first cut can keep existing implementation files and re-export them through `core/` and `host/` modules. Physical file moves are optional; explicit boundaries are not.
 
 ## Responsibilities
 
@@ -542,7 +554,8 @@ Deliverable:
 
 ### Phase 7: Make `workspace-fs` hostable as a standalone service
 
-- split core logic from desktop-specific adapters
+- formalize the existing boundary into explicit `core`, `host`, and `client` modules
+- split core contracts from host-side implementations without rewriting stable logic unnecessarily
 - define a transport-neutral service interface for query/mutation/search/watch
 - keep Electron IPC as one host adapter, not the service itself
 - make watcher/search state belong to the host layer
@@ -550,7 +563,7 @@ Deliverable:
 
 Deliverable:
 
-- `workspace-fs` can be embedded locally or exposed by a remote host without changing higher-level consumers
+- `workspace-fs` can be embedded locally or exposed by a remote host without changing higher-level consumers, and current desktop imports already map cleanly onto `host`
 
 ### Phase 8: Migrate Changes and File Viewer consumers
 

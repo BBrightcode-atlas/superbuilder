@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { deletePath } from "@superset/workspace-fs";
+import { deletePath } from "@superset/workspace-fs/host";
 import simpleGit from "simple-git";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";

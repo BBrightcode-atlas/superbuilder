@@ -7,6 +7,18 @@
 		".": {
 			"types": "./src/index.ts",
 			"default": "./src/index.ts"
+		},
+		"./client": {
+			"types": "./src/client/index.ts",
+			"default": "./src/client/index.ts"
+		},
+		"./core": {
+			"types": "./src/core/index.ts",
+			"default": "./src/core/index.ts"
+		},
+		"./host": {
+			"types": "./src/host/index.ts",
+			"default": "./src/host/index.ts"
 		}
 	},
 	"scripts": {

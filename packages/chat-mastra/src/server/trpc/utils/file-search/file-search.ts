@@ -3,4 +3,4 @@ export {
 	searchFiles,
 	type WorkspaceFsEntry as FileSearchItem,
 	type WorkspaceFsSearchResult as FileSearchResult,
-} from "@superset/workspace-fs";
+} from "@superset/workspace-fs/host";

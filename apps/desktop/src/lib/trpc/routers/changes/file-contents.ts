@@ -5,7 +5,7 @@ import {
 	statFile,
 	type WorkspaceFsPathError,
 	writeTextFile,
-} from "@superset/workspace-fs";
+} from "@superset/workspace-fs/host";
 import type { FileContents } from "shared/changes-types";
 import { detectLanguage } from "shared/detect-language";
 import { getImageMimeType } from "shared/file-types";

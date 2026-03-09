@@ -15,7 +15,7 @@ import {
 	toFileSystemChangeEvent,
 	type WorkspaceFsWatchEvent,
 	WorkspaceFsWatcherManager,
-} from "@superset/workspace-fs";
+} from "@superset/workspace-fs/host";
 import { observable } from "@trpc/server/observable";
 import { shell } from "electron";
 import fg from "fast-glob";
