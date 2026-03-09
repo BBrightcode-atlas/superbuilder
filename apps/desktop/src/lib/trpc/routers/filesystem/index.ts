@@ -1,18 +1,16 @@
 import path from "node:path";
 import { observable } from "@trpc/server/observable";
-import type {
-	DirectoryEntry,
-	FileSystemChangeEvent,
-} from "shared/file-tree-types";
+import type { FileSystemChangeEvent } from "shared/file-tree-types";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
 import {
-	resolveWorkspaceRootPath,
-	toFileSystemChangeEvent,
+	readWorkspaceDirectory,
+	searchWorkspaceFiles,
+	searchWorkspaceFilesMulti,
+	searchWorkspaceKeyword,
+	watchWorkspaceFileSystemEvents,
 	workspaceFsService,
 } from "../workspace-fs-service";
-
-const MAX_SEARCH_RESULTS = 500;
 
 function isClosedStreamError(error: unknown): boolean {
 	return (
@@ -20,16 +18,6 @@ function isClosedStreamError(error: unknown): boolean {
 		"code" in error &&
 		error.code === "ERR_INVALID_STATE"
 	);
-}
-
-interface KeywordSearchMatch {
-	id: string;
-	name: string;
-	relativePath: string;
-	path: string;
-	line: number;
-	column: number;
-	preview: string;
 }
 
 export const createFilesystemRouter = () => {
@@ -41,20 +29,9 @@ export const createFilesystemRouter = () => {
 					absolutePath: z.string(),
 				}),
 			)
-			.query(async ({ input }): Promise<DirectoryEntry[]> => {
+			.query(async ({ input }) => {
 				try {
-					const entries = await workspaceFsService.listDirectory({
-						workspaceId: input.workspaceId,
-						absolutePath: input.absolutePath,
-					});
-
-					return entries.map((entry) => ({
-						id: entry.id,
-						name: entry.name,
-						path: entry.absolutePath,
-						relativePath: entry.relativePath,
-						isDirectory: entry.isDirectory,
-					}));
+					return await readWorkspaceDirectory(input);
 				} catch (error) {
 					console.error("[filesystem/readDirectory] Failed:", {
 						workspaceId: input.workspaceId,
@@ -69,11 +46,8 @@ export const createFilesystemRouter = () => {
 			.input(z.object({ workspaceId: z.string() }))
 			.subscription(({ input }) => {
 				return observable<FileSystemChangeEvent>((emit) => {
-					const rootPath = resolveWorkspaceRootPath(input.workspaceId);
 					let isDisposed = false;
-					const stream = workspaceFsService.watchWorkspace({
-						workspaceId: input.workspaceId,
-					});
+					const stream = watchWorkspaceFileSystemEvents(input.workspaceId);
 					const iterator = stream[Symbol.asyncIterator]();
 
 					const runCleanup = () => {
@@ -110,14 +84,11 @@ export const createFilesystemRouter = () => {
 								if (isDisposed) {
 									return;
 								}
-								safeNext(
-									toFileSystemChangeEvent(event, rootPath),
-								);
+								safeNext(event);
 							}
 						} catch (error) {
 							console.error("[filesystem/subscribe] Failed:", {
 								workspaceId: input.workspaceId,
-								rootPath,
 								error,
 							});
 							safeNext({
@@ -153,23 +124,13 @@ export const createFilesystemRouter = () => {
 				}
 
 				try {
-					const results = await workspaceFsService.searchFiles({
+					return await searchWorkspaceFiles({
 						workspaceId,
 						query: trimmedQuery,
-						includeHidden: true,
 						includePattern,
 						excludePattern,
 						limit,
 					});
-
-					return results.map((result) => ({
-						id: result.id,
-						name: result.name,
-						relativePath: result.relativePath,
-						path: result.absolutePath,
-						isDirectory: false,
-						score: result.score,
-					}));
 				} catch (error) {
 					console.error("[filesystem/searchFiles] Failed:", {
 						workspaceId,
@@ -204,57 +165,14 @@ export const createFilesystemRouter = () => {
 					return [];
 				}
 
-				// Deduplicate roots that share the same path
-				const seen = new Map<string, (typeof roots)[number]>();
-				for (const root of roots) {
-					if (!seen.has(root.rootPath)) {
-						seen.set(root.rootPath, root);
-					}
-				}
-				const uniqueRoots = [...seen.values()];
-
-				const safeLimit = Math.max(1, Math.min(limit, MAX_SEARCH_RESULTS));
-				const perRootLimit = Math.max(
-					10,
-					Math.ceil(safeLimit / uniqueRoots.length),
-				);
-
 				try {
-					const allResults = await Promise.all(
-						uniqueRoots.map(async (root) => {
-							try {
-								const results = await workspaceFsService.searchFiles({
-									workspaceId: root.workspaceId,
-									query: trimmedQuery,
-									includeHidden: true,
-									includePattern,
-									excludePattern,
-									limit: perRootLimit,
-								});
-								return results.map((result) => ({
-									id: `${root.workspaceId}:${result.id}`,
-									name: result.name,
-									relativePath: result.relativePath,
-									path: result.absolutePath,
-									isDirectory: false,
-									score: result.score,
-									workspaceId: root.workspaceId,
-									workspaceName: root.workspaceName,
-								}));
-							} catch (error) {
-								console.error(
-									"[filesystem/searchFilesMulti] Failed for root:",
-									{ rootPath: root.rootPath, error },
-								);
-								return [];
-							}
-						}),
-					);
-
-					return allResults
-						.flat()
-						.sort((a, b) => b.score - a.score)
-						.slice(0, safeLimit);
+					return await searchWorkspaceFilesMulti({
+						roots,
+						query: trimmedQuery,
+						includePattern,
+						excludePattern,
+						limit,
+					});
 				} catch (error) {
 					console.error("[filesystem/searchFilesMulti] Failed:", {
 						query,
@@ -274,7 +192,7 @@ export const createFilesystemRouter = () => {
 					limit: z.number().default(200),
 				}),
 			)
-			.query(async ({ input }): Promise<KeywordSearchMatch[]> => {
+			.query(async ({ input }) => {
 				const { workspaceId, query, includePattern, excludePattern, limit } =
 					input;
 				const trimmedQuery = query.trim();
@@ -284,24 +202,13 @@ export const createFilesystemRouter = () => {
 				}
 
 				try {
-					const results = await workspaceFsService.searchKeyword({
+					return await searchWorkspaceKeyword({
 						workspaceId,
 						query: trimmedQuery,
-						includeHidden: true,
 						includePattern,
 						excludePattern,
 						limit,
 					});
-
-					return results.map((result) => ({
-						id: result.id,
-						name: result.name,
-						relativePath: result.relativePath,
-						path: result.absolutePath,
-						line: result.line,
-						column: result.column,
-						preview: result.preview,
-					}));
 				} catch (error) {
 					console.error("[filesystem/searchKeyword] Failed:", {
 						workspaceId,
