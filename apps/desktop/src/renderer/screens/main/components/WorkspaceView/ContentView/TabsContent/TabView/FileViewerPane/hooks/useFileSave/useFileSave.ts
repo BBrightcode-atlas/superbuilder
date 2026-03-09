@@ -31,23 +31,37 @@ export function useFileSave({
 	const utils = electronTrpc.useUtils();
 
 	const saveFileMutation = electronTrpc.changes.saveFile.useMutation({
-		onSuccess: (result) => {
+		onSuccess: (result, variables) => {
 			if (result.status !== "saved") {
 				savingFromRawRef.current = false;
 				return;
 			}
 
-			setIsDirty(false);
-			if (editorRef.current) {
-				originalContentRef.current = editorRef.current.getValue();
-			}
-			if (savingFromRawRef.current) {
+			const savedContent = variables.content;
+			const currentEditorValue = editorRef.current?.getValue() ?? savedContent;
+			const hasUnsavedChanges = currentEditorValue !== savedContent;
+
+			utils.changes.readWorkingFile.setData(
+				{ worktreePath: variables.worktreePath, filePath: variables.filePath },
+				{
+					ok: true,
+					content: savedContent,
+					truncated: false,
+					byteLength: new TextEncoder().encode(savedContent).length,
+				},
+			);
+
+			originalContentRef.current = savedContent;
+			setIsDirty(hasUnsavedChanges);
+			if (savingFromRawRef.current && !hasUnsavedChanges) {
 				draftContentRef.current = null;
+			} else if (hasUnsavedChanges) {
+				draftContentRef.current = currentEditorValue;
 			}
 			savingFromRawRef.current = false;
 			originalDiffContentRef.current = "";
 
-			utils.changes.readWorkingFile.invalidate();
+			void utils.changes.readWorkingFile.invalidate();
 			utils.changes.getFileContents.invalidate();
 			utils.changes.getStatus.invalidate();
 

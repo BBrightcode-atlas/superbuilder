@@ -109,7 +109,7 @@
     },
     "apps/desktop": {
       "name": "@superset/desktop",
-      "version": "1.0.6",
+      "version": "1.1.3",
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.43",
         "@ai-sdk/openai": "3.0.36",
@@ -785,6 +785,7 @@
         "@upstash/qstash": "^2.8.4",
         "@vercel/blob": "^2.0.0",
         "@vercel/kv": "^3.0.0",
+        "date-fns": "^4.1.0",
         "drizzle-orm": "0.45.1",
         "superjson": "^2.2.5",
         "zod": "^4.3.5",

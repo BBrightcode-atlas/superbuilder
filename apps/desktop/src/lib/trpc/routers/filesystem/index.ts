@@ -59,6 +59,14 @@ const FILE_SEARCH_FUSE_OPTIONS = {
 
 const filesystemWatcherManager = new WorkspaceFsWatcherManager();
 
+function isClosedStreamError(error: unknown): boolean {
+	return (
+		error instanceof TypeError &&
+		"code" in error &&
+		error.code === "ERR_INVALID_STATE"
+	);
+}
+
 function resolveWorkspaceRootPath(workspaceId: string): string {
 	const workspace = getWorkspace(workspaceId);
 	if (!workspace) {
@@ -101,7 +109,41 @@ interface KeywordSearchMatch {
 	preview: string;
 }
 
-const searchIndexCache = new Map<string, FileSearchCacheEntry>();
+const SEARCH_INDEX_LRU_MAX = 3;
+
+class LRUSearchIndexCache {
+	private cache = new Map<string, FileSearchCacheEntry>();
+	private readonly max: number;
+
+	constructor(max: number) {
+		this.max = max;
+	}
+
+	get(key: string): FileSearchCacheEntry | undefined {
+		const entry = this.cache.get(key);
+		if (entry) {
+			// Move to end (most recently used)
+			this.cache.delete(key);
+			this.cache.set(key, entry);
+		}
+		return entry;
+	}
+
+	set(key: string, value: FileSearchCacheEntry): void {
+		if (this.cache.has(key)) {
+			this.cache.delete(key);
+		} else if (this.cache.size >= this.max) {
+			// Evict least recently used (first entry)
+			const firstKey = this.cache.keys().next().value;
+			if (firstKey !== undefined) {
+				this.cache.delete(firstKey);
+			}
+		}
+		this.cache.set(key, value);
+	}
+}
+
+const searchIndexCache = new LRUSearchIndexCache(SEARCH_INDEX_LRU_MAX);
 const searchIndexBuilds = new Map<string, Promise<FileSearchIndex>>();
 
 function createFileSearchFuse(items: FileSearchItem[]): Fuse<FileSearchItem> {
@@ -637,9 +679,43 @@ export const createFilesystemRouter = () => {
 					const rootPath = resolveWorkspaceRootPath(input.workspaceId);
 					let unsubscribe: (() => Promise<void>) | null = null;
 					let isDisposed = false;
+					let cleanupInFlight = false;
+
+					const runCleanup = () => {
+						if (cleanupInFlight) {
+							return;
+						}
+
+						isDisposed = true;
+						if (!unsubscribe) {
+							return;
+						}
+
+						cleanupInFlight = true;
+						void unsubscribe().finally(() => {
+							cleanupInFlight = false;
+						});
+					};
+
+					const safeNext = (event: FileSystemChangeEvent) => {
+						if (isDisposed) {
+							return;
+						}
+
+						try {
+							emit.next(event);
+						} catch (error) {
+							if (isClosedStreamError(error)) {
+								runCleanup();
+								return;
+							}
+
+							throw error;
+						}
+					};
 
 					const handleEvent = (event: WorkspaceFsWatchEvent) => {
-						emit.next(toFileSystemChangeEvent(event, rootPath));
+						safeNext(toFileSystemChangeEvent(event, rootPath));
 					};
 
 					void filesystemWatcherManager
@@ -663,17 +739,14 @@ export const createFilesystemRouter = () => {
 								rootPath,
 								error,
 							});
-							emit.next({
+							safeNext({
 								type: "overflow",
 								revision: 0,
 							});
 						});
 
 					return () => {
-						isDisposed = true;
-						if (unsubscribe) {
-							void unsubscribe();
-						}
+						runCleanup();
 					};
 				});
 			}),
@@ -718,6 +791,102 @@ export const createFilesystemRouter = () => {
 				} catch (error) {
 					console.error("[filesystem/searchFiles] Failed:", {
 						rootPath,
+						query,
+						error,
+					});
+					return [];
+				}
+			}),
+
+		searchFilesMulti: publicProcedure
+			.input(
+				z.object({
+					roots: z.array(
+						z.object({
+							rootPath: z.string(),
+							workspaceId: z.string(),
+							workspaceName: z.string(),
+						}),
+					),
+					query: z.string(),
+					includePattern: z.string().default(""),
+					excludePattern: z.string().default(""),
+					limit: z.number().default(50),
+				}),
+			)
+			.query(async ({ input }) => {
+				const { roots, query, includePattern, excludePattern, limit } = input;
+				const trimmedQuery = query.trim();
+
+				if (!trimmedQuery || roots.length === 0) {
+					return [];
+				}
+
+				// Deduplicate roots that share the same path
+				const seen = new Map<string, (typeof roots)[number]>();
+				for (const root of roots) {
+					if (!seen.has(root.rootPath)) {
+						seen.set(root.rootPath, root);
+					}
+				}
+				const uniqueRoots = [...seen.values()];
+
+				const safeLimit = Math.max(1, Math.min(limit, MAX_SEARCH_RESULTS));
+				const perRootLimit = Math.max(
+					10,
+					Math.ceil(safeLimit / uniqueRoots.length),
+				);
+
+				try {
+					const pathMatcher = createPathFilterMatcher({
+						includePattern,
+						excludePattern,
+					});
+
+					const allResults = await Promise.all(
+						uniqueRoots.map(async (root) => {
+							try {
+								const index = await getSearchIndex(root.rootPath);
+								const searchableItems = pathMatcher.hasFilters
+									? index.items.filter((item) =>
+											matchesPathFilters(item.relativePath, pathMatcher),
+										)
+									: index.items;
+								if (searchableItems.length === 0) {
+									return [];
+								}
+
+								const fuse = pathMatcher.hasFilters
+									? createFileSearchFuse(searchableItems)
+									: index.fuse;
+								return fuse
+									.search(trimmedQuery, { limit: perRootLimit })
+									.map((result) => ({
+										id: `${root.workspaceId}:${result.item.id}`,
+										name: result.item.name,
+										relativePath: result.item.relativePath,
+										path: result.item.path,
+										isDirectory: false,
+										score: 1 - (result.score ?? 0),
+										workspaceId: root.workspaceId,
+										workspaceName: root.workspaceName,
+									}));
+							} catch (error) {
+								console.error(
+									"[filesystem/searchFilesMulti] Failed for root:",
+									{ rootPath: root.rootPath, error },
+								);
+								return [];
+							}
+						}),
+					);
+
+					return allResults
+						.flat()
+						.sort((a, b) => b.score - a.score)
+						.slice(0, safeLimit);
+				} catch (error) {
+					console.error("[filesystem/searchFilesMulti] Failed:", {
 						query,
 						error,
 					});

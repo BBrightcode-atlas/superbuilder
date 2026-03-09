@@ -169,12 +169,7 @@ const config: Configuration = {
 	mac: {
 		...(existsSync(macIconPath) ? { icon: macIconPath } : {}),
 		category: "public.app-category.utilities",
-		target: [
-			{
-				target: "default",
-				arch: ["arm64"],
-			},
-		],
+		target: "default",
 		hardenedRuntime: true,
 		gatekeeperAssess: false,
 		notarize: true,
