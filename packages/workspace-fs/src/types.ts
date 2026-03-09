@@ -10,6 +10,37 @@ export interface WorkspaceFsSearchResult extends WorkspaceFsEntry {
 	score: number;
 }
 
+export interface WorkspaceFsExistsResult {
+	exists: boolean;
+	isDirectory: boolean;
+	isFile: boolean;
+}
+
+export interface WorkspaceFsStat {
+	size: number;
+	isDirectory: boolean;
+	isFile: boolean;
+	isSymbolicLink: boolean;
+	createdAt: string;
+	modifiedAt: string;
+	accessedAt: string;
+}
+
+export interface WorkspaceFsPathOperationError {
+	absolutePath: string;
+	error: string;
+}
+
+export interface DeletePathsResult {
+	deleted: string[];
+	errors: WorkspaceFsPathOperationError[];
+}
+
+export interface MoveCopyResult {
+	entries: { from: string; to: string }[];
+	errors: WorkspaceFsPathOperationError[];
+}
+
 export interface WorkspaceFsKeywordMatch extends WorkspaceFsEntry {
 	line: number;
 	column: number;

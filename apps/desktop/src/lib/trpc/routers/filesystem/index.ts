@@ -1,18 +1,7 @@
 import path from "node:path";
 import {
-	copyPaths,
-	createDirectoryAtPath,
-	createFileAtPath,
-	deletePaths,
-	listDirectory,
-	movePaths,
-	pathExists,
-	renamePath,
-	searchFiles as searchWorkspaceFiles,
-	searchKeyword as searchWorkspaceKeyword,
-	statPath,
+	createWorkspaceFsHostService,
 	toFileSystemChangeEvent,
-	type WorkspaceFsWatchEvent,
 	WorkspaceFsWatcherManager,
 } from "@superset/workspace-fs/host";
 import { observable } from "@trpc/server/observable";
@@ -53,6 +42,23 @@ function resolveWorkspaceRootPath(workspaceId: string): string {
 	return rootPath;
 }
 
+const workspaceFsService = createWorkspaceFsHostService({
+	resolveRootPath: resolveWorkspaceRootPath,
+	watcherManager: filesystemWatcherManager,
+	trashItem: async (absolutePath) => {
+		await shell.trashItem(absolutePath);
+	},
+	runRipgrep: async (args, options) => {
+		const result = await execWithShellEnv("rg", args, {
+			cwd: options.cwd,
+			maxBuffer: options.maxBuffer,
+			windowsHide: true,
+		});
+
+		return { stdout: result.stdout };
+	},
+});
+
 interface KeywordSearchMatch {
 	id: string;
 	name: string;
@@ -73,11 +79,9 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.query(async ({ input }): Promise<DirectoryEntry[]> => {
-				const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-
 				try {
-					const entries = await listDirectory({
-						rootPath,
+					const entries = await workspaceFsService.listDirectory({
+						workspaceId: input.workspaceId,
 						absolutePath: input.absolutePath,
 					});
 
@@ -103,24 +107,15 @@ export const createFilesystemRouter = () => {
 			.subscription(({ input }) => {
 				return observable<FileSystemChangeEvent>((emit) => {
 					const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-					let unsubscribe: (() => Promise<void>) | null = null;
 					let isDisposed = false;
-					let cleanupInFlight = false;
+					const stream = workspaceFsService.watchWorkspace({
+						workspaceId: input.workspaceId,
+					});
+					const iterator = stream[Symbol.asyncIterator]();
 
 					const runCleanup = () => {
-						if (cleanupInFlight) {
-							return;
-						}
-
 						isDisposed = true;
-						if (!unsubscribe) {
-							return;
-						}
-
-						cleanupInFlight = true;
-						void unsubscribe().finally(() => {
-							cleanupInFlight = false;
-						});
+						void iterator.return?.();
 					};
 
 					const safeNext = (event: FileSystemChangeEvent) => {
@@ -140,26 +135,21 @@ export const createFilesystemRouter = () => {
 						}
 					};
 
-					const handleEvent = (event: WorkspaceFsWatchEvent) => {
-						safeNext(toFileSystemChangeEvent(event, rootPath));
-					};
+					void (async () => {
+						try {
+							while (!isDisposed) {
+								const next = await iterator.next();
+								if (next.done) {
+									return;
+								}
 
-					void filesystemWatcherManager
-						.subscribe(
-							{
-								workspaceId: input.workspaceId,
-								rootPath,
-							},
-							handleEvent,
-						)
-						.then((cleanup) => {
-							if (isDisposed) {
-								void cleanup();
-								return;
+								const event = next.value;
+								if (isDisposed) {
+									return;
+								}
+								safeNext(toFileSystemChangeEvent(event, rootPath));
 							}
-							unsubscribe = cleanup;
-						})
-						.catch((error) => {
+						} catch (error) {
 							console.error("[filesystem/subscribe] Failed:", {
 								workspaceId: input.workspaceId,
 								rootPath,
@@ -169,7 +159,8 @@ export const createFilesystemRouter = () => {
 								type: "overflow",
 								revision: 0,
 							});
-						});
+						}
+					})();
 
 					return () => {
 						runCleanup();
@@ -180,7 +171,7 @@ export const createFilesystemRouter = () => {
 		searchFiles: publicProcedure
 			.input(
 				z.object({
-					rootPath: z.string(),
+					workspaceId: z.string(),
 					query: z.string(),
 					includePattern: z.string().default(""),
 					excludePattern: z.string().default(""),
@@ -188,7 +179,7 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.query(async ({ input }) => {
-				const { rootPath, query, includePattern, excludePattern, limit } =
+				const { workspaceId, query, includePattern, excludePattern, limit } =
 					input;
 				const trimmedQuery = query.trim();
 
@@ -197,8 +188,8 @@ export const createFilesystemRouter = () => {
 				}
 
 				try {
-					const results = await searchWorkspaceFiles({
-						rootPath,
+					const results = await workspaceFsService.searchFiles({
+						workspaceId,
 						query: trimmedQuery,
 						includeHidden: true,
 						includePattern,
@@ -216,7 +207,7 @@ export const createFilesystemRouter = () => {
 					}));
 				} catch (error) {
 					console.error("[filesystem/searchFiles] Failed:", {
-						rootPath,
+						workspaceId,
 						query,
 						error,
 					});
@@ -267,8 +258,8 @@ export const createFilesystemRouter = () => {
 					const allResults = await Promise.all(
 						uniqueRoots.map(async (root) => {
 							try {
-								const results = await searchWorkspaceFiles({
-									rootPath: root.rootPath,
+								const results = await workspaceFsService.searchFiles({
+									workspaceId: root.workspaceId,
 									query: trimmedQuery,
 									includeHidden: true,
 									includePattern,
@@ -311,7 +302,7 @@ export const createFilesystemRouter = () => {
 		searchKeyword: publicProcedure
 			.input(
 				z.object({
-					rootPath: z.string(),
+					workspaceId: z.string(),
 					query: z.string(),
 					includePattern: z.string().default(""),
 					excludePattern: z.string().default(""),
@@ -319,7 +310,7 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.query(async ({ input }): Promise<KeywordSearchMatch[]> => {
-				const { rootPath, query, includePattern, excludePattern, limit } =
+				const { workspaceId, query, includePattern, excludePattern, limit } =
 					input;
 				const trimmedQuery = query.trim();
 
@@ -328,22 +319,13 @@ export const createFilesystemRouter = () => {
 				}
 
 				try {
-					const results = await searchWorkspaceKeyword({
-						rootPath,
+					const results = await workspaceFsService.searchKeyword({
+						workspaceId,
 						query: trimmedQuery,
 						includeHidden: true,
 						includePattern,
 						excludePattern,
 						limit,
-						runRipgrep: async (args, options) => {
-							const result = await execWithShellEnv("rg", args, {
-								cwd: options.cwd,
-								maxBuffer: options.maxBuffer,
-								windowsHide: true,
-							});
-
-							return { stdout: result.stdout };
-						},
 					});
 
 					return results.map((result) => ({
@@ -357,7 +339,7 @@ export const createFilesystemRouter = () => {
 					}));
 				} catch (error) {
 					console.error("[filesystem/searchKeyword] Failed:", {
-						rootPath,
+						workspaceId,
 						query,
 						error,
 					});
@@ -375,9 +357,8 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-				const result = await createFileAtPath({
-					rootPath,
+				const result = await workspaceFsService.createFile({
+					workspaceId: input.workspaceId,
 					absolutePath: path.join(input.parentAbsolutePath, input.name),
 					content: input.content,
 				});
@@ -393,9 +374,8 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-				const result = await createDirectoryAtPath({
-					rootPath,
+				const result = await workspaceFsService.createDirectory({
+					workspaceId: input.workspaceId,
 					absolutePath: path.join(input.parentAbsolutePath, input.name),
 				});
 				return { path: result.absolutePath };
@@ -410,9 +390,8 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-				const result = await renamePath({
-					rootPath,
+				const result = await workspaceFsService.rename({
+					workspaceId: input.workspaceId,
 					absolutePath: input.absolutePath,
 					newName: input.newName,
 				});
@@ -431,14 +410,10 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-				const result = await deletePaths({
-					rootPath,
+				const result = await workspaceFsService.deletePaths({
+					workspaceId: input.workspaceId,
 					absolutePaths: input.absolutePaths,
 					permanent: input.permanent,
-					trashItem: async (absolutePath) => {
-						await shell.trashItem(absolutePath);
-					},
 				});
 
 				return {
@@ -459,9 +434,8 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-				const result = await movePaths({
-					rootPath,
+				const result = await workspaceFsService.movePaths({
+					workspaceId: input.workspaceId,
 					absolutePaths: input.sourceAbsolutePaths,
 					destinationAbsolutePath: input.destinationAbsolutePath,
 				});
@@ -484,9 +458,8 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-				const result = await copyPaths({
-					rootPath,
+				const result = await workspaceFsService.copyPaths({
+					workspaceId: input.workspaceId,
 					absolutePaths: input.sourceAbsolutePaths,
 					destinationAbsolutePath: input.destinationAbsolutePath,
 				});
@@ -508,9 +481,8 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.query(async ({ input }) => {
-				const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-				return await pathExists({
-					rootPath,
+				return await workspaceFsService.exists({
+					workspaceId: input.workspaceId,
 					absolutePath: input.absolutePath,
 				});
 			}),
@@ -523,9 +495,8 @@ export const createFilesystemRouter = () => {
 				}),
 			)
 			.query(async ({ input }) => {
-				const rootPath = resolveWorkspaceRootPath(input.workspaceId);
-				const result = await statPath({
-					rootPath,
+				const result = await workspaceFsService.stat({
+					workspaceId: input.workspaceId,
 					absolutePath: input.absolutePath,
 				});
 				return result;

@@ -303,7 +303,7 @@ export function FilesView() {
 		isFetching: isSearchFetching,
 		hasQuery: isSearching,
 	} = useFileSearch({
-		worktreePath,
+		workspaceId,
 		searchTerm,
 	});
 

@@ -6,32 +6,13 @@ import {
 	normalizeAbsolutePath,
 	toRelativePath,
 } from "./paths";
-import type { WorkspaceFsEntry } from "./types";
-
-interface DeletePathError {
-	absolutePath: string;
-	error: string;
-}
-
-export interface DeletePathsResult {
-	deleted: string[];
-	errors: DeletePathError[];
-}
-
-export interface MoveCopyResult {
-	entries: { from: string; to: string }[];
-	errors: DeletePathError[];
-}
-
-export interface WorkspaceFsStat {
-	size: number;
-	isDirectory: boolean;
-	isFile: boolean;
-	isSymbolicLink: boolean;
-	createdAt: string;
-	modifiedAt: string;
-	accessedAt: string;
-}
+import type {
+	DeletePathsResult,
+	MoveCopyResult,
+	WorkspaceFsEntry,
+	WorkspaceFsPathOperationError,
+	WorkspaceFsStat,
+} from "./types";
 
 export type WorkspaceFsPathErrorCode =
 	| "OUTSIDE_ROOT"
@@ -436,7 +417,7 @@ export async function deletePaths({
 	trashItem?: (absolutePath: string) => Promise<void>;
 }): Promise<DeletePathsResult> {
 	const deleted: string[] = [];
-	const errors: DeletePathError[] = [];
+	const errors: WorkspaceFsPathOperationError[] = [];
 
 	for (const absolutePath of absolutePaths) {
 		try {
@@ -453,7 +434,7 @@ export async function deletePaths({
 			errors.push({
 				absolutePath,
 				error: error instanceof Error ? error.message : String(error),
-			});
+			} satisfies WorkspaceFsPathOperationError);
 		}
 	}
 
@@ -474,7 +455,7 @@ export async function movePaths({
 		absolutePath: destinationAbsolutePath,
 	});
 	const entries: { from: string; to: string }[] = [];
-	const errors: DeletePathError[] = [];
+	const errors: WorkspaceFsPathOperationError[] = [];
 
 	for (const absolutePath of absolutePaths) {
 		try {
@@ -500,7 +481,7 @@ export async function movePaths({
 			errors.push({
 				absolutePath,
 				error: error instanceof Error ? error.message : String(error),
-			});
+			} satisfies WorkspaceFsPathOperationError);
 		}
 	}
 
@@ -521,7 +502,7 @@ export async function copyPaths({
 		absolutePath: destinationAbsolutePath,
 	});
 	const entries: { from: string; to: string }[] = [];
-	const errors: DeletePathError[] = [];
+	const errors: WorkspaceFsPathOperationError[] = [];
 
 	for (const absolutePath of absolutePaths) {
 		try {
@@ -551,7 +532,7 @@ export async function copyPaths({
 			errors.push({
 				absolutePath,
 				error: error instanceof Error ? error.message : String(error),
-			});
+			} satisfies WorkspaceFsPathOperationError);
 		}
 	}
 

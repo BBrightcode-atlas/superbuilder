@@ -98,7 +98,7 @@ export function useCommandPalette({
 
 	// Single-workspace search (existing behavior)
 	const singleSearch = useFileSearch({
-		worktreePath: open && scope === "workspace" ? worktreePath : undefined,
+		workspaceId: open && scope === "workspace" ? workspaceId : undefined,
 		searchTerm: query,
 		includePattern,
 		excludePattern,

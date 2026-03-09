@@ -568,6 +568,9 @@ Deliverable:
 - formalize the existing boundary into explicit `core`, `host`, and `client` modules
 - split core contracts from host-side implementations without rewriting stable logic unnecessarily
 - define a transport-neutral service interface for query/mutation/search/watch
+- add a host service that resolves `workspaceId` to a workspace root and exposes one service object for the desktop router
+- move desktop filesystem search endpoints off raw `rootPath` inputs and onto `workspaceId`-scoped service calls
+- add service-level tests around host root resolution and watch-stream behavior
 - keep Electron IPC as one host adapter, not the service itself
 - make watcher/search state belong to the host layer
 - prepare for a future remote workspace host that runs beside the workspace
@@ -643,6 +646,7 @@ Notes:
 - directory/file targets are always absolute
 - `workspaceId` is always required
 - `relativePath` should never be required input
+- desktop router procedures should be thin adapters over the `workspace-fs` host service, not independent filesystem logic
 
 ## Rollout Strategy
 

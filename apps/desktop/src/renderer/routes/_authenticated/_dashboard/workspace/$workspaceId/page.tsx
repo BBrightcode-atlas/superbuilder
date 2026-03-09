@@ -390,7 +390,6 @@ function WorkspacePage() {
 	});
 	const keywordSearch = useKeywordSearch({
 		workspaceId,
-		worktreePath: workspace?.worktreePath,
 	});
 	const handleQuickOpen = useCallback(() => {
 		keywordSearch.handleOpenChange(false);

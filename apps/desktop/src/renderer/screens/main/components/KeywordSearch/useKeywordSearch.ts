@@ -8,7 +8,6 @@ const SEARCH_LIMIT = 200;
 
 interface UseKeywordSearchParams {
 	workspaceId: string;
-	worktreePath: string | undefined;
 }
 
 interface KeywordSearchResult {
@@ -23,7 +22,6 @@ interface KeywordSearchResult {
 
 export function useKeywordSearch({
 	workspaceId,
-	worktreePath,
 }: UseKeywordSearchParams) {
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
@@ -53,14 +51,14 @@ export function useKeywordSearch({
 	const { data: searchResults, isFetching } =
 		electronTrpc.filesystem.searchKeyword.useQuery(
 			{
-				rootPath: worktreePath ?? "",
+				workspaceId,
 				query: debouncedQuery,
 				includePattern,
 				excludePattern,
 				limit: SEARCH_LIMIT,
 			},
 			{
-				enabled: open && Boolean(worktreePath) && debouncedQuery.length > 0,
+				enabled: open && debouncedQuery.length > 0,
 				staleTime: 1000,
 				placeholderData: (previous) => previous ?? [],
 			},
