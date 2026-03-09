@@ -448,6 +448,7 @@ This keeps bursty workspace churn from overwhelming renderer state and query inv
 ### Priority 2: Smarter invalidation
 
 - patch visible tree state directly for create/update/delete where possible
+- for the file tree specifically: invalidate only affected parent directories during normal create/delete events, and reserve full tree refresh for overflow, root-path changes, or unrecoverable cache uncertainty
 - avoid broad query invalidation on every filesystem event
 - refresh only expanded folders, selected files, and open editors eagerly
 - make the changes sidebar recompute only when events can affect git-visible state

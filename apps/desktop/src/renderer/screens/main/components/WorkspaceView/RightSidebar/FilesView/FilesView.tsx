@@ -32,6 +32,50 @@ import { useFileSearch } from "./hooks/useFileSearch";
 import { useFileTreeActions } from "./hooks/useFileTreeActions";
 import type { NewItemMode } from "./types";
 
+interface PendingTreeRefresh {
+	fullRefresh: boolean;
+	directoryPaths: Set<string>;
+	invalidateSearch: boolean;
+}
+
+function getPathSegmentSeparator(absolutePath: string): string {
+	return absolutePath.includes("\\") ? "\\" : "/";
+}
+
+function getParentPath(absolutePath: string): string {
+	const trimmedPath = absolutePath.replace(/[\\/]+$/, "");
+	const lastSeparatorIndex = Math.max(
+		trimmedPath.lastIndexOf("/"),
+		trimmedPath.lastIndexOf("\\"),
+	);
+
+	if (lastSeparatorIndex <= 0) {
+		return trimmedPath;
+	}
+
+	// Preserve Windows drive roots like `C:\`.
+	if (/^[A-Za-z]:$/.test(trimmedPath.slice(0, lastSeparatorIndex))) {
+		return `${trimmedPath.slice(0, lastSeparatorIndex)}\\`;
+	}
+
+	return trimmedPath.slice(0, lastSeparatorIndex);
+}
+
+function deleteCachedEntryPath(
+	cache: Map<string, DirectoryEntry>,
+	absolutePath: string,
+): void {
+	const segmentSeparator = getPathSegmentSeparator(absolutePath);
+	for (const cachedPath of cache.keys()) {
+		if (
+			cachedPath === absolutePath ||
+			cachedPath.startsWith(`${absolutePath}${segmentSeparator}`)
+		) {
+			cache.delete(cachedPath);
+		}
+	}
+}
+
 export function FilesView() {
 	const { workspaceId } = useParams({ strict: false });
 	const { data: workspace } = electronTrpc.workspaces.get.useQuery(
@@ -48,6 +92,11 @@ export function FilesView() {
 	worktreePathRef.current = worktreePath;
 	const entryCacheRef = useRef(new Map<string, DirectoryEntry>());
 	const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const pendingRefreshRef = useRef<PendingTreeRefresh>({
+		fullRefresh: false,
+		directoryPaths: new Set<string>(),
+		invalidateSearch: false,
+	});
 
 	const trpcUtils = electronTrpc.useUtils();
 
@@ -138,17 +187,76 @@ export function FilesView() {
 		void trpcUtils.filesystem.searchFiles.invalidate();
 	}, [tree, trpcUtils]);
 
+	const invalidateDirectoryByPath = useCallback(
+		(directoryPath: string) => {
+			const currentRoot = worktreePathRef.current;
+			if (!currentRoot) {
+				return;
+			}
+
+			if (directoryPath === currentRoot) {
+				tree.getItemInstance("root")?.invalidateChildrenIds();
+				return;
+			}
+
+			const directoryItem = tree.getItems().find(
+				(item: ItemInstance<DirectoryEntry>) =>
+					item.getItemData()?.isDirectory &&
+					item.getItemData()?.path === directoryPath,
+			);
+			directoryItem?.invalidateChildrenIds();
+		},
+		[tree],
+	);
+
 	const scheduleRefresh = useCallback(
-		(_event?: FileSystemChangeEvent) => {
+		(event?: FileSystemChangeEvent) => {
+			const currentRoot = worktreePathRef.current;
+			if (event) {
+				pendingRefreshRef.current.invalidateSearch = true;
+
+				if (event.type === "overflow" || !currentRoot) {
+					pendingRefreshRef.current.fullRefresh = true;
+				} else if (event.absolutePath) {
+					deleteCachedEntryPath(entryCacheRef.current, event.absolutePath);
+
+					if (event.type !== "update" || event.isDirectory) {
+						const parentPath =
+							event.absolutePath === currentRoot
+								? currentRoot
+								: getParentPath(event.absolutePath);
+						pendingRefreshRef.current.directoryPaths.add(parentPath);
+					}
+				}
+			}
+
 			if (refreshTimerRef.current) {
 				clearTimeout(refreshTimerRef.current);
 			}
 			refreshTimerRef.current = setTimeout(() => {
 				refreshTimerRef.current = null;
-				refreshVisibleDirectories();
+				const pending = pendingRefreshRef.current;
+				pendingRefreshRef.current = {
+					fullRefresh: false,
+					directoryPaths: new Set<string>(),
+					invalidateSearch: false,
+				};
+
+				if (pending.fullRefresh) {
+					refreshVisibleDirectories();
+					return;
+				}
+
+				for (const directoryPath of pending.directoryPaths) {
+					invalidateDirectoryByPath(directoryPath);
+				}
+
+				if (pending.invalidateSearch) {
+					void trpcUtils.filesystem.searchFiles.invalidate();
+				}
 			}, 75);
 		},
-		[refreshVisibleDirectories],
+		[invalidateDirectoryByPath, refreshVisibleDirectories, trpcUtils],
 	);
 
 	useEffect(() => {
