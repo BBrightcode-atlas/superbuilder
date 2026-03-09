@@ -15,7 +15,11 @@ import { useWorkspaceFileEvents } from "renderer/screens/main/components/Workspa
 import { useBranchSyncInvalidation } from "renderer/screens/main/hooks/useBranchSyncInvalidation";
 import { useGitChangesStatus } from "renderer/screens/main/hooks/useGitChangesStatus";
 import { useChangesStore } from "renderer/stores/changes";
-import { pathsMatch, toAbsoluteWorkspacePath } from "shared/absolute-paths";
+import {
+	pathsMatch,
+	retargetAbsolutePath,
+	toAbsoluteWorkspacePath,
+} from "shared/absolute-paths";
 import type { ChangeCategory, ChangedFile } from "shared/changes-types";
 import type { FileSystemChangeEvent } from "shared/file-tree-types";
 import { CategorySection } from "./components/CategorySection";
@@ -52,6 +56,17 @@ function eventTargetsSelectedFile(
 
 	if (event.type === "overflow") {
 		return true;
+	}
+
+	if (event.type === "rename" && event.absolutePath && event.oldAbsolutePath) {
+		return (
+			retargetAbsolutePath(
+				selectedAbsolutePath,
+				event.oldAbsolutePath,
+				event.absolutePath,
+				Boolean(event.isDirectory),
+			) !== null
+		);
 	}
 
 	return event.absolutePath === selectedAbsolutePath;

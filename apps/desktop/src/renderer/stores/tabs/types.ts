@@ -143,6 +143,12 @@ export interface TabsStore extends TabsState {
 		cwd: string | null,
 		confirmed: boolean,
 	) => void;
+	retargetFileViewerPaths: (
+		workspaceId: string,
+		oldAbsolutePath: string,
+		newAbsolutePath: string,
+		isDirectory: boolean,
+	) => void;
 	clearPaneInitialData: (paneId: string) => void;
 	/** Pin a file-viewer pane so it won't be replaced by new file clicks */
 	pinPane: (paneId: string) => void;

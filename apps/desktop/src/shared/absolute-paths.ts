@@ -78,3 +78,30 @@ export function normalizeComparablePath(path: string): string {
 export function pathsMatch(left: string, right: string): boolean {
 	return normalizeComparablePath(left) === normalizeComparablePath(right);
 }
+
+export function retargetAbsolutePath(
+	currentPath: string,
+	oldAbsolutePath: string,
+	newAbsolutePath: string,
+	isDirectory: boolean,
+): string | null {
+	const normalizedCurrentPath = normalizeComparablePath(currentPath);
+	const normalizedOldPath = normalizeComparablePath(oldAbsolutePath);
+	const normalizedNewPath = normalizeComparablePath(newAbsolutePath);
+
+	if (normalizedCurrentPath === normalizedOldPath) {
+		return newAbsolutePath;
+	}
+
+	if (!isDirectory) {
+		return null;
+	}
+
+	if (!normalizedCurrentPath.startsWith(`${normalizedOldPath}/`)) {
+		return null;
+	}
+
+	const suffix = normalizedCurrentPath.slice(normalizedOldPath.length);
+	const separator = newAbsolutePath.includes("\\") ? "\\" : "/";
+	return `${normalizedNewPath}${suffix}`.replace(/\//g, separator);
+}

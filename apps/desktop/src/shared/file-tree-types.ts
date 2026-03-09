@@ -9,9 +9,11 @@ export interface FileTreeNode {
 }
 
 export interface FileSystemChangeEvent {
-	type: "create" | "update" | "delete" | "overflow";
+	type: "create" | "update" | "delete" | "rename" | "overflow";
 	absolutePath?: string;
+	oldAbsolutePath?: string;
 	relativePath?: string;
+	oldRelativePath?: string;
 	isDirectory?: boolean;
 	revision: number;
 }

@@ -661,6 +661,27 @@ function applySearchEventToItems({
 	includeHidden: boolean;
 	event: Exclude<WorkspaceFsWatchEvent, { type: "overflow" }>;
 }): void {
+	if (event.type === "rename") {
+		itemsByPath.delete(normalizeAbsolutePath(event.oldAbsolutePath));
+		const nextRelativePath = toRelativePath(rootPath, event.absolutePath);
+		if (
+			event.isDirectory ||
+			!shouldIndexRelativePath(nextRelativePath, includeHidden)
+		) {
+			return;
+		}
+
+		const nextAbsolutePath = normalizeAbsolutePath(event.absolutePath);
+		itemsByPath.set(nextAbsolutePath, {
+			id: nextAbsolutePath,
+			name: path.basename(nextAbsolutePath),
+			absolutePath: nextAbsolutePath,
+			relativePath: nextRelativePath,
+			isDirectory: false,
+		});
+		return;
+	}
+
 	const absolutePath = normalizeAbsolutePath(event.absolutePath);
 	const relativePath = toRelativePath(rootPath, absolutePath);
 	const shouldRemove =

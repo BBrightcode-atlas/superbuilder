@@ -18,6 +18,7 @@ import {
 	useKeywordSearch,
 } from "renderer/screens/main/components/KeywordSearch";
 import { useWorkspaceFileEventBridge } from "renderer/screens/main/components/WorkspaceView/hooks/useWorkspaceFileEvents";
+import { useWorkspaceRenameReconciliation } from "renderer/screens/main/components/WorkspaceView/hooks/useWorkspaceRenameReconciliation";
 import { WorkspaceInitializingView } from "renderer/screens/main/components/WorkspaceView/WorkspaceInitializingView";
 import { WorkspaceLayout } from "renderer/screens/main/components/WorkspaceView/WorkspaceLayout";
 import { useCreateOrOpenPR, usePRStatus } from "renderer/screens/main/hooks";
@@ -79,6 +80,11 @@ function WorkspacePage() {
 		id: workspaceId,
 	});
 	useWorkspaceFileEventBridge(workspaceId, Boolean(workspace?.worktreePath));
+	useWorkspaceRenameReconciliation({
+		workspaceId,
+		worktreePath: workspace?.worktreePath,
+		enabled: Boolean(workspace?.worktreePath),
+	});
 	const navigate = useNavigate();
 	const routeNavigate = Route.useNavigate();
 	const { tabId: searchTabId, paneId: searchPaneId } = Route.useSearch();

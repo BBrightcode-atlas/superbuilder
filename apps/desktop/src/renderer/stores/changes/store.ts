@@ -1,3 +1,7 @@
+import {
+	retargetAbsolutePath,
+	toRelativeWorkspacePath,
+} from "shared/absolute-paths";
 import type {
 	ChangeCategory,
 	ChangedFile,
@@ -35,6 +39,13 @@ interface ChangesState {
 		file: ChangedFile | null,
 		category?: ChangeCategory,
 		commitHash?: string | null,
+	) => void;
+	retargetSelectedFile: (
+		workspaceId: string,
+		oldAbsolutePath: string,
+		newAbsolutePath: string,
+		worktreePath: string,
+		isDirectory: boolean,
 	) => void;
 	getSelectedFile: (workspaceId: string) => SelectedFileState | null;
 	setViewMode: (mode: DiffViewMode) => void;
@@ -85,6 +96,44 @@ export const useChangesStore = create<ChangesState>()(
 											commitHash: commitHash ?? null,
 										}
 									: null,
+						},
+					});
+				},
+
+				retargetSelectedFile: (
+					workspaceId,
+					oldAbsolutePath,
+					newAbsolutePath,
+					worktreePath,
+					isDirectory,
+				) => {
+					const currentSelection = get().selectedFiles[workspaceId];
+					if (!currentSelection) {
+						return;
+					}
+
+					const nextAbsolutePath = retargetAbsolutePath(
+						currentSelection.absolutePath,
+						oldAbsolutePath,
+						newAbsolutePath,
+						isDirectory,
+					);
+
+					if (!nextAbsolutePath) {
+						return;
+					}
+
+					set({
+						selectedFiles: {
+							...get().selectedFiles,
+							[workspaceId]: {
+								...currentSelection,
+								absolutePath: nextAbsolutePath,
+								file: {
+									...currentSelection.file,
+									path: toRelativeWorkspacePath(worktreePath, nextAbsolutePath),
+								},
+							},
 						},
 					});
 				},

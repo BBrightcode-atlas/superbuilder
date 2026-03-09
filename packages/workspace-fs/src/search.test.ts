@@ -30,10 +30,10 @@ async function createTempRoot(): Promise<string> {
 
 function createFileEvent(
 	event: Omit<
-		Exclude<WorkspaceFsWatchEvent, { type: "overflow" }>,
+		Extract<WorkspaceFsWatchEvent, { type: "create" | "update" | "delete" }>,
 		"workspaceId"
 	>,
-): Exclude<WorkspaceFsWatchEvent, { type: "overflow" }> {
+): Extract<WorkspaceFsWatchEvent, { type: "create" | "update" | "delete" }> {
 	return {
 		workspaceId: "workspace-test",
 		...event,

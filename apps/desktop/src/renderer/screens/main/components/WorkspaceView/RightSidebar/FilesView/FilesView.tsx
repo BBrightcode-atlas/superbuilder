@@ -17,6 +17,7 @@ import { LuFile, LuFolder } from "react-icons/lu";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { useWorkspaceFileEvents } from "renderer/screens/main/components/WorkspaceView/hooks/useWorkspaceFileEvents";
 import { useTabsStore } from "renderer/stores/tabs/store";
+import { retargetAbsolutePath } from "shared/absolute-paths";
 import type {
 	DirectoryEntry,
 	FileSystemChangeEvent,
@@ -36,6 +37,14 @@ interface PendingTreeRefresh {
 	fullRefresh: boolean;
 	directoryPaths: Set<string>;
 	invalidateSearch: boolean;
+	expandedPathsToRestore: Set<string>;
+}
+
+interface FileTreeController {
+	getItems(): ItemInstance<DirectoryEntry>[];
+	getItemInstance(
+		itemId: string,
+	): ItemInstance<DirectoryEntry> | null | undefined;
 }
 
 function getPathSegmentSeparator(absolutePath: string): string {
@@ -76,6 +85,53 @@ function deleteCachedEntryPath(
 	}
 }
 
+function getExpandedRenameTargets(
+	tree: FileTreeController,
+	oldAbsolutePath: string,
+	newAbsolutePath: string,
+	isDirectory: boolean,
+): string[] {
+	if (!isDirectory) {
+		return [];
+	}
+
+	return tree
+		.getItems()
+		.filter(
+			(item: ItemInstance<DirectoryEntry>) =>
+				item.getItemData()?.isDirectory && item.isExpanded(),
+		)
+		.map((item: ItemInstance<DirectoryEntry>) => item.getItemData()?.path ?? "")
+		.filter((path) => path.length > 0)
+		.map((path) =>
+			retargetAbsolutePath(path, oldAbsolutePath, newAbsolutePath, true),
+		)
+		.filter((path): path is string => Boolean(path));
+}
+
+async function restoreExpandedDirectories(
+	tree: FileTreeController,
+	paths: Iterable<string>,
+): Promise<void> {
+	const orderedPaths = Array.from(new Set(paths)).sort(
+		(left, right) => left.split(/[/\\]/).length - right.split(/[/\\]/).length,
+	);
+
+	for (const path of orderedPaths) {
+		for (let attempt = 0; attempt < 5; attempt += 1) {
+			const item = tree.getItemInstance(path);
+			if (item) {
+				if (!item.isExpanded()) {
+					await item.expand();
+				}
+				break;
+			}
+
+			await new Promise((resolve) => setTimeout(resolve, 25));
+		}
+	}
+}
+
 export function FilesView() {
 	const { workspaceId } = useParams({ strict: false });
 	const { data: workspace } = electronTrpc.workspaces.get.useQuery(
@@ -96,6 +152,7 @@ export function FilesView() {
 		fullRefresh: false,
 		directoryPaths: new Set<string>(),
 		invalidateSearch: false,
+		expandedPathsToRestore: new Set<string>(),
 	});
 
 	const trpcUtils = electronTrpc.useUtils();
@@ -219,6 +276,29 @@ export function FilesView() {
 
 				if (event.type === "overflow" || !currentRoot) {
 					pendingRefreshRef.current.fullRefresh = true;
+				} else if (
+					event.type === "rename" &&
+					event.absolutePath &&
+					event.oldAbsolutePath
+				) {
+					deleteCachedEntryPath(entryCacheRef.current, event.oldAbsolutePath);
+					deleteCachedEntryPath(entryCacheRef.current, event.absolutePath);
+
+					pendingRefreshRef.current.directoryPaths.add(
+						getParentPath(event.oldAbsolutePath),
+					);
+					pendingRefreshRef.current.directoryPaths.add(
+						getParentPath(event.absolutePath),
+					);
+
+					for (const expandedPath of getExpandedRenameTargets(
+						tree,
+						event.oldAbsolutePath,
+						event.absolutePath,
+						Boolean(event.isDirectory),
+					)) {
+						pendingRefreshRef.current.expandedPathsToRestore.add(expandedPath);
+					}
 				} else if (event.absolutePath) {
 					deleteCachedEntryPath(entryCacheRef.current, event.absolutePath);
 
@@ -242,6 +322,7 @@ export function FilesView() {
 					fullRefresh: false,
 					directoryPaths: new Set<string>(),
 					invalidateSearch: false,
+					expandedPathsToRestore: new Set<string>(),
 				};
 
 				if (pending.fullRefresh) {
@@ -256,9 +337,11 @@ export function FilesView() {
 				if (pending.invalidateSearch) {
 					void trpcUtils.filesystem.searchFiles.invalidate();
 				}
+
+				void restoreExpandedDirectories(tree, pending.expandedPathsToRestore);
 			}, 75);
 		},
-		[invalidateDirectoryByPath, refreshVisibleDirectories, trpcUtils],
+		[invalidateDirectoryByPath, refreshVisibleDirectories, tree, trpcUtils],
 	);
 
 	useEffect(() => {

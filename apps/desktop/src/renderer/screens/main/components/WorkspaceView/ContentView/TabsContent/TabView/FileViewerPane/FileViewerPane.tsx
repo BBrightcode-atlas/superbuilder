@@ -9,7 +9,11 @@ import { useWorkspaceFileEvents } from "renderer/screens/main/components/Workspa
 import { useChangesStore } from "renderer/stores/changes";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import type { SplitPaneOptions, Tab } from "renderer/stores/tabs/types";
-import { pathsMatch, toAbsoluteWorkspacePath } from "shared/absolute-paths";
+import {
+	pathsMatch,
+	retargetAbsolutePath,
+	toAbsoluteWorkspacePath,
+} from "shared/absolute-paths";
 import { isImageFile, isMarkdownFile } from "shared/file-types";
 import type { FileViewerMode } from "shared/tabs-types";
 import type { CodeEditorAdapter } from "../../../components";
@@ -89,6 +93,7 @@ export function FileViewerPane({
 		diskContent: string | null;
 	} | null>(null);
 	const pendingModeRef = useRef<FileViewerMode | null>(null);
+	const pendingRenamePathRef = useRef<string | null>(null);
 	const filePath = fileViewer?.filePath ?? "";
 	const viewMode = fileViewer?.viewMode ?? "raw";
 	const isPinned = fileViewer?.isPinned ?? false;
@@ -187,7 +192,15 @@ export function FileViewerPane({
 				error,
 			});
 		});
-	}, [absoluteFilePath, filePath, isImage, oldPath, trpcUtils, viewMode, worktreePath]);
+	}, [
+		absoluteFilePath,
+		filePath,
+		isImage,
+		oldPath,
+		trpcUtils,
+		viewMode,
+		worktreePath,
+	]);
 
 	const handleEditorChange = useCallback((value: string | undefined) => {
 		if (value === undefined) return;
@@ -199,8 +212,16 @@ export function FileViewerPane({
 		setIsDirty(value !== originalContentRef.current);
 	}, []);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: Reset on file change only
 	useEffect(() => {
+		if (
+			pendingRenamePathRef.current &&
+			pathsMatch(pendingRenamePathRef.current, filePath)
+		) {
+			pendingRenamePathRef.current = null;
+			return;
+		}
+
+		pendingRenamePathRef.current = null;
 		setIsDirty(false);
 		originalContentRef.current = "";
 		originalDiffContentRef.current = "";
@@ -226,6 +247,25 @@ export function FileViewerPane({
 		(event) => {
 			if (event.type === "overflow") {
 				invalidateCurrentFile();
+				return;
+			}
+
+			if (event.type === "rename") {
+				if (!event.absolutePath || !event.oldAbsolutePath) {
+					return;
+				}
+
+				const nextFilePath = retargetAbsolutePath(
+					absoluteFilePath,
+					event.oldAbsolutePath,
+					event.absolutePath,
+					Boolean(event.isDirectory),
+				);
+				if (!nextFilePath) {
+					return;
+				}
+
+				pendingRenamePathRef.current = nextFilePath;
 				return;
 			}
 

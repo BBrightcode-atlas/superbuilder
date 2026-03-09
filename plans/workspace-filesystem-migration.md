@@ -685,6 +685,11 @@ Some watcher backends emit create/delete pairs rather than a true rename.
 Mitigation:
 
 - normalize obvious cases where possible
+- current implementation emits `rename` only for confident watcher matches:
+  - one delete + one create in the same parent
+  - one delete + one create with the same basename
+  - a single remaining delete/create pair in a flush
+- when a `rename` event is emitted, renderer state retargets open file viewers and selected Changes entries by absolute path, and the file tree restores expanded renamed directories
 - treat ambiguous cases as delete + create
 - reserve `rename` for confidently matched transitions
 
@@ -704,6 +709,7 @@ Mitigation:
 - `relativePath` is derived and display-only
 - external file edits appear in the file explorer without manual refresh
 - rename and move update tree state correctly
+- open file viewers and Changes selection follow confident rename/move transitions without falling back to stale absolute paths
 - file search and content search update coherently after external changes
 - explorer, changes, file viewer, and chat host code use one filesystem package
 - no new feature adds a one-off watcher outside the shared watcher manager

@@ -56,6 +56,14 @@ export type WorkspaceFsWatchEvent =
 			revision: number;
 	  }
 	| {
+			type: "rename";
+			workspaceId: string;
+			oldAbsolutePath: string;
+			absolutePath: string;
+			isDirectory: boolean;
+			revision: number;
+	  }
+	| {
 			type: "overflow";
 			workspaceId: string;
 			revision: number;
