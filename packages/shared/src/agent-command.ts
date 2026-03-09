@@ -114,7 +114,8 @@ export function buildAgentFileCommand({
 	agent?: AgentType;
 }): string {
 	const builder = AGENT_FILE_COMMANDS[agent];
-	return builder(filePath);
+	const escaped = filePath.replaceAll("'", "'\\''");
+	return builder(escaped);
 }
 
 const AGENT_COMMANDS: Record<
