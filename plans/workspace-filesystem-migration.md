@@ -27,6 +27,7 @@ This should behave more like VS Code:
 - Canonical file identity: `absolutePath`
 - Scope and permissions boundary: `workspaceId`
 - Renderer event transport: desktop tRPC subscriptions
+- Only active workspaces should have live filesystem listeners
 
 ## Why This Shape
 
@@ -178,6 +179,8 @@ packages/workspace-fs/
 - normalized event stream
 - debouncing and overflow handling
 - snapshot support
+- active-workspace-only lifecycle
+- reference-counted sharing across consumers in the same workspace
 
 `search/` and `watch/` should be implemented as one coordinated subsystem inside `packages/workspace-fs`, not as separate feature-specific utilities. Watching is what keeps file search and keyword/content search coherent after external edits, git operations, and file moves.
 
@@ -229,6 +232,51 @@ Notes:
 - `overflow` means the renderer must request a fresh snapshot
 - `revision` gives subscribers an ordered stream for reconciliation
 
+## Performance Priorities
+
+Performance work should be implemented in this order:
+
+### Priority 0: Required baseline
+
+- only active workspaces should have live watchers
+- one shared watcher per active workspace root in main
+- renderer subscriptions must ref-count onto that single watcher instead of creating parallel listeners
+- no background listeners for inactive, hidden, or unopened workspaces
+
+This is the highest-value control. The app should never watch every registered workspace by default.
+
+### Priority 1: Event reduction
+
+- filter ignored paths before they leave the watcher layer
+- debounce/coalesce bursts from `git checkout`, installs, and branch switches
+- emit `overflow` and force snapshot reconciliation when event streams become unreliable
+
+This keeps bursty workspace churn from overwhelming renderer state and query invalidation.
+
+### Priority 2: Smarter invalidation
+
+- patch visible tree state directly for create/update/delete where possible
+- avoid broad query invalidation on every filesystem event
+- refresh only expanded folders, selected files, and open editors eagerly
+- make the changes sidebar recompute only when events can affect git-visible state
+
+This is the main UI responsiveness improvement after watcher count is under control.
+
+### Priority 3: Search/index efficiency
+
+- keep file search, keyword/content search, and watching in one subsystem
+- move from invalidate-all toward incremental index patching
+- reserve full index rebuilds for overflow, startup, or unrecoverable churn
+
+This matters most on large repositories and after bulk filesystem operations.
+
+### Priority 4: Hot-path filesystem caching
+
+- add short-lived caches for repeated `stat`/`realpath`/path-validation work on open files
+- cache should be conservative and easy to invalidate from watcher events
+
+This is useful, but it comes after watcher scoping and invalidation improvements.
+
 ## Migration Phases
 
 ### Phase 1: Create the shared package
@@ -260,11 +308,12 @@ Deliverable:
 ### Phase 3: Add watcher infrastructure with `@parcel/watcher`
 
 - create `WorkspaceWatcherManager` in desktop main
-- one watcher per workspace root
+- one watcher per active workspace root
 - share watchers across subscribers with reference counting
 - normalize backend events into the shared event model
 - debounce noisy event bursts
 - emit `overflow` when the stream cannot be trusted and require a full snapshot refresh
+- tear watchers down when a workspace is no longer active or has no subscribers
 
 Deliverable:
 
@@ -275,6 +324,7 @@ Deliverable:
 - add a `filesystem.subscribeWorkspace` subscription route
 - stream normalized file events to renderer consumers
 - emit initial revision metadata on subscription
+- only subscribe for active/visible workspace consumers
 
 Deliverable:
 
@@ -303,6 +353,7 @@ Deliverable:
 - move duplicated chat host search implementations into the same package
 - keep watching in the same module so file search and keyword/content search share one invalidation path
 - invalidate and patch file search indexes from watcher events
+- prioritize incremental patching over full rebuilds where event quality allows
 - keep `ripgrep` as the primary content search engine
 
 Deliverable:
@@ -382,8 +433,10 @@ Notes:
 - switch each consumer directly onto `packages/workspace-fs` as it is migrated
 - compare old and new behavior during development and testing, not through a long-lived dual runtime path
 - instrument:
+  - active watcher count
   - watcher count
   - event lag
+  - burst size / debounce flush size
   - overflow count
   - full-rescan count
   - index rebuild duration

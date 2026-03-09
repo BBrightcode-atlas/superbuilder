@@ -15,6 +15,7 @@ import { useParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LuFile, LuFolder } from "react-icons/lu";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { useWorkspaceFileEvents } from "renderer/screens/main/components/WorkspaceView/hooks/useWorkspaceFileEvents";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import type {
 	DirectoryEntry,
@@ -158,14 +159,12 @@ export function FilesView() {
 		};
 	}, []);
 
-	electronTrpc.filesystem.subscribe.useSubscription(
-		{ workspaceId: workspaceId ?? "" },
-		{
-			enabled: Boolean(workspaceId && worktreePath),
-			onData: (event) => {
-				scheduleRefresh(event);
-			},
+	useWorkspaceFileEvents(
+		workspaceId ?? "",
+		(event) => {
+			scheduleRefresh(event);
 		},
+		Boolean(workspaceId && worktreePath),
 	);
 
 	const { createFile, createDirectory, rename, deleteItems, isDeleting } =

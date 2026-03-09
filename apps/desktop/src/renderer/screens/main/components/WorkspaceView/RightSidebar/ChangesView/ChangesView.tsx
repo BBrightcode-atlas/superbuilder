@@ -11,6 +11,7 @@ import { toast } from "@superset/ui/sonner";
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { useWorkspaceFileEvents } from "renderer/screens/main/components/WorkspaceView/hooks/useWorkspaceFileEvents";
 import { useBranchSyncInvalidation } from "renderer/screens/main/hooks/useBranchSyncInvalidation";
 import { useGitChangesStatus } from "renderer/screens/main/hooks/useGitChangesStatus";
 import { useChangesStore } from "renderer/stores/changes";
@@ -269,30 +270,28 @@ export function ChangesView({
 		};
 	}, []);
 
-	electronTrpc.filesystem.subscribe.useSubscription(
-		{ workspaceId: workspaceId ?? "" },
-		{
-			enabled: Boolean(workspaceId && worktreePath),
-			onData: () => {
-				if (refreshTimerRef.current) {
-					clearTimeout(refreshTimerRef.current);
-				}
+	useWorkspaceFileEvents(
+		workspaceId ?? "",
+		() => {
+			if (refreshTimerRef.current) {
+				clearTimeout(refreshTimerRef.current);
+			}
 
-				refreshTimerRef.current = setTimeout(() => {
-					refreshTimerRef.current = null;
-					Promise.all([
-						trpcUtils.changes.getBranches.invalidate({ worktreePath }),
-						trpcUtils.changes.getStatus.invalidate(),
-						trpcUtils.changes.getFileContents.invalidate({ worktreePath }),
-					]).catch((error) => {
-						console.error("[ChangesView] Failed to refresh changes state:", {
-							worktreePath,
-							error,
-						});
+			refreshTimerRef.current = setTimeout(() => {
+				refreshTimerRef.current = null;
+				Promise.all([
+					trpcUtils.changes.getBranches.invalidate({ worktreePath }),
+					trpcUtils.changes.getStatus.invalidate(),
+					trpcUtils.changes.getFileContents.invalidate({ worktreePath }),
+				]).catch((error) => {
+					console.error("[ChangesView] Failed to refresh changes state:", {
+						worktreePath,
+						error,
 					});
-				}, 75);
-			},
+				});
+			}, 75);
 		},
+		Boolean(workspaceId && worktreePath),
 	);
 
 	const expandedCommitHashes = useMemo(

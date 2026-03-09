@@ -17,6 +17,7 @@ import {
 	KeywordSearch,
 	useKeywordSearch,
 } from "renderer/screens/main/components/KeywordSearch";
+import { useWorkspaceFileEventBridge } from "renderer/screens/main/components/WorkspaceView/hooks/useWorkspaceFileEvents";
 import { WorkspaceInitializingView } from "renderer/screens/main/components/WorkspaceView/WorkspaceInitializingView";
 import { WorkspaceLayout } from "renderer/screens/main/components/WorkspaceView/WorkspaceLayout";
 import { useCreateOrOpenPR, usePRStatus } from "renderer/screens/main/hooks";
@@ -77,6 +78,7 @@ function WorkspacePage() {
 	const { data: workspace } = electronTrpc.workspaces.get.useQuery({
 		id: workspaceId,
 	});
+	useWorkspaceFileEventBridge(workspaceId, Boolean(workspace?.worktreePath));
 	const navigate = useNavigate();
 	const routeNavigate = Route.useNavigate();
 	const { tabId: searchTabId, paneId: searchPaneId } = Route.useSearch();

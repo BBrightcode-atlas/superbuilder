@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MosaicBranch } from "react-mosaic-component";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { FileSaveConflictDialog } from "renderer/screens/main/components/WorkspaceView/components/FileSaveConflictDialog";
+import { useWorkspaceFileEvents } from "renderer/screens/main/components/WorkspaceView/hooks/useWorkspaceFileEvents";
 import { useChangesStore } from "renderer/stores/changes";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import type { SplitPaneOptions, Tab } from "renderer/stores/tabs/types";
@@ -216,26 +217,24 @@ export function FileViewerPane({
 		}
 	}, [isDirty]);
 
-	electronTrpc.filesystem.subscribe.useSubscription(
-		{ workspaceId: workspaceId ?? "" },
-		{
-			enabled: Boolean(workspaceId && worktreePath && absoluteFilePath),
-			onData: (event) => {
-				if (event.type === "overflow") {
-					invalidateCurrentFile();
-					return;
-				}
-
-				if (
-					!event.absolutePath ||
-					!pathsMatch(event.absolutePath, absoluteFilePath)
-				) {
-					return;
-				}
-
+	useWorkspaceFileEvents(
+		workspaceId ?? "",
+		(event) => {
+			if (event.type === "overflow") {
 				invalidateCurrentFile();
-			},
+				return;
+			}
+
+			if (
+				!event.absolutePath ||
+				!pathsMatch(event.absolutePath, absoluteFilePath)
+			) {
+				return;
+			}
+
+			invalidateCurrentFile();
 		},
+		Boolean(workspaceId && worktreePath && absoluteFilePath),
 	);
 
 	const handlePin = () => {
