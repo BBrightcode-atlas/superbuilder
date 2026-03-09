@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import path from "node:path";
 import {
 	readFileBuffer,
 	readTextFile,
@@ -85,8 +85,8 @@ export const createFileContentsRouter = () => {
 			.input(
 				z.object({
 					worktreePath: z.string(),
-					filePath: z.string(),
-					oldPath: z.string().optional(),
+					absolutePath: z.string(),
+					oldAbsolutePath: z.string().optional(),
 					category: z.enum(["against-base", "committed", "staged", "unstaged"]),
 					commitHash: z.string().optional(),
 					defaultBranch: z.string().optional(),
@@ -97,12 +97,18 @@ export const createFileContentsRouter = () => {
 
 				const git = simpleGit(input.worktreePath);
 				const defaultBranch = input.defaultBranch || "main";
-				const originalPath = input.oldPath || input.filePath;
+				const filePath = toGitRelativePath(
+					input.worktreePath,
+					input.absolutePath,
+				);
+				const originalPath = input.oldAbsolutePath
+					? toGitRelativePath(input.worktreePath, input.oldAbsolutePath)
+					: filePath;
 
 				const { original, modified } = await getFileVersions(
 					git,
 					input.worktreePath,
-					input.filePath,
+					filePath,
 					originalPath,
 					input.category,
 					defaultBranch,
@@ -112,7 +118,7 @@ export const createFileContentsRouter = () => {
 				return {
 					original,
 					modified,
-					language: detectLanguage(input.filePath),
+					language: detectLanguage(input.absolutePath),
 				};
 			}),
 
@@ -120,7 +126,7 @@ export const createFileContentsRouter = () => {
 			.input(
 				z.object({
 					worktreePath: z.string(),
-					filePath: z.string(),
+					absolutePath: z.string(),
 					content: z.string(),
 					expectedContent: z.string().optional(),
 				}),
@@ -130,7 +136,7 @@ export const createFileContentsRouter = () => {
 					try {
 						const currentContent = await readTextFile({
 							rootPath: input.worktreePath,
-							absolutePath: resolve(input.worktreePath, input.filePath),
+							absolutePath: input.absolutePath,
 						});
 
 						if (currentContent !== input.expectedContent) {
@@ -164,7 +170,7 @@ export const createFileContentsRouter = () => {
 
 				await writeTextFile({
 					rootPath: input.worktreePath,
-					absolutePath: resolve(input.worktreePath, input.filePath),
+					absolutePath: input.absolutePath,
 					content: input.content,
 				});
 				clearStatusCacheForWorktree(input.worktreePath);
@@ -179,15 +185,14 @@ export const createFileContentsRouter = () => {
 			.input(
 				z.object({
 					worktreePath: z.string(),
-					filePath: z.string(),
+					absolutePath: z.string(),
 				}),
 			)
 			.query(async ({ input }): Promise<ReadWorkingFileResult> => {
 				try {
-					const absolutePath = resolve(input.worktreePath, input.filePath);
 					const stats = await statFile({
 						rootPath: input.worktreePath,
-						absolutePath,
+						absolutePath: input.absolutePath,
 					});
 					if (stats.size > MAX_FILE_SIZE) {
 						return { ok: false, reason: "too-large" };
@@ -195,7 +200,7 @@ export const createFileContentsRouter = () => {
 
 					const buffer = await readFileBuffer({
 						rootPath: input.worktreePath,
-						absolutePath,
+						absolutePath: input.absolutePath,
 					});
 
 					if (isBinaryContent(buffer)) {
@@ -227,20 +232,19 @@ export const createFileContentsRouter = () => {
 			.input(
 				z.object({
 					worktreePath: z.string(),
-					filePath: z.string(),
+					absolutePath: z.string(),
 				}),
 			)
 			.query(async ({ input }): Promise<ReadWorkingFileImageResult> => {
-				const mimeType = getImageMimeType(input.filePath);
+				const mimeType = getImageMimeType(input.absolutePath);
 				if (!mimeType) {
 					return { ok: false, reason: "not-image" };
 				}
 
 				try {
-					const absolutePath = resolve(input.worktreePath, input.filePath);
 					const stats = await statFile({
 						rootPath: input.worktreePath,
-						absolutePath,
+						absolutePath: input.absolutePath,
 					});
 					if (stats.size > MAX_IMAGE_SIZE) {
 						return { ok: false, reason: "too-large" };
@@ -248,7 +252,7 @@ export const createFileContentsRouter = () => {
 
 					const buffer = await readFileBuffer({
 						rootPath: input.worktreePath,
-						absolutePath,
+						absolutePath: input.absolutePath,
 					});
 
 					const base64 = buffer.toString("base64");
@@ -277,6 +281,27 @@ type DiffCategory = "against-base" | "committed" | "staged" | "unstaged";
 interface FileVersions {
 	original: string;
 	modified: string;
+}
+
+function toGitRelativePath(worktreePath: string, absolutePath: string): string {
+	const normalizedWorktreePath = path.resolve(worktreePath);
+	const normalizedAbsolutePath = path.resolve(absolutePath);
+	const relativePath = path.relative(
+		normalizedWorktreePath,
+		normalizedAbsolutePath,
+	);
+
+	if (
+		relativePath === "" ||
+		relativePath === "." ||
+		relativePath === ".." ||
+		relativePath.startsWith(`..${path.sep}`) ||
+		path.isAbsolute(relativePath)
+	) {
+		throw new Error(`Path is outside worktree: ${absolutePath}`);
+	}
+
+	return relativePath.replace(/\\/g, "/");
 }
 
 async function getFileVersions(
@@ -386,7 +411,7 @@ async function getUnstagedVersions(
 
 	let modified = "";
 	try {
-		const absolutePath = resolve(worktreePath, filePath);
+		const absolutePath = path.resolve(worktreePath, filePath);
 		const stats = await statFile({
 			rootPath: worktreePath,
 			absolutePath,

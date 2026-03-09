@@ -104,22 +104,22 @@ export function RightSidebar() {
 	const { scrollToFile } = useScrollContext();
 
 	const invalidateFileContent = useCallback(
-		(filePath: string) => {
+		(absolutePath: string) => {
 			if (!worktreePath) return;
 
 			Promise.all([
 				trpcUtils.changes.readWorkingFile.invalidate({
 					worktreePath,
-					filePath,
+					absolutePath,
 				}),
 				trpcUtils.changes.getFileContents.invalidate({
 					worktreePath,
-					filePath,
+					absolutePath,
 				}),
 			]).catch((error) => {
 				console.error(
 					"[RightSidebar/invalidateFileContent] Failed to invalidate file content queries:",
-					{ worktreePath, filePath, error },
+					{ worktreePath, absolutePath, error },
 				);
 			});
 		},
@@ -129,23 +129,26 @@ export function RightSidebar() {
 	const handleFileOpenPane = useCallback(
 		(file: ChangedFile, category: ChangeCategory, commitHash?: string) => {
 			if (!workspaceId || !worktreePath) return;
+			const absolutePath = toAbsoluteWorkspacePath(worktreePath, file.path);
 			addFileViewerPane(workspaceId, {
-				filePath: toAbsoluteWorkspacePath(worktreePath, file.path),
+				filePath: absolutePath,
 				diffCategory: category,
 				fileStatus: file.status,
 				commitHash,
-				oldPath: file.oldPath,
+				oldPath: file.oldPath
+					? toAbsoluteWorkspacePath(worktreePath, file.oldPath)
+					: undefined,
 			});
-			invalidateFileContent(file.path);
+			invalidateFileContent(absolutePath);
 		},
 		[workspaceId, worktreePath, addFileViewerPane, invalidateFileContent],
 	);
 
 	const handleFileScrollTo = useCallback(
 		(file: ChangedFile, category: ChangeCategory, commitHash?: string) => {
-			scrollToFile(file, category, commitHash);
+			scrollToFile(file, category, commitHash, worktreePath);
 		},
-		[scrollToFile],
+		[scrollToFile, worktreePath],
 	);
 
 	const handleFileOpen =

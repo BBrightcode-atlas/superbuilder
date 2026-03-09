@@ -103,7 +103,7 @@ export function FileDiffSection({
 		useFileDiffEdit({
 			category,
 			worktreePath,
-			filePath: file.path,
+			absolutePath: toAbsoluteWorkspacePath(worktreePath, file.path),
 		});
 
 	const totalChanges = file.additions + file.deletions;
@@ -111,7 +111,7 @@ export function FileDiffSection({
 	const isGenerated = isGeneratedFile(file.path);
 	const isHiddenByDefault = isLargeDiff || isGenerated;
 
-	const fileKey = createFileKey(file, category, commitHash);
+	const fileKey = createFileKey(file, category, commitHash, worktreePath);
 	const isViewed = viewedFiles.has(fileKey);
 
 	const openInEditorMutation =
@@ -174,11 +174,17 @@ export function FileDiffSection({
 	}, [fileKey, setActiveFileKey, toggleEdit]);
 
 	useEffect(() => {
-		registerFileRef(file, category, commitHash, sectionRef.current);
+		registerFileRef(
+			file,
+			category,
+			commitHash,
+			worktreePath,
+			sectionRef.current,
+		);
 		return () => {
-			registerFileRef(file, category, commitHash, null);
+			registerFileRef(file, category, commitHash, worktreePath, null);
 		};
-	}, [file, category, commitHash, registerFileRef]);
+	}, [file, category, commitHash, registerFileRef, worktreePath]);
 
 	useEffect(() => {
 		const element = sectionRef.current;
@@ -229,8 +235,10 @@ export function FileDiffSection({
 		electronTrpc.changes.getFileContents.useQuery(
 			{
 				worktreePath,
-				filePath: file.path,
-				oldPath: file.oldPath,
+				absolutePath: toAbsoluteWorkspacePath(worktreePath, file.path),
+				oldAbsolutePath: file.oldPath
+					? toAbsoluteWorkspacePath(worktreePath, file.oldPath)
+					: undefined,
 				category,
 				commitHash,
 				defaultBranch: category === "against-base" ? baseBranch : undefined,

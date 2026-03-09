@@ -15,7 +15,7 @@ import { useWorkspaceFileEvents } from "renderer/screens/main/components/Workspa
 import { useBranchSyncInvalidation } from "renderer/screens/main/hooks/useBranchSyncInvalidation";
 import { useGitChangesStatus } from "renderer/screens/main/hooks/useGitChangesStatus";
 import { useChangesStore } from "renderer/stores/changes";
-import { toAbsoluteWorkspacePath } from "shared/absolute-paths";
+import { pathsMatch, toAbsoluteWorkspacePath } from "shared/absolute-paths";
 import type { ChangeCategory, ChangedFile } from "shared/changes-types";
 import type { FileSystemChangeEvent } from "shared/file-tree-types";
 import { CategorySection } from "./components/CategorySection";
@@ -337,7 +337,13 @@ export function ChangesView({
 					invalidations.push(
 						trpcUtils.changes.getFileContents.invalidate({
 							worktreePath,
-							filePath: selectedFileState.file.path,
+							absolutePath: selectedFileState.absolutePath,
+							oldAbsolutePath: selectedFileState.file.oldPath
+								? toAbsoluteWorkspacePath(
+										worktreePath,
+										selectedFileState.file.oldPath,
+									)
+								: undefined,
 							category: selectedFileState.category,
 							commitHash: selectedFileState.commitHash ?? undefined,
 							defaultBranch: effectiveBaseBranch,
@@ -451,14 +457,28 @@ export function ChangesView({
 			return;
 		}
 
-		const selectedPath = selectedFileState.file.path;
 		const existsInSelection =
 			selectedFileState.category === "against-base"
-				? againstBaseFiles.some((file) => file.path === selectedPath)
+				? againstBaseFiles.some((file) =>
+						pathsMatch(
+							toAbsoluteWorkspacePath(worktreePath, file.path),
+							selectedFileState.absolutePath,
+						),
+					)
 				: selectedFileState.category === "staged"
-					? stagedFiles.some((file) => file.path === selectedPath)
+					? stagedFiles.some((file) =>
+							pathsMatch(
+								toAbsoluteWorkspacePath(worktreePath, file.path),
+								selectedFileState.absolutePath,
+							),
+						)
 					: selectedFileState.category === "unstaged"
-						? combinedUnstaged.some((file) => file.path === selectedPath)
+						? combinedUnstaged.some((file) =>
+								pathsMatch(
+									toAbsoluteWorkspacePath(worktreePath, file.path),
+									selectedFileState.absolutePath,
+								),
+							)
 						: selectedFileState.category === "committed";
 
 		if (!existsInSelection) {

@@ -9,11 +9,7 @@ import { useWorkspaceFileEvents } from "renderer/screens/main/components/Workspa
 import { useChangesStore } from "renderer/stores/changes";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import type { SplitPaneOptions, Tab } from "renderer/stores/tabs/types";
-import {
-	pathsMatch,
-	toAbsoluteWorkspacePath,
-	toRelativeWorkspacePath,
-} from "shared/absolute-paths";
+import { pathsMatch, toAbsoluteWorkspacePath } from "shared/absolute-paths";
 import { isImageFile, isMarkdownFile } from "shared/file-types";
 import type { FileViewerMode } from "shared/tabs-types";
 import type { CodeEditorAdapter } from "../../../components";
@@ -146,10 +142,6 @@ export function FileViewerPane({
 		() => toAbsoluteWorkspacePath(worktreePath, filePath),
 		[worktreePath, filePath],
 	);
-	const relativeFilePath = useMemo(
-		() => toRelativeWorkspacePath(worktreePath, filePath),
-		[filePath, worktreePath],
-	);
 	const isImage = useMemo(() => isImageFile(filePath), [filePath]);
 	const hasExternalDiskChange =
 		isDirty &&
@@ -168,21 +160,22 @@ export function FileViewerPane({
 			invalidations.push(
 				trpcUtils.changes.getFileContents.invalidate({
 					worktreePath,
-					filePath: relativeFilePath,
+					absolutePath: absoluteFilePath,
+					oldAbsolutePath: oldPath,
 				}),
 			);
 		} else if (viewMode === "rendered" && isImage) {
 			invalidations.push(
 				trpcUtils.changes.readWorkingFileImage.invalidate({
 					worktreePath,
-					filePath: relativeFilePath,
+					absolutePath: absoluteFilePath,
 				}),
 			);
 		} else {
 			invalidations.push(
 				trpcUtils.changes.readWorkingFile.invalidate({
 					worktreePath,
-					filePath: relativeFilePath,
+					absolutePath: absoluteFilePath,
 				}),
 			);
 		}
@@ -190,11 +183,11 @@ export function FileViewerPane({
 		Promise.all(invalidations).catch((error) => {
 			console.error("[FileViewerPane] Failed to invalidate file queries:", {
 				worktreePath,
-				filePath: relativeFilePath,
+				absolutePath: absoluteFilePath,
 				error,
 			});
 		});
-	}, [filePath, isImage, relativeFilePath, trpcUtils, viewMode, worktreePath]);
+	}, [absoluteFilePath, filePath, isImage, oldPath, trpcUtils, viewMode, worktreePath]);
 
 	const handleEditorChange = useCallback((value: string | undefined) => {
 		if (value === undefined) return;

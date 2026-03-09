@@ -6,13 +6,13 @@ import { isDiffEditable } from "shared/changes-types";
 interface UseFileDiffEditParams {
 	category: ChangeCategory;
 	worktreePath: string;
-	filePath: string;
+	absolutePath: string;
 }
 
 export function useFileDiffEdit({
 	category,
 	worktreePath,
-	filePath,
+	absolutePath,
 }: UseFileDiffEditParams) {
 	const [isEditing, setIsEditing] = useState(false);
 	const editable = isDiffEditable(category);
@@ -34,15 +34,15 @@ export function useFileDiffEdit({
 			content: string,
 			options?: { expectedContent?: string; force?: boolean },
 		) => {
-			if (!worktreePath || !filePath) return;
+			if (!worktreePath || !absolutePath) return;
 			return saveFileMutation.mutateAsync({
 				worktreePath,
-				filePath,
+				absolutePath,
 				content,
 				expectedContent: options?.force ? undefined : options?.expectedContent,
 			});
 		},
-		[worktreePath, filePath, saveFileMutation],
+		[absolutePath, worktreePath, saveFileMutation],
 	);
 
 	const toggleEdit = editable ? () => setIsEditing((prev) => !prev) : undefined;

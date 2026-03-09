@@ -113,7 +113,7 @@ export interface FileViewerState {
 	diffCategory?: ChangeCategory;
 	/** Commit hash for committed category diffs */
 	commitHash?: string;
-	/** Original path for renamed files */
+	/** Canonical absolute original path for renamed files */
 	oldPath?: string;
 	/** Initial line to scroll to (raw mode only, transient - applied once) */
 	initialLine?: number;

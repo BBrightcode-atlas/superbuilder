@@ -19,6 +19,7 @@ This should behave more like VS Code:
 - rename and move are first-class path transitions
 - relative paths are derived display data, not primary identifiers
 - file trees and search results react to external changes automatically
+- file viewer, editor save/read flows, and changes sidebar selection/scroll state use absolute paths instead of repo-relative keys
 
 ## Decisions
 
@@ -131,6 +132,7 @@ Rules:
 - `relativePath` is derived metadata
 - move and rename produce a new `absolutePath`
 - UI state such as expansion and selection is keyed by `absolutePath`
+- renderer query inputs should use `absolutePath`; relative paths are only for display or git-native payloads that have not yet been normalized
 
 ## New package
 

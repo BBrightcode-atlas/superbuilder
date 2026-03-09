@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from "react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
-import { toRelativeWorkspacePath } from "shared/absolute-paths";
 import type { ChangeCategory } from "shared/changes-types";
 import { isImageFile } from "shared/file-types";
 
@@ -30,10 +29,6 @@ export function useFileContent({
 	// For remote URLs (e.g. Vercel Blob), skip all IPC queries
 	const isRemote =
 		filePath.startsWith("https://") || filePath.startsWith("http://");
-	const relativeFilePath = useMemo(
-		() => toRelativeWorkspacePath(worktreePath, filePath),
-		[filePath, worktreePath],
-	);
 
 	const { data: branchData } = electronTrpc.changes.getBranches.useQuery(
 		{ worktreePath },
@@ -48,7 +43,7 @@ export function useFileContent({
 
 	const { data: rawFileData, isLoading: isLoadingRaw } =
 		electronTrpc.changes.readWorkingFile.useQuery(
-			{ worktreePath, filePath: relativeFilePath },
+			{ worktreePath, absolutePath: filePath },
 			{
 				enabled:
 					!isRemote &&
@@ -61,7 +56,7 @@ export function useFileContent({
 
 	const { data: imageData, isLoading: isLoadingImage } =
 		electronTrpc.changes.readWorkingFileImage.useQuery(
-			{ worktreePath, filePath: relativeFilePath },
+			{ worktreePath, absolutePath: filePath },
 			{
 				enabled:
 					!isRemote &&
@@ -76,8 +71,8 @@ export function useFileContent({
 		electronTrpc.changes.getFileContents.useQuery(
 			{
 				worktreePath,
-				filePath: relativeFilePath,
-				oldPath,
+				absolutePath: filePath,
+				oldAbsolutePath: oldPath,
 				category: diffCategory ?? "unstaged",
 				commitHash,
 				defaultBranch:
@@ -88,7 +83,7 @@ export function useFileContent({
 					!isRemote &&
 					viewMode === "diff" &&
 					!!diffCategory &&
-					!!relativeFilePath &&
+					!!filePath &&
 					!!worktreePath,
 			},
 		);
