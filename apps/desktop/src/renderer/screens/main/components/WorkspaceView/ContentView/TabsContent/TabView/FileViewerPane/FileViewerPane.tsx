@@ -150,6 +150,7 @@ export function FileViewerPane({
 		() => toRelativeWorkspacePath(worktreePath, filePath),
 		[filePath, worktreePath],
 	);
+	const isImage = useMemo(() => isImageFile(filePath), [filePath]);
 	const hasExternalDiskChange =
 		isDirty &&
 		viewMode === "raw" &&
@@ -162,28 +163,38 @@ export function FileViewerPane({
 			return;
 		}
 
-		Promise.all([
-			trpcUtils.changes.readWorkingFile.invalidate({
-				worktreePath,
-				filePath: relativeFilePath,
-			}),
-			trpcUtils.changes.readWorkingFileImage.invalidate({
-				worktreePath,
-				filePath: relativeFilePath,
-			}),
-			trpcUtils.changes.getFileContents.invalidate({
-				worktreePath,
-				filePath: relativeFilePath,
-			}),
-			trpcUtils.changes.getStatus.invalidate(),
-		]).catch((error) => {
+		const invalidations: Promise<unknown>[] = [];
+		if (viewMode === "diff") {
+			invalidations.push(
+				trpcUtils.changes.getFileContents.invalidate({
+					worktreePath,
+					filePath: relativeFilePath,
+				}),
+			);
+		} else if (viewMode === "rendered" && isImage) {
+			invalidations.push(
+				trpcUtils.changes.readWorkingFileImage.invalidate({
+					worktreePath,
+					filePath: relativeFilePath,
+				}),
+			);
+		} else {
+			invalidations.push(
+				trpcUtils.changes.readWorkingFile.invalidate({
+					worktreePath,
+					filePath: relativeFilePath,
+				}),
+			);
+		}
+
+		Promise.all(invalidations).catch((error) => {
 			console.error("[FileViewerPane] Failed to invalidate file queries:", {
 				worktreePath,
 				filePath: relativeFilePath,
 				error,
 			});
 		});
-	}, [filePath, relativeFilePath, trpcUtils, worktreePath]);
+	}, [filePath, isImage, relativeFilePath, trpcUtils, viewMode, worktreePath]);
 
 	const handleEditorChange = useCallback((value: string | undefined) => {
 		if (value === undefined) return;

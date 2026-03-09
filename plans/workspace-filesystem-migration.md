@@ -453,6 +453,7 @@ This keeps bursty workspace churn from overwhelming renderer state and query inv
 - avoid broad query invalidation on every filesystem event
 - refresh only expanded folders, selected files, and open editors eagerly
 - make the changes sidebar recompute only when events can affect git-visible state
+- for open editors, invalidate only the active file payload for the current view mode rather than raw/image/diff/status together
 - for Changes specifically: invalidate git status on workspace file events, invalidate branches only on overflow or branch-level uncertainty, and invalidate diff contents only for the selected file rather than all file diff queries
 
 This is the main UI responsiveness improvement after watcher count is under control.
