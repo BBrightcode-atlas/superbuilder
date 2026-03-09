@@ -460,6 +460,7 @@ This is the main UI responsiveness improvement after watcher count is under cont
 
 - keep file search, keyword/content search, and watching in one subsystem
 - move from invalidate-all toward incremental index patching
+- patch cached filename search indexes directly from normal create/update/delete events
 - reserve full index rebuilds for overflow, startup, or unrecoverable churn
 
 This matters most on large repositories and after bulk filesystem operations.
@@ -548,6 +549,7 @@ Deliverable:
 - keep watching in the same module so file search and keyword/content search share one invalidation path
 - invalidate and patch file search indexes from watcher events
 - prioritize incremental patching over full rebuilds where event quality allows
+- keep full filename-index invalidation as the fallback for overflow, watcher errors, or other unrecoverable cache uncertainty
 - keep `ripgrep` as the primary content search engine
 
 Deliverable:

@@ -8,6 +8,7 @@ import { normalizeAbsolutePath, toRelativePath } from "./paths";
 import {
 	DEFAULT_IGNORE_PATTERNS,
 	invalidateSearchIndexesForRoot,
+	patchSearchIndexesForRoot,
 } from "./search";
 import type { WorkspaceFsWatchEvent } from "./types";
 
@@ -168,11 +169,13 @@ export class WorkspaceFsWatcherManager {
 			return;
 		}
 
-		invalidateSearchIndexesForRoot(state.rootPath);
+		const normalizedEvents = await Promise.all(
+			events.map((event) => this.normalizeEvent(state, event)),
+		);
+		patchSearchIndexesForRoot(state.rootPath, normalizedEvents);
 
-		for (const event of events) {
-			const normalized = await this.normalizeEvent(state, event);
-			this.emit(state, normalized);
+		for (const normalizedEvent of normalizedEvents) {
+			this.emit(state, normalizedEvent);
 		}
 	}
 

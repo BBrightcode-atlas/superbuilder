@@ -9,6 +9,7 @@ import type {
 	WorkspaceFsEntry,
 	WorkspaceFsKeywordMatch,
 	WorkspaceFsSearchResult,
+	WorkspaceFsWatchEvent,
 } from "./types";
 
 const execFileAsync = promisify(execFile);
@@ -82,6 +83,7 @@ export interface SearchKeywordOptions {
 
 const searchIndexCache = new Map<string, FileSearchCacheEntry>();
 const searchIndexBuilds = new Map<string, Promise<FileSearchIndex>>();
+const searchIndexVersions = new Map<string, number>();
 
 function createFileSearchFuse(
 	items: WorkspaceFsEntry[],
@@ -102,6 +104,16 @@ function getSearchCacheKey({
 	includeHidden,
 }: SearchIndexKeyOptions): string {
 	return `${normalizeAbsolutePath(rootPath)}::${includeHidden ? "hidden" : "visible"}`;
+}
+
+function getSearchIndexVersion(cacheKey: string): number {
+	return searchIndexVersions.get(cacheKey) ?? 0;
+}
+
+function advanceSearchIndexVersion(cacheKey: string): number {
+	const nextVersion = getSearchIndexVersion(cacheKey) + 1;
+	searchIndexVersions.set(cacheKey, nextVersion);
+	return nextVersion;
 }
 
 function parseGlobPatterns(input: string): string[] {
@@ -185,6 +197,8 @@ function globToRegExp(pattern: string): RegExp {
 	regex += "$";
 	return new RegExp(regex);
 }
+
+const defaultIgnoreMatchers = DEFAULT_IGNORE_PATTERNS.map(globToRegExp);
 
 function createPathFilterMatcher({
 	includePattern,
@@ -271,9 +285,12 @@ async function getSearchIndex(
 	}
 
 	if (cached && !inFlight) {
+		const buildVersion = getSearchIndexVersion(cacheKey);
 		const buildPromise = buildSearchIndex(options)
 			.then((index) => {
-				searchIndexCache.set(cacheKey, { index, builtAt: Date.now() });
+				if (getSearchIndexVersion(cacheKey) === buildVersion) {
+					searchIndexCache.set(cacheKey, { index, builtAt: Date.now() });
+				}
 				searchIndexBuilds.delete(cacheKey);
 				return index;
 			})
@@ -293,9 +310,12 @@ async function getSearchIndex(
 		return await inFlight;
 	}
 
+	const buildVersion = getSearchIndexVersion(cacheKey);
 	const buildPromise = buildSearchIndex(options)
 		.then((index) => {
-			searchIndexCache.set(cacheKey, { index, builtAt: Date.now() });
+			if (getSearchIndexVersion(cacheKey) === buildVersion) {
+				searchIndexCache.set(cacheKey, { index, builtAt: Date.now() });
+			}
 			searchIndexBuilds.delete(cacheKey);
 			return index;
 		})
@@ -612,9 +632,97 @@ async function searchKeywordWithScan({
 	return rankKeywordMatches(matches, query, safeLimit);
 }
 
+function isHiddenRelativePath(relativePath: string): boolean {
+	return normalizePathForGlob(relativePath)
+		.split("/")
+		.some((segment) => segment.startsWith(".") && segment.length > 1);
+}
+
+function shouldIndexRelativePath(
+	relativePath: string,
+	includeHidden: boolean,
+): boolean {
+	const normalizedPath = normalizePathForGlob(relativePath);
+	if (!includeHidden && isHiddenRelativePath(normalizedPath)) {
+		return false;
+	}
+
+	return !defaultIgnoreMatchers.some((matcher) => matcher.test(normalizedPath));
+}
+
+function patchSearchIndexForEvent({
+	index,
+	rootPath,
+	includeHidden,
+	event,
+}: {
+	index: FileSearchIndex;
+	rootPath: string;
+	includeHidden: boolean;
+	event: Exclude<WorkspaceFsWatchEvent, { type: "overflow" }>;
+}): FileSearchIndex {
+	const absolutePath = normalizeAbsolutePath(event.absolutePath);
+	const relativePath = toRelativePath(rootPath, absolutePath);
+	const existingIndex = index.items.findIndex(
+		(item) => item.absolutePath === absolutePath,
+	);
+	const shouldRemove =
+		event.type === "delete" ||
+		event.isDirectory ||
+		!shouldIndexRelativePath(relativePath, includeHidden);
+
+	if (shouldRemove) {
+		if (existingIndex === -1) {
+			return index;
+		}
+
+		const nextItems = index.items.filter(
+			(item) => item.absolutePath !== absolutePath,
+		);
+		return {
+			items: nextItems,
+			fuse: createFileSearchFuse(nextItems),
+		};
+	}
+
+	const nextEntry: WorkspaceFsEntry = {
+		id: absolutePath,
+		name: path.basename(absolutePath),
+		absolutePath,
+		relativePath,
+		isDirectory: false,
+	};
+
+	if (existingIndex === -1) {
+		const nextItems = [...index.items, nextEntry];
+		return {
+			items: nextItems,
+			fuse: createFileSearchFuse(nextItems),
+		};
+	}
+
+	const existingEntry = index.items[existingIndex];
+	if (
+		existingEntry &&
+		existingEntry.name === nextEntry.name &&
+		existingEntry.relativePath === nextEntry.relativePath
+	) {
+		return index;
+	}
+
+	const nextItems = index.items.slice();
+	nextItems[existingIndex] = nextEntry;
+	return {
+		items: nextItems,
+		fuse: createFileSearchFuse(nextItems),
+	};
+}
+
 export function invalidateSearchIndex(options: SearchIndexKeyOptions): void {
-	searchIndexCache.delete(getSearchCacheKey(options));
-	searchIndexBuilds.delete(getSearchCacheKey(options));
+	const cacheKey = getSearchCacheKey(options);
+	advanceSearchIndexVersion(cacheKey);
+	searchIndexCache.delete(cacheKey);
+	searchIndexBuilds.delete(cacheKey);
 }
 
 export function invalidateSearchIndexesForRoot(rootPath: string): void {
@@ -624,8 +732,68 @@ export function invalidateSearchIndexesForRoot(rootPath: string): void {
 }
 
 export function invalidateAllSearchIndexes(): void {
+	for (const cacheKey of new Set([
+		...searchIndexCache.keys(),
+		...searchIndexBuilds.keys(),
+		...searchIndexVersions.keys(),
+	])) {
+		advanceSearchIndexVersion(cacheKey);
+	}
 	searchIndexCache.clear();
 	searchIndexBuilds.clear();
+}
+
+export function patchSearchIndexesForRoot(
+	rootPath: string,
+	events: WorkspaceFsWatchEvent[],
+): void {
+	if (events.length === 0) {
+		return;
+	}
+
+	const normalizedRootPath = normalizeAbsolutePath(rootPath);
+	const patchableEvents = events.filter(
+		(event): event is Exclude<WorkspaceFsWatchEvent, { type: "overflow" }> =>
+			event.type !== "overflow",
+	);
+
+	if (patchableEvents.length === 0) {
+		return;
+	}
+
+	for (const includeHidden of [true, false]) {
+		const cacheKey = getSearchCacheKey({
+			rootPath: normalizedRootPath,
+			includeHidden,
+		});
+		const cached = searchIndexCache.get(cacheKey);
+		const hasInFlightBuild = searchIndexBuilds.has(cacheKey);
+		if (!cached && !hasInFlightBuild) {
+			continue;
+		}
+
+		advanceSearchIndexVersion(cacheKey);
+		searchIndexBuilds.delete(cacheKey);
+
+		if (!cached) {
+			continue;
+		}
+
+		let nextIndex = cached.index;
+		for (const event of patchableEvents) {
+			nextIndex = patchSearchIndexForEvent({
+				index: nextIndex,
+				rootPath: normalizedRootPath,
+				includeHidden,
+				event,
+			});
+		}
+
+		searchIndexCache.set(cacheKey, {
+			index: nextIndex,
+			builtAt: Date.now(),
+		});
+	}
 }
 
 export async function searchFiles({
