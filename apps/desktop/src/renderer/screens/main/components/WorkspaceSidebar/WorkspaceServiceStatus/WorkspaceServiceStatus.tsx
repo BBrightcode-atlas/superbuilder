@@ -3,7 +3,10 @@ import { Button } from "@superset/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@superset/ui/popover";
 import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useCallback, useEffect, useState } from "react";
-import { useWorkspaceServiceClient } from "renderer/hooks/useWorkspaceServiceClient";
+import { env } from "renderer/env.renderer";
+import { authClient } from "renderer/lib/auth-client";
+import { useWorkspaceService } from "renderer/routes/_authenticated/providers/WorkspaceServiceProvider";
+import { MOCK_ORG_ID } from "shared/constants";
 
 type HealthStatus = "unknown" | "ok" | "error";
 
@@ -16,34 +19,42 @@ interface ServiceInfo {
 
 export function WorkspaceServiceStatus() {
 	const enabled = useFeatureFlagEnabled(FEATURE_FLAGS.V2_CLOUD);
-	const { client } = useWorkspaceServiceClient();
+	const { services } = useWorkspaceService();
+	const { data: session } = authClient.useSession();
+
+	const activeOrgId = env.SKIP_ENV_VALIDATION
+		? MOCK_ORG_ID
+		: (session?.session?.activeOrganizationId ?? null);
+
+	const service = activeOrgId ? services.get(activeOrgId) : null;
+
 	const [status, setStatus] = useState<HealthStatus>("unknown");
 	const [info, setInfo] = useState<ServiceInfo | null>(null);
 
 	const checkHealth = useCallback(async () => {
-		if (!client) {
+		if (!service) {
 			setStatus("unknown");
 			return;
 		}
 
 		try {
-			const result = await client.health.check.query();
+			const result = await service.client.health.check.query();
 			setStatus(result.status === "ok" ? "ok" : "error");
 		} catch {
 			setStatus("error");
 		}
-	}, [client]);
+	}, [service]);
 
 	const fetchInfo = useCallback(async () => {
-		if (!client) return;
+		if (!service) return;
 
 		try {
-			const result = await client.health.info.query();
+			const result = await service.client.health.info.query();
 			setInfo(result);
 		} catch {
 			setInfo(null);
 		}
-	}, [client]);
+	}, [service]);
 
 	useEffect(() => {
 		checkHealth();
@@ -76,6 +87,9 @@ export function WorkspaceServiceStatus() {
 				<div className="space-y-1">
 					<div className="font-medium">Workspace Service</div>
 					<div className="text-muted-foreground">Status: {status}</div>
+					{service && (
+						<div className="text-muted-foreground">{service.url}</div>
+					)}
 					{info && (
 						<>
 							<div className="text-muted-foreground">

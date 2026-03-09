@@ -7,7 +7,13 @@ const clientCache = new Map<
 	ReturnType<typeof createTRPCClient<AppRouter>>
 >();
 
-export function getWorkspaceServiceClient(port: number) {
+export type WorkspaceServiceClient = ReturnType<
+	typeof createTRPCClient<AppRouter>
+>;
+
+export function getWorkspaceServiceClient(
+	port: number,
+): WorkspaceServiceClient {
 	const cached = clientCache.get(port);
 	if (cached) return cached;
 
