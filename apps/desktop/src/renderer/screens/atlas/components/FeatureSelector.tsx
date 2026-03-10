@@ -6,7 +6,7 @@ import { GroupFilter } from "./GroupFilter";
 interface FeatureSelectorProps {
   registry: {
     features: Record<string, { name: string; type: string; group: string }>;
-    groups: Array<{ id: string; label: string }>;
+    groups: Record<string, { label: string; order: number }>;
     core: string[];
   };
   selected: string[];
@@ -21,6 +21,10 @@ export function FeatureSelector({
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const features = Object.entries(registry.features);
 
+  const groupsArray = Object.entries(registry.groups)
+    .map(([id, meta]) => ({ id, label: meta.label, order: meta.order }))
+    .sort((a, b) => a.order - b.order);
+
   const filtered = features.filter(([, f]) =>
     activeGroup ? f.group === activeGroup : true,
   );
@@ -28,7 +32,7 @@ export function FeatureSelector({
   return (
     <div className="space-y-4">
       <GroupFilter
-        groups={registry.groups}
+        groups={groupsArray}
         activeGroup={activeGroup}
         onGroupChange={setActiveGroup}
       />

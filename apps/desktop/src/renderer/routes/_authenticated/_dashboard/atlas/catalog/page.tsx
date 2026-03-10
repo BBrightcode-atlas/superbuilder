@@ -34,6 +34,11 @@ function CatalogPage() {
     dependencies: entry.dependencies,
   }));
 
+  const groups = registry.groups as Record<string, { label: string; order: number }>;
+  const groupsArray = Object.entries(groups)
+    .map(([id, meta]) => ({ id, label: meta.label, order: meta.order }))
+    .sort((a, b) => a.order - b.order);
+
   const filtered = allFeatures.filter((f) => {
     if (activeGroup && f.group !== activeGroup) return false;
     if (
@@ -64,7 +69,7 @@ function CatalogPage() {
       </div>
 
       <GroupFilter
-        groups={registry.groups}
+        groups={groupsArray}
         activeGroup={activeGroup}
         onGroupChange={setActiveGroup}
       />
