@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Badge } from "@superset/ui/badge";
-import { cn } from "@superset/ui/cn";
+import { cn } from "@superset/ui/utils";
 
 interface FeatureCardProps {
   id: string;

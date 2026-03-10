@@ -1,4 +1,4 @@
-import { cn } from "@superset/ui/cn";
+import { cn } from "@superset/ui/utils";
 
 interface GroupFilterProps {
   groups: Array<{ id: string; label: string }>;

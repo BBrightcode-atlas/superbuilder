@@ -5,7 +5,7 @@ import { Spinner } from "@superset/ui/spinner";
 import { HiArrowLeft } from "react-icons/hi2";
 
 export const Route = createFileRoute(
-  "/_authenticated/_dashboard/atlas/catalog/$featureId",
+  "/_authenticated/_dashboard/atlas/catalog/$featureId/",
 )({
   component: FeatureDetailPage,
 });

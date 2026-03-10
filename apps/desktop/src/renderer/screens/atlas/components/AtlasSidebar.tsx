@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { cn } from "@superset/ui/cn";
+import { cn } from "@superset/ui/utils";
 import { HiOutlineCube, HiOutlineWrenchScrewdriver } from "react-icons/hi2";
 
 const NAV_ITEMS = [

@@ -1,4 +1,4 @@
-import { cn } from "@superset/ui/cn";
+import { cn } from "@superset/ui/utils";
 import { Checkbox } from "@superset/ui/checkbox";
 import { useState } from "react";
 import { GroupFilter } from "./GroupFilter";

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
-import { loadConfig, loadRegistry, validateRegistry } from "@superset/atlas-engine";
+import { loadConfig, loadRegistry, validateRegistry } from "@superbuilder/atlas-engine";
 
 function getAtlasPath(): string {
 	const envPath = process.env.ATLAS_PATH;

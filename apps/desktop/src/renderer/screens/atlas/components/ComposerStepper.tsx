@@ -1,4 +1,4 @@
-import { cn } from "@superset/ui/cn";
+import { cn } from "@superset/ui/utils";
 
 const STEPS = [
   { label: "Feature 선택", description: "사용할 Feature를 선택하세요" },
