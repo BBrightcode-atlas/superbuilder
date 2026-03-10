@@ -1,4 +1,10 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+	blob,
+	index,
+	integer,
+	sqliteTable,
+	text,
+} from "drizzle-orm/sqlite-core";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -35,3 +41,24 @@ export const atlasProjects = sqliteTable(
 
 export type InsertAtlasProject = typeof atlasProjects.$inferInsert;
 export type SelectAtlasProject = typeof atlasProjects.$inferSelect;
+
+/**
+ * Atlas Integrations - stores encrypted API tokens for external services
+ */
+export const atlasIntegrations = sqliteTable("atlas_integrations", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => uuidv4()),
+	service: text("service").$type<"supabase" | "vercel">().notNull().unique(),
+	encryptedToken: blob("encrypted_token", { mode: "buffer" }).notNull(),
+	metadata: text("metadata", { mode: "json" }).$type<Record<string, string>>(),
+	createdAt: integer("created_at")
+		.notNull()
+		.$defaultFn(() => Date.now()),
+	updatedAt: integer("updated_at")
+		.notNull()
+		.$defaultFn(() => Date.now()),
+});
+
+export type InsertAtlasIntegration = typeof atlasIntegrations.$inferInsert;
+export type SelectAtlasIntegration = typeof atlasIntegrations.$inferSelect;

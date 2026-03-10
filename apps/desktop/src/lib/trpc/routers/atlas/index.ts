@@ -3,6 +3,7 @@ import { createAtlasComposerRouter } from "./composer";
 import { createAtlasDeploymentsRouter } from "./deployments";
 import { createAtlasRegistryRouter } from "./registry";
 import { createAtlasResolverRouter } from "./resolver";
+import { createAtlasSupabaseRouter } from "./supabase";
 
 export const createAtlasRouter = () =>
 	router({
@@ -10,4 +11,5 @@ export const createAtlasRouter = () =>
 		resolver: createAtlasResolverRouter(),
 		composer: createAtlasComposerRouter(),
 		deployments: createAtlasDeploymentsRouter(),
+		supabase: createAtlasSupabaseRouter(),
 	});
