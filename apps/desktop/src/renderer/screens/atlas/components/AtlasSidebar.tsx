@@ -1,6 +1,10 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@superset/ui/utils";
-import { HiOutlineCube, HiOutlineWrenchScrewdriver } from "react-icons/hi2";
+import {
+  HiOutlineCube,
+  HiOutlineWrenchScrewdriver,
+  HiOutlineRocketLaunch,
+} from "react-icons/hi2";
 
 const NAV_ITEMS = [
   { to: "/atlas/catalog", label: "Catalog", icon: HiOutlineCube },
@@ -8,6 +12,11 @@ const NAV_ITEMS = [
     to: "/atlas/composer",
     label: "Composer",
     icon: HiOutlineWrenchScrewdriver,
+  },
+  {
+    to: "/atlas/deployments",
+    label: "Deployments",
+    icon: HiOutlineRocketLaunch,
   },
 ] as const;
 
