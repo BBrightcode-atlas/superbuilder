@@ -9,9 +9,9 @@ export function usePaywall() {
 
 	const userPlan: UserPlan = (session?.session?.plan as UserPlan) ?? "free";
 
-	function hasAccess(feature: GatedFeature): boolean {
-		void feature;
-		return userPlan === "pro" || userPlan === "enterprise";
+	function hasAccess(_feature: GatedFeature): boolean {
+		// Superbuilder: all features unlocked in local desktop mode
+		return true;
 	}
 
 	function gateFeature(

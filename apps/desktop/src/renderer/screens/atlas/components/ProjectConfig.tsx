@@ -1,7 +1,8 @@
 import { Button } from "@superset/ui/button";
 import { Input } from "@superset/ui/input";
 import { Label } from "@superset/ui/label";
-import { HiOutlineFolder } from "react-icons/hi2";
+import { LuFolderOpen } from "react-icons/lu";
+import { electronTrpc } from "renderer/lib/electron-trpc";
 
 interface ProjectConfigProps {
   projectName: string;
@@ -16,6 +17,21 @@ export function ProjectConfig({
   targetPath,
   onTargetPathChange,
 }: ProjectConfigProps) {
+  const selectDirectory = electronTrpc.projects.selectDirectory.useMutation();
+
+  const handleBrowse = () => {
+    selectDirectory.mutate(
+      { defaultPath: targetPath || undefined },
+      {
+        onSuccess: (result) => {
+          if (!result.canceled && result.path) {
+            onTargetPathChange(result.path);
+          }
+        },
+      },
+    );
+  };
+
   return (
     <div className="space-y-4 max-w-lg">
       <div className="space-y-2">
@@ -41,8 +57,13 @@ export function ProjectConfig({
             placeholder="/Users/username/Projects/my-saas-project"
             className="flex-1"
           />
-          <Button variant="outline" size="icon">
-            <HiOutlineFolder className="size-4" />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleBrowse}
+            disabled={selectDirectory.isPending}
+          >
+            <LuFolderOpen className="size-4" />
           </Button>
         </div>
       </div>

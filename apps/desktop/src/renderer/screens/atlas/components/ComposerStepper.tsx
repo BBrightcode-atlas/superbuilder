@@ -1,5 +1,5 @@
 import { cn } from "@superset/ui/utils";
-import { LuCheck, LuLoader2 } from "react-icons/lu";
+import { LuCheck, LuLoader } from "react-icons/lu";
 
 const STEPS = [
   { label: "Feature 선택", description: "사용할 Feature를 선택하세요" },
@@ -48,7 +48,7 @@ export function ComposerStepper({
               {isCompleted ? (
                 <LuCheck className="size-3.5" />
               ) : isActive ? (
-                <LuLoader2 className="size-3.5 animate-spin" />
+                <LuLoader className="size-3.5 animate-spin" />
               ) : (
                 i + 1
               )}

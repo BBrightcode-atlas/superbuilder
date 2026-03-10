@@ -1,6 +1,6 @@
 import { cn } from "@superset/ui/utils";
 import { Button } from "@superset/ui/button";
-import { LuCheck, LuLoader2, LuX, LuSkipForward } from "react-icons/lu";
+import { LuCheck, LuLoader, LuX, LuCircle } from "react-icons/lu";
 
 export type PipelineStepStatus = "pending" | "running" | "done" | "failed" | "skipped";
 
@@ -18,10 +18,10 @@ interface PipelineProgressProps {
 
 const STATUS_ICON: Record<PipelineStepStatus, React.ReactNode> = {
   pending: <div className="size-2 rounded-full bg-muted-foreground" />,
-  running: <LuLoader2 className="size-4 animate-spin text-primary" />,
+  running: <LuLoader className="size-4 animate-spin text-primary" />,
   done: <LuCheck className="size-4 text-green-500" />,
   failed: <LuX className="size-4 text-destructive" />,
-  skipped: <LuSkipForward className="size-4 text-muted-foreground" />,
+  skipped: <LuCircle className="size-4 text-muted-foreground" />,
 };
 
 export function PipelineProgress({ steps, onRetry, onSkip }: PipelineProgressProps) {
