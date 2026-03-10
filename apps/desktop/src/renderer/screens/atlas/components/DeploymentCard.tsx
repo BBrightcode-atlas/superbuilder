@@ -60,6 +60,18 @@ export function DeploymentCard({
 				{project.localPath}
 			</code>
 
+			{project.supabaseProjectUrl ? (
+				<a
+					href={project.supabaseProjectUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="flex items-center gap-1 text-xs text-primary hover:underline"
+				>
+					<LuExternalLink className="size-3" />
+					Supabase: {project.supabaseProjectUrl}
+				</a>
+			) : null}
+
 			{project.vercelUrl ? (
 				<a
 					href={project.vercelUrl}
@@ -68,7 +80,7 @@ export function DeploymentCard({
 					className="flex items-center gap-1 text-xs text-primary hover:underline"
 				>
 					<LuExternalLink className="size-3" />
-					{project.vercelUrl}
+					Vercel: {project.vercelUrl}
 				</a>
 			) : null}
 
