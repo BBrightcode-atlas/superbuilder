@@ -1,0 +1,11 @@
+{
+  "sources": [
+    {
+      "name": "feature-atlas",
+      "repo": "BBrightcode-atlas/feature-atlas",
+      "branch": "develop",
+      "localPath": "/path/to/your/feature-atlas",
+      "registry": "registry/features.json"
+    }
+  ]
+}

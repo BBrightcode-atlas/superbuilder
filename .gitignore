@@ -54,6 +54,9 @@ next-env.d.ts
 .superset/ports.json
 .superset/config.local.json
 
+# Superbuilder (machine-specific config; track example only)
+.superbuilder/config.json
+
 # tsbuildinfo
 *.tsbuildinfo
 
