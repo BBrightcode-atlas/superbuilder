@@ -223,8 +223,8 @@ async function quitApp(): Promise<void> {
 		buttons: ["Cancel", "Keep Sessions", "Kill Sessions"],
 		defaultId: 1,
 		cancelId: 0,
-		title: "Quit Superset?",
-		message: "Quit Superset?",
+		title: "Quit SuperBuilder?",
+		message: "Quit SuperBuilder?",
 		detail:
 			"Keep sessions running in the background, or kill all sessions and shut down the daemon?",
 	});

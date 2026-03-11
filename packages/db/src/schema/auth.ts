@@ -10,7 +10,8 @@ import {
 	uuid,
 } from "drizzle-orm/pg-core";
 
-export const authSchema = pgSchema("auth");
+export const AUTH_SCHEMA_NAME = "auth";
+export const authSchema = pgSchema(AUTH_SCHEMA_NAME);
 
 export const users = authSchema.table("users", {
 	id: uuid("id").primaryKey().defaultRandom(),

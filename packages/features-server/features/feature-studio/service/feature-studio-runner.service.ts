@@ -65,58 +65,84 @@ export class FeatureStudioRunnerService {
 			})
 			.returning();
 
-		const spec = await generateFeatureStudioSpec({
-			title: request.title,
-			rawPrompt: request.rawPrompt,
-			rulesetReference: request.rulesetReference ?? undefined,
-		});
-		const plan = await generateFeatureStudioPlan({
-			title: request.title,
-			rawPrompt: request.rawPrompt,
-			rulesetReference: request.rulesetReference ?? undefined,
-			spec,
-		});
+		try {
+			const spec = await generateFeatureStudioSpec({
+				title: request.title,
+				rawPrompt: request.rawPrompt,
+				rulesetReference: request.rulesetReference ?? undefined,
+			});
+			const plan = await generateFeatureStudioPlan({
+				title: request.title,
+				rawPrompt: request.rawPrompt,
+				rulesetReference: request.rulesetReference ?? undefined,
+				spec,
+			});
 
-		await this.db.insert(featureRequestArtifacts).values({
-			featureRequestId,
-			kind: "spec",
-			version: 1,
-			content: spec,
-			metadata: run ? { runId: run.id } : null,
-			createdById: request.createdById,
-		});
+			await this.db.insert(featureRequestArtifacts).values({
+				featureRequestId,
+				kind: "spec",
+				version: 1,
+				content: spec,
+				metadata: run ? { runId: run.id } : null,
+				createdById: request.createdById,
+			});
 
-		await this.db.insert(featureRequestArtifacts).values({
-			featureRequestId,
-			kind: "plan",
-			version: 1,
-			content: plan,
-			metadata: run ? { runId: run.id } : null,
-			createdById: request.createdById,
-		});
+			await this.db.insert(featureRequestArtifacts).values({
+				featureRequestId,
+				kind: "plan",
+				version: 1,
+				content: plan,
+				metadata: run ? { runId: run.id } : null,
+				createdById: request.createdById,
+			});
 
-		await this.db.insert(featureRequestApprovals).values({
-			featureRequestId,
-			approvalType: "spec_plan",
-			status: "pending",
-			requestedFromId: request.createdById,
-			approvedArtifactVersion: 1,
-		});
+			await this.db.insert(featureRequestApprovals).values({
+				featureRequestId,
+				approvalType: "spec_plan",
+				status: "pending",
+				requestedFromId: request.createdById,
+				approvedArtifactVersion: 1,
+			});
 
-		const [updated] = await this.db
-			.update(featureRequests)
-			.set({
-				status: "pending_spec_approval",
-				currentRunId: run?.id ?? null,
-			})
-			.where(eq(featureRequests.id, request.id))
-			.returning();
+			const [updated] = await this.db
+				.update(featureRequests)
+				.set({
+					status: "pending_spec_approval",
+					currentRunId: run?.id ?? null,
+				})
+				.where(eq(featureRequests.id, request.id))
+				.returning();
 
-		if (!updated) {
-			throw new Error("Failed to update feature request status");
+			if (!updated) {
+				throw new Error("Failed to update feature request status");
+			}
+
+			return updated;
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "Unknown runner failure";
+
+			if (run) {
+				await this.db
+					.update(featureRequestRuns)
+					.set({
+						status: "failed",
+						lastError: message,
+						retryCount: 1,
+					})
+					.where(eq(featureRequestRuns.id, run.id));
+			}
+
+			await this.db
+				.update(featureRequests)
+				.set({
+					status: "failed",
+					currentRunId: run?.id ?? null,
+				})
+				.where(eq(featureRequests.id, request.id));
+
+			throw error;
 		}
-
-		return updated;
 	}
 
 	async resumeAfterApproval(approvalId: string) {

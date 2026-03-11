@@ -31,7 +31,7 @@ export function AccountSettings({ visibleItems }: AccountSettingsProps) {
 		visibleItems,
 	);
 
-	const { data: session } = authClient.useSession();
+	const { data: session, refetch: refetchSession } = authClient.useSession();
 	const currentUserId = session?.user?.id;
 	const collections = useCollections();
 
@@ -43,7 +43,8 @@ export function AccountSettings({ visibleItems }: AccountSettingsProps) {
 		[collections],
 	);
 
-	const user = usersData?.find((u) => u.id === currentUserId);
+	const syncedUser = usersData?.find((u) => u.id === currentUserId);
+	const user = syncedUser ?? session?.user;
 
 	const signOutMutation = electronTrpc.auth.signOut.useMutation({
 		onSuccess: () => toast.success("Signed out"),
@@ -75,6 +76,7 @@ export function AccountSettings({ visibleItems }: AccountSettingsProps) {
 			});
 
 			setAvatarPreview(uploadResult.url);
+			await refetchSession();
 			toast.success("Avatar updated!");
 		} catch {
 			toast.error("Failed to update avatar");
@@ -91,6 +93,7 @@ export function AccountSettings({ visibleItems }: AccountSettingsProps) {
 
 		try {
 			await apiTrpcClient.user.updateProfile.mutate({ name: nameValue });
+			await refetchSession();
 			toast.success("Name updated!");
 		} catch {
 			toast.error("Failed to update name");

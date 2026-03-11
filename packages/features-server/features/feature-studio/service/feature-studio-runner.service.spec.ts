@@ -29,6 +29,9 @@ jest.mock("@superbuilder/drizzle", () => ({
 	},
 	featureRequestRuns: {
 		id: { name: "id" },
+		status: { name: "status" },
+		lastError: { name: "lastError" },
+		retryCount: { name: "retryCount" },
 	},
 }));
 
@@ -149,6 +152,35 @@ describe("FeatureStudioRunnerService", () => {
 			throw new Error("Expected a feature request result");
 		}
 		expect(result.status).toBe("pending_spec_approval");
+	});
+
+	it("marks the request and run as failed when spec generation errors", async () => {
+		mockDb.query.featureRequests.findFirst.mockResolvedValue({
+			id: requestId,
+			title: "Lead capture widget",
+			rawPrompt: "Build a reusable lead capture widget",
+			rulesetReference: "rules/feature.md",
+			status: "draft",
+			createdById: userId,
+		});
+		generateFeatureStudioSpec.mockRejectedValue(
+			new Error("Could not find API key process.env.ANTHROPIC_API_KEY"),
+		);
+		mockDb._queueResolve("returning", [{ id: "run_1" }]);
+
+		await expect(service.advance(requestId)).rejects.toThrow(
+			"Could not find API key process.env.ANTHROPIC_API_KEY",
+		);
+		expect(mockDb.update).toHaveBeenCalledTimes(2);
+		expect(mockDb.set).toHaveBeenNthCalledWith(1, {
+			status: "failed",
+			lastError: "Could not find API key process.env.ANTHROPIC_API_KEY",
+			retryCount: 1,
+		});
+		expect(mockDb.set).toHaveBeenNthCalledWith(2, {
+			status: "failed",
+			currentRunId: "run_1",
+		});
 	});
 
 	it("moves an approved spec approval to plan_approved on resume", async () => {

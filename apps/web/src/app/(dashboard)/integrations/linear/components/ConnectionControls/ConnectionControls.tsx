@@ -45,7 +45,7 @@ export function ConnectionControls({
 	);
 
 	const handleConnect = () => {
-		window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/integrations/linear/connect?organizationId=${organizationId}`;
+		window.location.href = `${env.NEXT_PUBLIC_WEB_URL}/integrations/linear/connect?organizationId=${organizationId}`;
 	};
 
 	const handleDisconnect = () => {

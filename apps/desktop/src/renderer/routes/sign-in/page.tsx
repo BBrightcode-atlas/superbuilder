@@ -7,6 +7,7 @@ import { FcGoogle } from "react-icons/fc";
 import { env } from "renderer/env.renderer";
 import { track } from "renderer/lib/analytics";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { APP_DISPLAY_NAME } from "shared/constants";
 import { SupersetLogo } from "./components/SupersetLogo";
 import { useSessionRecovery } from "./hooks/useSessionRecovery";
 
@@ -54,7 +55,7 @@ function SignInPage() {
 
 					<div className="text-center mb-8">
 						<h1 className="text-xl font-semibold text-foreground mb-2">
-							Welcome to Superset
+							Welcome to {APP_DISPLAY_NAME}
 						</h1>
 						<p className="text-sm text-muted-foreground">
 							{hasLocalToken

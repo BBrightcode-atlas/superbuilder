@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { useTabsStore } from "renderer/stores/tabs/store";
+import { APP_SESSION_PARTITION } from "shared/constants";
 
 // ---------------------------------------------------------------------------
 // Module-level singletons
@@ -155,7 +156,7 @@ export function usePersistentWebview({
 		} else {
 			// Create new webview
 			webview = document.createElement("webview") as Electron.WebviewTag;
-			webview.setAttribute("partition", "persist:superset");
+			webview.setAttribute("partition", APP_SESSION_PARTITION);
 			webview.setAttribute("allowpopups", "");
 			webview.style.display = "flex";
 			webview.style.flex = "1";

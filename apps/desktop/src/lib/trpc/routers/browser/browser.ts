@@ -1,6 +1,7 @@
 import { observable } from "@trpc/server/observable";
 import { session } from "electron";
 import { browserManager } from "main/lib/browser/browser-manager";
+import { APP_SESSION_PARTITION } from "shared/constants";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
 
@@ -164,7 +165,7 @@ export const createBrowserRouter = () => {
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const ses = session.fromPartition("persist:superset");
+				const ses = session.fromPartition(APP_SESSION_PARTITION);
 				switch (input.type) {
 					case "cookies":
 						await ses.clearStorageData({ storages: ["cookies"] });

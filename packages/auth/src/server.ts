@@ -37,6 +37,12 @@ import { formatPrice, getOrganizationOwners } from "./utils";
 const qstash = new Client({ token: env.QSTASH_TOKEN });
 
 const NOTIFY_SLACK_URL = `${env.NEXT_PUBLIC_API_URL}/api/integrations/stripe/jobs/notify-slack`;
+const HAS_STRIPE_CUSTOMER_PROVISIONING =
+	!env.STRIPE_SECRET_KEY.includes("dummy");
+const ENABLE_CROSS_SUBDOMAIN_COOKIES = ![
+	"localhost",
+	"127.0.0.1",
+].includes(env.NEXT_PUBLIC_COOKIE_DOMAIN);
 const desktopDevPort = process.env.DESKTOP_VITE_PORT || "5173";
 const desktopDevOrigins =
 	process.env.NODE_ENV === "development"
@@ -64,6 +70,8 @@ export const auth = betterAuth({
 		...desktopDevOrigins,
 		"superset://app",
 		"superset://",
+		"superbuilder://app",
+		"superbuilder://",
 		...(process.env.NODE_ENV === "development"
 			? ["exp://", "exp://**", "exp://192.168.*.*:*/**"]
 			: []),
@@ -79,7 +87,7 @@ export const auth = betterAuth({
 	},
 	advanced: {
 		crossSubDomainCookies: {
-			enabled: true,
+			enabled: ENABLE_CROSS_SUBDOMAIN_COOKIES,
 			domain: env.NEXT_PUBLIC_COOKIE_DOMAIN,
 		},
 		database: {
@@ -282,6 +290,13 @@ export const auth = betterAuth({
 				},
 
 				afterCreateOrganization: async ({ organization, user }) => {
+					if (!HAS_STRIPE_CUSTOMER_PROVISIONING) {
+						console.warn(
+							"[auth] Skipping Stripe customer provisioning because STRIPE_SECRET_KEY is a dummy value",
+						);
+						return;
+					}
+
 					const customer = await stripeClient.customers.create({
 						name: organization.name,
 						email: user.email,

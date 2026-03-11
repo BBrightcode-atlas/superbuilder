@@ -5,19 +5,67 @@ import { loadToken } from "../auth/utils/auth-functions";
 import { publicProcedure, router } from "../..";
 import type { FeatureStudioContractRouter } from "./feature-studio-contract";
 
+function isJwtToken(token: string): boolean {
+	return token.split(".").length === 3;
+}
+
+async function exchangeSessionTokenForJwt(
+	sessionToken: string,
+): Promise<string | null> {
+	try {
+		const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/token`, {
+			headers: {
+				Authorization: `Bearer ${sessionToken}`,
+			},
+		});
+		if (!response.ok) {
+			console.warn(
+				"[feature-studio] failed to exchange desktop session token for JWT",
+				response.status,
+				response.statusText,
+			);
+			return null;
+		}
+		const data = (await response.json()) as { token?: string };
+		return data.token ?? null;
+	} catch (error) {
+		console.warn(
+			"[feature-studio] failed to reach auth token endpoint",
+			error,
+		);
+		return null;
+	}
+}
+
+async function getFeatureStudioAuthorizationHeader(): Promise<
+	Record<string, string>
+> {
+	const { token } = await loadToken();
+	if (!token) {
+		return {};
+	}
+
+	if (isJwtToken(token)) {
+		return {
+			Authorization: `Bearer ${token}`,
+		};
+	}
+
+	const jwt = await exchangeSessionTokenForJwt(token);
+	if (!jwt) {
+		return {};
+	}
+
+	return {
+		Authorization: `Bearer ${jwt}`,
+	};
+}
+
 const featureStudioClient = createTRPCProxyClient<FeatureStudioContractRouter>({
 	links: [
 		httpBatchLink({
 			url: `${env.FEATURES_SERVER_URL}/trpc`,
-			headers: async () => {
-				const { token } = await loadToken();
-				if (!token) {
-					return {};
-				}
-				return {
-					Authorization: `Bearer ${token}`,
-				};
-			},
+			headers: getFeatureStudioAuthorizationHeader,
 		}),
 	],
 });

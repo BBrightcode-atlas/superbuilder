@@ -6,7 +6,11 @@ import { app, Notification, nativeTheme } from "electron";
 import { createWindow } from "lib/electron-app/factories/windows/create";
 import { createAppRouter } from "lib/trpc/routers";
 import { localDb } from "main/lib/local-db";
-import { NOTIFICATION_EVENTS, PLATFORM } from "shared/constants";
+import {
+	APP_SESSION_PARTITION,
+	NOTIFICATION_EVENTS,
+	PLATFORM,
+} from "shared/constants";
 import {
 	env,
 	getWorkspaceName as getEnvWorkspaceName,
@@ -121,7 +125,7 @@ export async function MainWindow() {
 			webviewTag: true,
 			// Isolate Electron session from system browser cookies
 			// This ensures desktop uses bearer token auth, not web cookies
-			partition: "persist:superset",
+			partition: APP_SESSION_PARTITION,
 		},
 	});
 

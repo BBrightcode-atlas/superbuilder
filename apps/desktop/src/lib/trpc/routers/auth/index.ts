@@ -5,7 +5,7 @@ import { observable } from "@trpc/server/observable";
 import { shell } from "electron";
 import { env } from "main/env.main";
 import { getDeviceName, getHashedDeviceId } from "main/lib/device-info";
-import { PLATFORM, PROTOCOL_SCHEME } from "shared/constants";
+import { PROTOCOL_SCHEME } from "shared/constants";
 import { env as sharedEnv } from "shared/env.shared";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
@@ -67,8 +67,9 @@ export const createAuthRouter = () => {
 
 		/**
 		 * Start OAuth sign-in flow.
-		 * Opens browser for OAuth, token delivered via deep link on macOS
-		 * or localhost callback on Linux (where deep links are unreliable).
+		 * Prefer localhost callback for all desktop platforms because browser
+		 * custom-protocol redirects are less reliable in dev and can be blocked
+		 * without user gesture in some browsers.
 		 */
 		signIn: publicProcedure
 			.input(z.object({ provider: z.enum(AUTH_PROVIDERS) }))
@@ -89,13 +90,10 @@ export const createAuthRouter = () => {
 					connectUrl.searchParams.set("provider", input.provider);
 					connectUrl.searchParams.set("state", state);
 					connectUrl.searchParams.set("protocol", PROTOCOL_SCHEME);
-					// Only send local_callback on Linux where deep links are unreliable
-					if (PLATFORM.IS_LINUX) {
-						connectUrl.searchParams.set(
-							"local_callback",
-							`http://127.0.0.1:${sharedEnv.DESKTOP_NOTIFICATIONS_PORT}/auth/callback`,
-						);
-					}
+					connectUrl.searchParams.set(
+						"local_callback",
+						`http://127.0.0.1:${sharedEnv.DESKTOP_NOTIFICATIONS_PORT}/auth/callback`,
+					);
 					await shell.openExternal(connectUrl.toString());
 					return { success: true };
 				} catch (err) {
