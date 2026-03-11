@@ -70,6 +70,7 @@
     "./course": "./features/course/index.ts",
     "./family": "./features/family/index.ts",
     "./feature-catalog": "./features/feature-catalog/index.ts",
+    "./feature-studio": "./features/feature-studio/index.ts",
     "./marketing": "./features/marketing/index.ts",
     "./naver-auth": "./features/naver-auth/index.ts"
   },

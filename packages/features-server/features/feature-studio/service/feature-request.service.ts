@@ -1,0 +1,149 @@
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { desc, eq } from "drizzle-orm";
+import {
+  InjectDrizzle,
+  type DrizzleDB,
+  featureRequestApprovals,
+  featureRequestMessages,
+  featureRequests,
+} from "@superbuilder/drizzle";
+import type {
+  AppendFeatureRequestMessageDto,
+  CreateFeatureRequestDto,
+} from "../dto";
+
+@Injectable()
+export class FeatureRequestService {
+  constructor(@InjectDrizzle() private readonly db: DrizzleDB) {}
+
+  async createRequest(input: CreateFeatureRequestDto, userId: string) {
+    const [created] = await this.db
+      .insert(featureRequests)
+      .values({
+        title: input.title,
+        rawPrompt: input.rawPrompt,
+        summary: input.summary ?? null,
+        rulesetReference: input.rulesetReference ?? null,
+        createdById: userId,
+      })
+      .returning();
+
+    if (!created) {
+      throw new Error("Failed to create feature request");
+    }
+
+    return created;
+  }
+
+  async getRequest(id: string) {
+    const request = await this.db.query.featureRequests.findFirst({
+      where: eq(featureRequests.id, id),
+      with: {
+        messages: {
+          orderBy: [desc(featureRequestMessages.createdAt)],
+        },
+        approvals: {
+          orderBy: [desc(featureRequestApprovals.createdAt)],
+        },
+      },
+    });
+
+    if (!request) {
+      throw new NotFoundException(`Feature request not found: ${id}`);
+    }
+
+    return request;
+  }
+
+  async listRequests(input?: { status?: (typeof featureRequests.$inferSelect)["status"] }) {
+    return this.db.query.featureRequests.findMany({
+      where: input?.status ? eq(featureRequests.status, input.status) : undefined,
+      orderBy: [desc(featureRequests.createdAt)],
+    });
+  }
+
+  async listApprovals() {
+    return this.db.query.featureRequestApprovals.findMany({
+      orderBy: [desc(featureRequestApprovals.createdAt)],
+    });
+  }
+
+  async listQueue(input?: { status?: (typeof featureRequests.$inferSelect)["status"] }) {
+    const [requests, approvals] = await Promise.all([
+      this.listRequests(input),
+      this.listApprovals(),
+    ]);
+
+    return {
+      requests,
+      pendingApprovals: approvals.filter((approval) => approval.status === "pending"),
+    };
+  }
+
+  async appendMessage(input: AppendFeatureRequestMessageDto) {
+    await this.ensureRequestExists(input.featureRequestId);
+
+    const [created] = await this.db
+      .insert(featureRequestMessages)
+      .values({
+        featureRequestId: input.featureRequestId,
+        role: input.role,
+        kind: input.kind ?? "conversation",
+        content: input.content,
+        metadata: input.metadata ?? null,
+      })
+      .returning();
+
+    if (!created) {
+      throw new Error("Failed to append feature request message");
+    }
+
+    return created;
+  }
+
+  async respondToApproval(input: {
+    approvalId: string;
+    action: "approved" | "rejected" | "discarded";
+    feedback?: string;
+    decidedById: string;
+  }) {
+    const approval = await this.db.query.featureRequestApprovals.findFirst({
+      where: eq(featureRequestApprovals.id, input.approvalId),
+    });
+
+    if (!approval) {
+      throw new NotFoundException(`Approval not found: ${input.approvalId}`);
+    }
+
+    const [updated] = await this.db
+      .update(featureRequestApprovals)
+      .set({
+        status: input.action,
+        decisionNotes: input.feedback ?? null,
+        decidedById: input.decidedById,
+      })
+      .where(eq(featureRequestApprovals.id, input.approvalId))
+      .returning();
+
+    if (!updated) {
+      throw new Error("Failed to update approval");
+    }
+
+    return updated;
+  }
+
+  private async ensureRequestExists(featureRequestId: string) {
+    const request = await this.db.query.featureRequests.findFirst({
+      where: eq(featureRequests.id, featureRequestId),
+      columns: { id: true },
+    });
+
+    if (!request) {
+      throw new NotFoundException(
+        `Feature request not found: ${featureRequestId}`,
+      );
+    }
+
+    return request;
+  }
+}

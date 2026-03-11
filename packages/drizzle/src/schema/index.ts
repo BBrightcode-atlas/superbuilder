@@ -44,3 +44,4 @@ export * from "./features/blog";
 export * from "./features/story-studio";
 export * from "./features/bookmark";
 export * from "./features/feature-catalog";
+export * from "./features/feature-studio";

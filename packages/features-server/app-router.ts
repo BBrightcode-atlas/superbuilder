@@ -36,6 +36,7 @@ import { scheduledJobRouter } from "./features/scheduled-job";
 import { storyStudioRouter } from "./features/story-studio";
 import { taskRouter } from "./features/task";
 import { featureCatalogRouter } from "./features/feature-catalog";
+import { featureStudioRouter } from "./features/feature-studio";
 
 // 내부 전용 — 타입 추출용 (값은 export하지 않음)
 const _appRouter = router({
@@ -69,6 +70,7 @@ const _appRouter = router({
   coupon: couponRouter,
   bookmark: bookmarkRouter,
   featureCatalog: featureCatalogRouter,
+  featureStudio: featureStudioRouter,
 });
 
 /** 전체 앱 라우터 타입 — 클라이언트에서 import하여 사용 */
