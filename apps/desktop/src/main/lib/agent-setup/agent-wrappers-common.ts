@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { BIN_DIR } from "./paths";
 
-export const WRAPPER_MARKER = "# Superset agent-wrapper v1";
+export const WRAPPER_MARKER = "# SuperBuilder agent-wrapper v1";
 export const SUPERSET_MANAGED_BINARIES = [
 	"claude",
 	"codex",
@@ -13,7 +13,8 @@ export const SUPERSET_MANAGED_BINARIES = [
 	"mastracode",
 ] as const;
 
-const SUPERSET_MANAGED_HOOK_PATH_PATTERN = /\/\.superset(?:-[^/'"\s\\]+)?\//;
+const SUPERSET_MANAGED_HOOK_PATH_PATTERN =
+	/\/\.(?:superset|superbuilder)(?:-[^/'"\s\\]+)?\//;
 
 export function writeFileIfChanged(
 	filePath: string,
@@ -92,7 +93,7 @@ function buildRealBinaryResolver(): string {
     [ -z "$dir" ] && continue
     dir="\${dir%/}"
     case "$dir" in
-      "${BIN_DIR}"|"$HOME"/.superset/bin|"$HOME"/.superset-*/bin) continue ;;
+      "${BIN_DIR}"|"$HOME"/.superset/bin|"$HOME"/.superset-*/bin|"$HOME"/.superbuilder/bin|"$HOME"/.superbuilder-*/bin) continue ;;
     esac
     if [ -x "$dir/$name" ] && [ ! -d "$dir/$name" ]; then
       printf "%s\\n" "$dir/$name"
@@ -105,7 +106,7 @@ function buildRealBinaryResolver(): string {
 }
 
 function getMissingBinaryMessage(name: string): string {
-	return `Superset: ${name} not found in PATH. Install it and ensure it is on PATH, then retry.`;
+	return `SuperBuilder: ${name} not found in PATH. Install it and ensure it is on PATH, then retry.`;
 }
 
 export function getWrapperPath(binaryName: string): string {
@@ -118,7 +119,7 @@ export function buildWrapperScript(
 ): string {
 	return `#!/bin/bash
 ${WRAPPER_MARKER}
-# Superset wrapper for ${binaryName}
+# SuperBuilder wrapper for ${binaryName}
 
 ${buildRealBinaryResolver()}
 REAL_BIN="$(find_real_binary "${binaryName}")"

@@ -175,6 +175,14 @@ export default defineConfig({
     // features/feature-catalog
     "catalog_features",
     "catalog_dependencies",
+    // features/feature-studio
+    "feature_requests",
+    "feature_request_messages",
+    "feature_request_artifacts",
+    "feature_request_approvals",
+    "feature_request_runs",
+    "feature_request_worktrees",
+    "feature_registrations",
   ],
   verbose: true,
   strict: true,

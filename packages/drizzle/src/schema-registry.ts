@@ -26,6 +26,7 @@ import * as scheduledJob from "./schema/features/scheduled-job";
 import * as storyStudio from "./schema/features/story-studio";
 import * as task from "./schema/features/task";
 import * as featureCatalog from "./schema/features/feature-catalog";
+import * as featureStudio from "./schema/features/feature-studio";
 
 export const schema = {
   // Core
@@ -62,6 +63,8 @@ export const schema = {
   ...storyStudio,
   // Feature Catalog
   ...featureCatalog,
+  // Feature Studio
+  ...featureStudio,
 };
 
 export type Schema = typeof schema;

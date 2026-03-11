@@ -38,6 +38,7 @@ import { StoryStudioModule } from '@superbuilder/features-server/story-studio';
 import { CouponModule } from '@superbuilder/features-server/coupon';
 import { BookmarkModule } from '@superbuilder/features-server/bookmark';
 import { FeatureCatalogModule } from '@superbuilder/features-server/feature-catalog';
+import { FeatureStudioModule } from '@superbuilder/features-server/feature-studio';
 // [/ATLAS:IMPORTS]
 
 @Module({
@@ -90,6 +91,7 @@ import { FeatureCatalogModule } from '@superbuilder/features-server/feature-cata
     CouponModule,
     BookmarkModule,
     FeatureCatalogModule,
+    FeatureStudioModule,
     // [/ATLAS:MODULES]
   ],
   controllers: [AppController],

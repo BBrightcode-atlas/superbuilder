@@ -48,7 +48,7 @@ function findBinaryPathsWindows(name: string): string[] {
 
 /**
  * Finds the real path of a binary, skipping our wrapper scripts.
- * Filters out all superset bin directories (prod, dev, and workspace-specific)
+ * Filters out all managed app bin directories (prod, dev, and workspace-specific)
  * to avoid wrapper scripts calling each other.
  */
 export function findRealBinary(name: string): string | null {
@@ -59,16 +59,24 @@ export function findRealBinary(name: string): string | null {
 			: findBinaryPathsUnix(name);
 
 		const homedir = os.homedir();
-		// Filter out wrapper scripts from all superset directories:
-		// - ~/.superset/bin
-		// - ~/.superset-*/bin (workspace-specific instances)
-		const supersetBinDir = path.join(homedir, ".superset", "bin");
-		const supersetPrefix = path.join(homedir, ".superset-");
+		// Filter out wrapper scripts from all managed app directories:
+		// - ~/.superset/bin, ~/.superbuilder/bin
+		// - ~/.superset-*/bin, ~/.superbuilder-*/bin
+		const managedBinDirs = [
+			path.join(homedir, ".superset", "bin"),
+			path.join(homedir, ".superbuilder", "bin"),
+		];
+		const managedPrefixes = [
+			path.join(homedir, ".superset-"),
+			path.join(homedir, ".superbuilder-"),
+		];
 		const paths = allPaths.filter(
 			(p) =>
 				p &&
-				!p.startsWith(supersetBinDir) &&
-				!(p.startsWith(supersetPrefix) && p.includes("/bin/")) &&
+				!managedBinDirs.some((dir) => p.startsWith(dir)) &&
+				!managedPrefixes.some(
+					(prefix) => p.startsWith(prefix) && p.includes("/bin/"),
+				) &&
 				(isWindows || isExecutableUnixPath(p)),
 		);
 		return paths[0] || null;

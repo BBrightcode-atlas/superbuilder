@@ -225,7 +225,7 @@ export function ConsentForm({
 function getClientDisplayName(clientId: string): string {
 	const knownClients: Record<string, string> = {
 		"claude-code": "Claude Code",
-		"superset-desktop": "Superset Desktop",
+		"superset-desktop": "SuperBuilder Desktop",
 	};
 	if (knownClients[clientId]) {
 		return knownClients[clientId];

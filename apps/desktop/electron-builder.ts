@@ -16,7 +16,7 @@ const linuxIconPath = join(pkg.resources, "build/icons");
 const winIconPath = join(pkg.resources, "build/icons/icon.ico");
 
 const config: Configuration = {
-	appId: "com.superset.desktop",
+	appId: "com.bbrightcode.superbuilder.desktop",
 	productName,
 	copyright: `Copyright © ${currentYear} — ${author}`,
 	electronVersion: pkg.devDependencies.electron.replace(/^\^/, ""),
@@ -171,7 +171,7 @@ const config: Configuration = {
 	// Deep linking protocol
 	protocols: {
 		name: productName,
-		schemes: ["superset"],
+		schemes: ["superbuilder"],
 	},
 
 	// Linux

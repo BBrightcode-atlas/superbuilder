@@ -4,8 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { app, session } from "electron";
 import { env } from "main/env.main";
+import { APP_SESSION_PARTITION } from "shared/constants";
 
-const APP_PARTITION = "persist:superset";
 const REACT_DEVTOOLS_EXTENSION_ID = "fmkadmapgofadopljbjfkapdkoienihi";
 
 function safeReadDir(pathname: string): string[] {
@@ -180,7 +180,10 @@ export async function loadReactDevToolsExtension(): Promise<void> {
 
 	const targets = [
 		{ label: "default", ses: session.defaultSession },
-		{ label: APP_PARTITION, ses: session.fromPartition(APP_PARTITION) },
+		{
+			label: APP_SESSION_PARTITION,
+			ses: session.fromPartition(APP_SESSION_PARTITION),
+		},
 	];
 
 	for (const { label, ses } of targets) {
@@ -215,7 +218,7 @@ export async function loadWebviewBrowserExtension(): Promise<void> {
 
 	try {
 		await session
-			.fromPartition(APP_PARTITION)
+			.fromPartition(APP_SESSION_PARTITION)
 			.extensions.loadExtension(extensionPath);
 		console.log("[main] Browser extension loaded");
 	} catch (error) {

@@ -17,10 +17,13 @@ import {
 } from "lib/trpc/routers/auth/utils/auth-functions";
 import { applyShellEnvToProcess } from "lib/trpc/routers/workspaces/utils/shell-env";
 import {
+	APP_DISPLAY_NAME,
+	APP_SESSION_PARTITION,
 	DEFAULT_CONFIRM_ON_QUIT,
 	PLATFORM,
 	PROTOCOL_SCHEME,
 } from "shared/constants";
+import { productName } from "~/package.json";
 import { setupAgentHooks } from "./lib/agent-setup";
 import { initAppState } from "./lib/app-state";
 import { requestAppleEventsAccess } from "./lib/apple-events-permission";
@@ -50,9 +53,9 @@ void applyShellEnvToProcess().catch((error) => {
 // Dev mode: label the app with the workspace name so multiple worktrees are distinguishable
 if (IS_DEV) {
 	const workspaceName = resolveDevWorkspaceName();
-	if (workspaceName) {
-		app.setName(`Superset (${workspaceName})`);
-	}
+	app.setName(
+		workspaceName ? `${APP_DISPLAY_NAME} (${workspaceName})` : APP_DISPLAY_NAME,
+	);
 }
 
 // Dev mode: register with execPath + app script so macOS launches Electron with our entry point
@@ -81,7 +84,7 @@ async function processDeepLink(url: string): Promise<void> {
 	}
 
 	// Non-auth deep links: extract path and navigate in renderer
-	// e.g. superset://tasks/my-slug -> /tasks/my-slug
+	// e.g. superbuilder://tasks/my-slug -> /tasks/my-slug
 	const path = `/${url.split("://")[1]}`;
 	focusMainWindow();
 
@@ -185,7 +188,7 @@ app.on("before-quit", async (event) => {
 				buttons: ["Quit", "Cancel"],
 				defaultId: 0,
 				cancelId: 1,
-				title: "Quit Superset",
+				title: `Quit ${productName}`,
 				message: "Are you sure you want to quit?",
 			});
 
@@ -288,7 +291,7 @@ if (!gotTheLock) {
 		};
 		protocol.handle("superset-icon", iconProtocolHandler);
 		session
-			.fromPartition("persist:superset")
+			.fromPartition(APP_SESSION_PARTITION)
 			.protocol.handle("superset-icon", iconProtocolHandler);
 
 		ensureProjectIconsDir();
