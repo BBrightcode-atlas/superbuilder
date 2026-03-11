@@ -1,4 +1,5 @@
 import { FeatureStudioRunnerService } from "./feature-studio-runner.service";
+import type { WorktreeExecutionService } from "./worktree-execution.service";
 
 jest.mock("@superset/agent", () => ({
 	generateFeatureStudioPlan: jest.fn(),
@@ -104,10 +105,17 @@ const createMockDb = () => {
 describe("FeatureStudioRunnerService", () => {
 	let service: FeatureStudioRunnerService;
 	let mockDb: ReturnType<typeof createMockDb>;
+	let worktreeExecutionService: Pick<WorktreeExecutionService, "prepareWorktree">;
 
 	beforeEach(() => {
 		mockDb = createMockDb();
-		service = new FeatureStudioRunnerService(mockDb as never);
+		worktreeExecutionService = {
+			prepareWorktree: jest.fn(),
+		};
+		service = new FeatureStudioRunnerService(
+			mockDb as never,
+			worktreeExecutionService as never,
+		);
 		generateFeatureStudioSpec.mockReset();
 		generateFeatureStudioPlan.mockReset();
 	});
@@ -137,6 +145,9 @@ describe("FeatureStudioRunnerService", () => {
 
 		expect(generateFeatureStudioSpec).toHaveBeenCalled();
 		expect(generateFeatureStudioPlan).toHaveBeenCalled();
+		if (!("status" in result)) {
+			throw new Error("Expected a feature request result");
+		}
 		expect(result.status).toBe("pending_spec_approval");
 	});
 
@@ -155,5 +166,29 @@ describe("FeatureStudioRunnerService", () => {
 
 		expect(result.status).toBe("plan_approved");
 		expect(mockDb.update).toHaveBeenCalled();
+	});
+
+	it("prepares a worktree when the approved plan is advanced", async () => {
+		mockDb.query.featureRequests.findFirst.mockResolvedValue({
+			id: requestId,
+			title: "Lead capture widget",
+			rawPrompt: "Build a reusable lead capture widget",
+			status: "plan_approved",
+			createdById: userId,
+		});
+		(worktreeExecutionService.prepareWorktree as jest.Mock).mockResolvedValue({
+			branchName: "codex/feature-studio-123e4567",
+			worktreePath: "/tmp/feature-studio-worktrees/codex-feature-studio-123e4567",
+		});
+
+		const result = await service.advance(requestId);
+
+		expect(worktreeExecutionService.prepareWorktree).toHaveBeenCalledWith({
+			featureRequestId: requestId,
+		});
+		if (!("worktreePath" in result)) {
+			throw new Error("Expected a worktree preparation result");
+		}
+		expect(result.worktreePath).toContain("feature-studio-worktrees");
 	});
 });

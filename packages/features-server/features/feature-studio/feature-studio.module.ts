@@ -1,10 +1,30 @@
 import { Module, OnModuleInit } from "@nestjs/common";
-import { FeatureRequestService, FeatureStudioRunnerService } from "./service";
+import { ConfigModule } from "@nestjs/config";
+import {
+	BrowserQaService,
+	FeatureRequestService,
+	FeatureStudioRunnerService,
+	VercelPreviewService,
+	WorktreeExecutionService,
+} from "./service";
 import { injectFeatureStudioServices } from "./trpc";
 
 @Module({
-	providers: [FeatureRequestService, FeatureStudioRunnerService],
-	exports: [FeatureRequestService, FeatureStudioRunnerService],
+	imports: [ConfigModule],
+	providers: [
+		FeatureRequestService,
+		FeatureStudioRunnerService,
+		WorktreeExecutionService,
+		VercelPreviewService,
+		BrowserQaService,
+	],
+	exports: [
+		FeatureRequestService,
+		FeatureStudioRunnerService,
+		WorktreeExecutionService,
+		VercelPreviewService,
+		BrowserQaService,
+	],
 })
 export class FeatureStudioModule implements OnModuleInit {
 	constructor(

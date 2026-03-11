@@ -12,10 +12,14 @@ import {
 	generateFeatureStudioPlan,
 	generateFeatureStudioSpec,
 } from "@superset/agent";
+import { WorktreeExecutionService } from "./worktree-execution.service";
 
 @Injectable()
 export class FeatureStudioRunnerService {
-	constructor(@InjectDrizzle() private readonly db: DrizzleDB) {}
+	constructor(
+		@InjectDrizzle() private readonly db: DrizzleDB,
+		private readonly worktreeExecutionService: WorktreeExecutionService,
+	) {}
 
 	async advance(featureRequestId: string) {
 		const request = await this.db.query.featureRequests.findFirst({
@@ -28,14 +32,33 @@ export class FeatureStudioRunnerService {
 			);
 		}
 
-		if (request.status !== "draft") {
-			return request;
+		switch (request.status) {
+			case "draft":
+				return this.generateSpecAndPlan(featureRequestId);
+			case "plan_approved":
+				return this.worktreeExecutionService.prepareWorktree({
+					featureRequestId,
+				});
+			default:
+				return request;
+		}
+	}
+
+	private async generateSpecAndPlan(featureRequestId: string) {
+		const request = await this.db.query.featureRequests.findFirst({
+			where: eq(featureRequests.id, featureRequestId),
+		});
+
+		if (!request) {
+			throw new NotFoundException(
+				`Feature request not found: ${featureRequestId}`,
+			);
 		}
 
 		const [run] = await this.db
 			.insert(featureRequestRuns)
 			.values({
-				featureRequestId,
+				featureRequestId: request.id,
 				workflowName: "feature-studio",
 				workflowStep: "generate_spec_and_plan",
 				status: "running",
@@ -86,7 +109,7 @@ export class FeatureStudioRunnerService {
 				status: "pending_spec_approval",
 				currentRunId: run?.id ?? null,
 			})
-			.where(eq(featureRequests.id, featureRequestId))
+			.where(eq(featureRequests.id, request.id))
 			.returning();
 
 		if (!updated) {
