@@ -37,4 +37,12 @@ export const advanceFeatureRequestSchema = z.object({
 	featureRequestId: z.string().uuid(),
 });
 
+export const requestRegistrationApprovalSchema = z.object({
+	featureRequestId: z.string().uuid(),
+});
+
+export const registerFeatureRequestSchema = z.object({
+	featureRequestId: z.string().uuid(),
+});
+
 export type RespondToApprovalDto = z.infer<typeof respondToApprovalSchema>;

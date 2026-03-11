@@ -11,12 +11,18 @@ import {
 	createFeatureRequestSchema,
 	featureRequestIdSchema,
 	listFeatureRequestsSchema,
+	registerFeatureRequestSchema,
 	respondToApprovalSchema,
+	requestRegistrationApprovalSchema,
 } from "../dto";
-import type { FeatureRequestService } from "../service";
-import type { FeatureStudioRunnerService } from "../service";
+import type {
+	FeatureRegistrationService,
+	FeatureRequestService,
+	FeatureStudioRunnerService,
+} from "../service";
 
 const services = createServiceContainer<{
+	featureRegistrationService: FeatureRegistrationService;
 	featureRequestService: FeatureRequestService;
 	featureStudioRunnerService: FeatureStudioRunnerService;
 }>();
@@ -55,6 +61,10 @@ export const featureStudioRouter = router({
 		return services.get().featureRequestService.listApprovals();
 	}),
 
+	listReadyToRegister: authProcedure.query(async () => {
+		return services.get().featureRegistrationService.listReadyToRegister();
+	}),
+
 	appendMessage: authProcedure
 		.input(appendFeatureRequestMessageSchema)
 		.mutation(async ({ input }) => {
@@ -89,6 +99,25 @@ export const featureStudioRouter = router({
 			return services
 				.get()
 				.featureStudioRunnerService.advance(input.featureRequestId);
+		}),
+
+	requestRegistrationApproval: authProcedure
+		.input(requestRegistrationApprovalSchema)
+		.mutation(async ({ input, ctx }) => {
+			return services
+				.get()
+				.featureRegistrationService.requestRegistrationApproval(
+					input.featureRequestId,
+					getAuthUserId(ctx),
+				);
+		}),
+
+	registerRequest: authProcedure
+		.input(registerFeatureRequestSchema)
+		.mutation(async ({ input }) => {
+			return services
+				.get()
+				.featureRegistrationService.registerRequest(input.featureRequestId);
 		}),
 
 	listStatuses: authProcedure.query(() => {
