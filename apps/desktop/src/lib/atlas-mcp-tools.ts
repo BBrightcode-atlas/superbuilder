@@ -102,12 +102,33 @@ export const atlasNeonListOrgsTool = createTool({
 		),
 	}),
 	execute: async () => {
-		const data = await neonFetch("/organizations");
-		const orgs = (data.organizations ?? data ?? []) as Array<{
-			id: string;
-			name: string;
-		}>;
-		return { organizations: orgs };
+		// Try /users/me/organizations first (personal API key)
+		// Fall back to extracting org info from /projects (org API key)
+		try {
+			const data = await neonFetch("/users/me/organizations");
+			const orgs = (data.organizations ?? data ?? []) as Array<{
+				id: string;
+				name: string;
+			}>;
+			return { organizations: orgs };
+		} catch {
+			try {
+				const data = await neonFetch("/projects?limit=1");
+				const projects = (data.projects ?? []) as Array<{
+					org_id?: string;
+				}>;
+				if (projects.length > 0 && projects[0].org_id) {
+					return {
+						organizations: [
+							{ id: projects[0].org_id, name: projects[0].org_id },
+						],
+					};
+				}
+			} catch {
+				// ignore
+			}
+			return { organizations: [] };
+		}
 	},
 });
 
@@ -237,7 +258,7 @@ export const atlasVercelListTeamsTool = createTool({
 export const atlasVercelCreateProjectTool = createTool({
 	id: "atlas_vercel_create_project",
 	description:
-		"Create a new Vercel project. Optionally links to an Atlas project.",
+		"Create a new Vercel project. Optionally links to an Atlas project and a GitHub repository.",
 	inputSchema: z.object({
 		name: z.string().describe("Project name (kebab-case recommended)"),
 		teamId: z.string().optional().describe("Vercel team ID (optional, for personal account leave empty)"),
@@ -246,6 +267,8 @@ export const atlasVercelCreateProjectTool = createTool({
 			.string()
 			.optional()
 			.describe("Atlas project ID to link (optional)"),
+		gitOwner: z.string().optional().describe("GitHub owner/org for Git integration (optional)"),
+		gitRepo: z.string().optional().describe("GitHub repo name for Git integration (optional)"),
 	}),
 	outputSchema: z.object({
 		id: z.string(),
@@ -254,12 +277,19 @@ export const atlasVercelCreateProjectTool = createTool({
 	}),
 	execute: async (input) => {
 		const queryParams = input.teamId ? `?teamId=${input.teamId}` : "";
+		const body: Record<string, unknown> = {
+			name: input.name,
+			framework: input.framework,
+		};
+		if (input.gitOwner && input.gitRepo) {
+			body.gitRepository = {
+				type: "github",
+				repo: `${input.gitOwner}/${input.gitRepo}`,
+			};
+		}
 		const project = await vercelFetch(`/v10/projects${queryParams}`, {
 			method: "POST",
-			body: JSON.stringify({
-				name: input.name,
-				framework: input.framework,
-			}),
+			body: JSON.stringify(body),
 		});
 
 		if (input.atlasProjectId) {

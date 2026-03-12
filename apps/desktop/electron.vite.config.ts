@@ -19,6 +19,7 @@ import {
 
 // override: true ensures .env values take precedence over inherited env vars
 config({ path: resolve(__dirname, "../../.env"), override: true, quiet: true });
+config({ path: resolve(__dirname, "../../.env.local"), override: true, quiet: true });
 
 const DEV_SERVER_PORT = Number(process.env.DESKTOP_VITE_PORT);
 
@@ -100,6 +101,7 @@ export default defineConfig({
 				process.env.SUPABASE_ACCESS_TOKEN,
 			),
 			"process.env.VERCEL_TOKEN": defineEnv(process.env.VERCEL_TOKEN),
+			"process.env.NEON_API_KEY": defineEnv(process.env.NEON_API_KEY),
 		},
 
 		build: {

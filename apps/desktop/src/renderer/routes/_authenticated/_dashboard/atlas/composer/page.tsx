@@ -89,8 +89,7 @@ function ComposerPage() {
     electronTrpc.atlas.neon.writeEnvFile.useMutation();
   const vercelCreateMutation =
     electronTrpc.atlas.vercel.createProject.useMutation();
-  const vercelConnectGitMutation =
-    electronTrpc.atlas.vercel.connectGitRepo.useMutation();
+  // connectGitRepo는 더이상 사용하지 않음 — createProject에서 gitRepository로 한번에 처리
 
   if (registryLoading || !registryData) {
     return (
@@ -257,31 +256,24 @@ function ComposerPage() {
     updateStep(4, "running", "Vercel 프로젝트 생성 중...");
 
     try {
+      // createProject에 Git 정보를 포함하면 생성과 동시에 연동
       const vcProject = await vercelCreateMutation.mutateAsync({
         name: serviceName,
         teamId,
         framework: "vite",
         atlasProjectId: pipeline.result.projectId,
+        gitOwner: pipeline.result.gitHubOwner,
+        gitRepo: pipeline.result.gitHubRepo,
       });
 
-      // GitHub repo가 있으면 Vercel에 Git 연동
-      if (pipeline.result.gitHubOwner && pipeline.result.gitHubRepo) {
-        updateStep(4, "running", "GitHub 저장소 연동 중...");
-        try {
-          const gitResult = await vercelConnectGitMutation.mutateAsync({
-            projectId: vcProject.id,
-            owner: pipeline.result.gitHubOwner,
-            repo: pipeline.result.gitHubRepo,
-            teamId,
-            atlasProjectId: pipeline.result.projectId,
-          });
-          updateStep(4, "done", `${gitResult.url} — GitHub 연동 완료, 자동 배포 시작`);
-        } catch (gitError) {
-          updateStep(4, "done", `${vcProject.url} 생성 완료 (Git 연동 실패 — 수동 연결 필요)`);
-        }
-      } else {
-        updateStep(4, "done", `${vcProject.url} 프로젝트 생성 완료 (Git 연동 후 자동 배포)`);
-      }
+      const hasGit = pipeline.result.gitHubOwner && pipeline.result.gitHubRepo;
+      updateStep(
+        4,
+        "done",
+        hasGit
+          ? `${vcProject.url} — GitHub 연동 완료, 자동 배포 시작`
+          : `${vcProject.url} 프로젝트 생성 완료 (Git 연동 후 자동 배포)`,
+      );
       setVercelPhase("done");
     } catch (error) {
       updateStep(

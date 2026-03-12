@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@superset/ui/button";
 import { Input } from "@superset/ui/input";
 import { electronTrpc } from "renderer/lib/electron-trpc";
@@ -34,6 +34,15 @@ export function NeonSetup({ onComplete, onSkip }: NeonSetupProps) {
       setStep("org");
     }
   }, [status?.connected, step]);
+
+  // Auto-complete: env에 API key가 있고 org가 로드되면 자동 진행
+  const autoCompleted = useRef(false);
+  useEffect(() => {
+    if (status?.connected && orgs && orgs.length > 0 && step === "org" && !autoCompleted.current) {
+      autoCompleted.current = true;
+      onComplete(orgs[0].id, orgs[0].name);
+    }
+  }, [status?.connected, orgs, step]);
 
   if (statusLoading) {
     return null;
