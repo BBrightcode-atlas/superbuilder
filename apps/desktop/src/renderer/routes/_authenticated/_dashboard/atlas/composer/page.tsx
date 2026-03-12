@@ -30,7 +30,7 @@ interface PipelineState {
   }>;
   result: {
     projectId: string;
-    targetPath: string;
+    projectDir: string;
     features: string[];
     gitInitialized: boolean;
     gitHubOwner?: string;
@@ -41,9 +41,9 @@ interface PipelineState {
 const INITIAL_PIPELINE: PipelineState = {
   active: false,
   steps: [
-    { label: "파일 추출", status: "pending" },
-    { label: "Git 초기화", status: "pending" },
+    { label: "프로젝트 스캐폴드", status: "pending" },
     { label: "GitHub Push", status: "pending" },
+    { label: "Feature 설치", status: "pending" },
     { label: "Neon 프로젝트", status: "pending" },
     { label: "Vercel 배포", status: "pending" },
   ],
@@ -65,6 +65,9 @@ function ComposerPage() {
 
   const navigate = useNavigate();
   const [pipeline, setPipeline] = useState<PipelineState>(INITIAL_PIPELINE);
+  const [agentPhase, setAgentPhase] = useState<
+    "idle" | "ready" | "launched"
+  >("idle");
   const [neonPhase, setNeonPhase] = useState<
     "idle" | "setup" | "creating" | "done" | "skipped"
   >("idle");
@@ -83,13 +86,14 @@ function ComposerPage() {
   const composeMutation = electronTrpc.atlas.composer.compose.useMutation();
   const pushToGitHubMutation =
     electronTrpc.atlas.composer.pushToGitHub.useMutation();
+  const launchAgentMutation =
+    electronTrpc.atlas.composer.launchInstallAgent.useMutation();
   const neonCreateMutation =
     electronTrpc.atlas.neon.createProject.useMutation();
   const neonWriteEnvMutation =
     electronTrpc.atlas.neon.writeEnvFile.useMutation();
   const vercelCreateMutation =
     electronTrpc.atlas.vercel.createProject.useMutation();
-  // connectGitRepo는 더이상 사용하지 않음 — createProject에서 gitRepository로 한번에 처리
 
   if (registryLoading || !registryData) {
     return (
@@ -124,33 +128,34 @@ function ComposerPage() {
     if (!canCompose) return;
 
     setPipeline({ ...INITIAL_PIPELINE, active: true });
+    setAgentPhase("idle");
     setNeonPhase("idle");
     setVercelPhase("idle");
     setStep(3);
 
-    // Step 0: Extract + Git (both handled by compose mutation)
-    updateStep(0, "running", "프로젝트 파일을 추출하는 중...");
+    // Step 0: Scaffold (template clone + spec + workflow + git init)
+    updateStep(0, "running", "프로젝트 뼈대를 생성하는 중...");
 
     try {
       const result = await composeMutation.mutateAsync({
         selected: selectedFeatures,
         projectName: projectName.trim(),
         targetPath: targetPath.trim(),
+        config: {
+          database: { provider: "neon" },
+          auth: { provider: "better-auth", features: ["email"] },
+          deploy: { provider: "vercel" },
+        },
       });
 
-      updateStep(0, "done", `${result.features.length}개 Feature 추출 완료`);
-      updateStep(
-        1,
-        result.gitInitialized ? "done" : "failed",
-        result.gitInitialized ? "Git 저장소 초기화 완료" : "Git 초기화 실패",
-      );
+      updateStep(0, "done", `프로젝트 스캐폴드 완료 — ${result.features.length}개 Feature 선택됨`);
 
       let gitHubOwner: string | undefined;
       let gitHubRepo: string | undefined;
 
-      // Step 2: GitHub Push (only if git initialized)
+      // Step 1: GitHub Push
       if (result.gitInitialized) {
-        updateStep(2, "running", "GitHub 저장소 생성 및 Push 중...");
+        updateStep(1, "running", "GitHub 저장소 생성 및 Push 중...");
         try {
           const ghResult = await pushToGitHubMutation.mutateAsync({
             projectPath: result.projectDir,
@@ -160,23 +165,23 @@ function ComposerPage() {
           });
           gitHubOwner = ghResult.owner;
           gitHubRepo = ghResult.repo;
-          updateStep(2, "done", `${ghResult.repoUrl} Push 완료`);
+          updateStep(1, "done", `${ghResult.repoUrl} Push 완료`);
         } catch (error) {
           updateStep(
-            2,
+            1,
             "failed",
             error instanceof Error ? error.message : "GitHub Push 실패",
           );
         }
       } else {
-        updateStep(2, "skipped", "Git 초기화 실패로 건너뜀");
+        updateStep(1, "skipped", "Git 초기화 실패로 건너뜀");
       }
 
       setPipeline((prev) => ({
         ...prev,
         result: {
           projectId: result.projectId,
-          targetPath: result.projectDir,
+          projectDir: result.projectDir,
           features: result.features,
           gitInitialized: result.gitInitialized,
           gitHubOwner,
@@ -184,9 +189,12 @@ function ComposerPage() {
         },
       }));
 
-      // Pause for Neon setup
-      setNeonPhase("setup");
-      updateStep(3, "pending", "Neon 연결을 설정하세요");
+      // Step 2: Feature Install — show agent launch prompt
+      setAgentPhase("ready");
+      updateStep(2, "pending", "CLI Agent를 실행하여 features를 설치하세요");
+
+      // Steps 3-4 wait for agent + Neon/Vercel
+      updateStep(3, "pending", "Feature 설치 후 진행");
       updateStep(4, "pending", "Neon 완료 후 진행");
     } catch (error) {
       updateStep(
@@ -195,6 +203,38 @@ function ComposerPage() {
         error instanceof Error ? error.message : "알 수 없는 오류",
       );
     }
+  };
+
+  const handleLaunchAgent = async () => {
+    if (!pipeline.result) return;
+
+    updateStep(2, "running", "CLI Agent 실행 중...");
+    try {
+      await launchAgentMutation.mutateAsync({
+        projectDir: pipeline.result.projectDir,
+      });
+      updateStep(2, "done", "Agent가 features를 설치 중입니다. 완료 후 다음 단계로 진행하세요.");
+      setAgentPhase("launched");
+
+      // Proceed to Neon setup
+      setNeonPhase("setup");
+      updateStep(3, "pending", "Neon 연결을 설정하세요");
+    } catch (error) {
+      updateStep(
+        2,
+        "failed",
+        error instanceof Error ? error.message : "Agent 실행 실패",
+      );
+    }
+  };
+
+  const handleSkipAgent = () => {
+    setAgentPhase("launched");
+    updateStep(2, "skipped", "나중에 /install-features 명령어로 설치");
+
+    // Proceed to Neon setup
+    setNeonPhase("setup");
+    updateStep(3, "pending", "Neon 연결을 설정하세요");
   };
 
   const handleComposeFailed = () => {
@@ -215,10 +255,9 @@ function ComposerPage() {
         atlasProjectId: pipeline.result.projectId,
       });
 
-      // Neon projects are available immediately — no health check needed
       updateStep(3, "running", ".env 파일 작성 중...");
       await neonWriteEnvMutation.mutateAsync({
-        projectPath: pipeline.result.targetPath,
+        projectPath: pipeline.result.projectDir,
         connectionUri: neonProject.connectionUri,
         neonProjectId: neonProject.id,
       });
@@ -256,7 +295,6 @@ function ComposerPage() {
     updateStep(4, "running", "Vercel 프로젝트 생성 중...");
 
     try {
-      // createProject에 Git 정보를 포함하면 생성과 동시에 연동
       const vcProject = await vercelCreateMutation.mutateAsync({
         name: serviceName,
         teamId,
@@ -291,7 +329,7 @@ function ComposerPage() {
   };
 
   // Pipeline step index → Stepper step index mapping
-  // Pipeline: [파일추출(0), Git초기화(1), GitHub Push(2), Neon(3), Vercel(4)]
+  // Pipeline: [스캐폴드(0), GitHub Push(1), Feature설치(2), Neon(3), Vercel(4)]
   // Stepper:  [Feature선택(0), 의존성(1), 설정(2), 프로젝트생성(3), Neon(4), Vercel(5)]
   const PIPELINE_TO_STEPPER = [3, 3, 3, 4, 5] as const;
 
@@ -336,6 +374,25 @@ function ComposerPage() {
               설정으로 돌아가기
             </Button>
             <Button onClick={handleCompose}>재시도</Button>
+          </div>
+        ) : null}
+
+        {agentPhase === "ready" ? (
+          <div className="space-y-3 rounded-lg border p-4">
+            <p className="text-sm font-medium">
+              프로젝트 뼈대가 생성되었습니다. CLI Agent를 실행하여 features를 설치하세요.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Agent가 프로젝트를 열고 <code>/install-features</code> 명령을 실행합니다.
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={handleLaunchAgent} disabled={launchAgentMutation.isPending}>
+                {launchAgentMutation.isPending ? "실행 중..." : "에이전트 실행"}
+              </Button>
+              <Button variant="outline" onClick={handleSkipAgent}>
+                나중에 설치
+              </Button>
+            </div>
           </div>
         ) : null}
 
@@ -384,6 +441,7 @@ function ComposerPage() {
         ) : null}
 
         {pipeline.result &&
+        (agentPhase === "launched") &&
         (neonPhase === "done" || neonPhase === "skipped") &&
         (vercelPhase === "done" || vercelPhase === "skipped") ? (
           <div className="space-y-4 pt-4 border-t">
@@ -395,7 +453,7 @@ function ComposerPage() {
               </h2>
             </div>
             <code className="block p-3 rounded bg-muted text-sm font-mono">
-              {pipeline.result.targetPath}
+              {pipeline.result.projectDir}
             </code>
             <div className="flex gap-2">
               <Button
