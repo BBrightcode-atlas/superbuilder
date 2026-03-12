@@ -18,7 +18,7 @@ import {
   studioEdges,
   studioBrandProfiles,
   studioTonePresets,
-} from "@superbuilder/drizzle/schema";
+} from "@superbuilder/features-db/schema";
 import { db } from "../lib/db";
 
 export const contentStudioTools = {

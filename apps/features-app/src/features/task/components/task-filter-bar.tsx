@@ -19,7 +19,7 @@ import {
 } from "@superbuilder/feature-ui/shadcn/select";
 import { Filter, ArrowUpDown, X } from "lucide-react";
 import { cn } from "@superbuilder/feature-ui/lib/utils";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 import { STATUS_DISPLAY_ORDER, PRIORITY_LABELS } from "../constants";
 import type { FilterState, SortByField } from "../constants";
 import { getStatusLabel } from "./task-status-icon";

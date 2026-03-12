@@ -1,12 +1,12 @@
 /**
- * drizzle-orm 함수 및 @superbuilder/drizzle 기본 mock 헬퍼.
+ * drizzle-orm 함수 및 @superbuilder/features-db 기본 mock 헬퍼.
  *
  * 전체 jest.mock() 블록 대신 상수를 spread하여 사용 가능.
  *
  * 사용법:
  * jest.mock("drizzle-orm", () => DRIZZLE_ORM_MOCK);
  *
- * jest.mock("@superbuilder/drizzle", () => ({
+ * jest.mock("@superbuilder/features-db", () => ({
  *   ...DRIZZLE_BASE_MOCK,
  *   blogPosts: { id: { name: "id" }, ... },
  * }));
@@ -40,11 +40,11 @@ export const DRIZZLE_ORM_MOCK = {
 };
 
 /**
- * @superbuilder/drizzle 패키지의 기본 mock (DRIZZLE token + InjectDrizzle).
+ * @superbuilder/features-db 패키지의 기본 mock (DRIZZLE token + InjectDrizzle).
  * 실제 테이블 mock은 spread하여 추가합니다.
  *
  * @example
- * jest.mock("@superbuilder/drizzle", () => {
+ * jest.mock("@superbuilder/features-db", () => {
  *   const { Inject } = jest.requireActual("@nestjs/common");
  *   return {
  *     ...DRIZZLE_BASE_MOCK_WITH_INJECT(Inject),

@@ -2,7 +2,7 @@ jest.mock('drizzle-orm', () => ({
   eq: jest.fn((field: any, value: any) => ({ field, value, type: 'eq' })),
 }));
 
-jest.mock('@superbuilder/drizzle', () => {
+jest.mock('@superbuilder/features-db', () => {
   const { Inject } = require('@nestjs/common');
   return {
     DRIZZLE: 'DRIZZLE_TOKEN',
@@ -30,7 +30,7 @@ jest.mock('@/core/logger', () => ({
 
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ModelPricingService } from './model-pricing.service';
-import { DRIZZLE } from '@superbuilder/drizzle';
+import { DRIZZLE } from '@superbuilder/features-db';
 import { createMockDb, TEST_MODEL_PRICING } from '../__test-utils__';
 
 describe('ModelPricingService', () => {

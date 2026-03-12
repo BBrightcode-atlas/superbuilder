@@ -1,7 +1,7 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { eq, and, ilike, inArray, count, desc, or, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   bookingProviders,
   bookingProviderCategories,
@@ -10,7 +10,7 @@ import {
   bookingCategories,
   bookingWeeklySchedules,
   profiles,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type { z } from "zod";
 import type { searchProvidersSchema } from "../dto/search-providers.dto";
 import type {

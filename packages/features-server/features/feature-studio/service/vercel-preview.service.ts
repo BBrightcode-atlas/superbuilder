@@ -7,7 +7,7 @@ import {
 	featureRequestArtifacts,
 	featureRequests,
 	featureRequestWorktrees,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 
 export interface DeployPreviewInput {
 	featureRequestId: string;

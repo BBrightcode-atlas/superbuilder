@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { eq } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { agentDeskFiles } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { agentDeskFiles } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 import { LLMService } from "../../../features/ai";
 import type { ParsedFileResult } from "../types";

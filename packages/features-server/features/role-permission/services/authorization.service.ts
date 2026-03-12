@@ -1,8 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, and, inArray } from 'drizzle-orm';
-import { userRoles, roles, rolePermissions, permissions } from '@superbuilder/drizzle';
-import type { Role, Permission } from '@superbuilder/drizzle';
+import { userRoles, roles, rolePermissions, permissions } from '@superbuilder/features-db';
+import type { Role, Permission } from '@superbuilder/features-db';
 import type {
   UserPermissionSet,
   PermissionCheck,

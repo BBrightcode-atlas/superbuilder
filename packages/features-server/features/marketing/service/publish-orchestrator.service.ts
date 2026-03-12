@@ -9,7 +9,7 @@ import {
   marketingPlatformVariants,
   marketingPublications,
   type SnsPlatform,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type { PublishNowDto, SchedulePublishDto } from "../dto";
 import { MarketingService } from "./marketing.service";
 import { SnsAccountService } from "./sns-account.service";

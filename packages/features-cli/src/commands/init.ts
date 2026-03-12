@@ -92,7 +92,7 @@ export async function initCommand(projectName: string, options: InitOptions): Pr
       ["node_modules", "dist"],
     );
 
-    // packages/drizzle 복사
+    // packages/features-db 복사
     await copyDirectory(
       path.join(atlasRoot, "packages", "drizzle"),
       path.join(projectPath, "packages", "drizzle"),

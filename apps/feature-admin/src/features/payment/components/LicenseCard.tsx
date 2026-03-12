@@ -3,7 +3,7 @@ import { Badge } from '@superbuilder/feature-ui/shadcn/badge';
 import { Button } from '@superbuilder/feature-ui/shadcn/button';
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
-import type { License } from '@superbuilder/drizzle';
+import type { License } from '@superbuilder/features-db';
 
 interface LicenseCardProps {
   license: License;

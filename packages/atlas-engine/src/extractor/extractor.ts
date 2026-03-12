@@ -120,7 +120,7 @@ function copyProject(sourcePath: string, targetPath: string): void {
  *
  * 제거 대상 경로:
  * - packages/features/{name}/
- * - packages/drizzle/src/schema/features/{schemaDir}/
+ * - packages/features-db/src/schema/features/{schemaDir}/
  * - apps/app/src/features/{name}/
  * - apps/feature-admin/src/features/{name}/
  * - packages/widgets/src/{name}/ (widget인 경우)
@@ -195,8 +195,8 @@ function regenerateConnectionFiles(
   const regenerated: string[] = [];
 
   const generators = [
-    { fn: generateSchemaIndex, label: "packages/drizzle/src/schema/index.ts" },
-    { fn: generateDrizzleConfig, label: "packages/drizzle/drizzle.config.ts" },
+    { fn: generateSchemaIndex, label: "packages/features-db/src/schema/index.ts" },
+    { fn: generateDrizzleConfig, label: "packages/features-db/drizzle.config.ts" },
     { fn: generateAppRouter, label: "packages/features/app-router.ts" },
     {
       fn: generateTrpcRouter,

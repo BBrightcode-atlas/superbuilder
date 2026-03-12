@@ -1,4 +1,4 @@
-import type { ModelPreference } from "@superbuilder/drizzle/schema";
+import type { ModelPreference } from "@superbuilder/features-db/schema";
 
 export interface RoutingContext {
   messageLength: number;

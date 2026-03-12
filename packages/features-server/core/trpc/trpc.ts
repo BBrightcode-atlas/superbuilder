@@ -1,7 +1,7 @@
 import { initTRPC, TRPCError, type TRPC_ERROR_CODE_KEY } from "@trpc/server";
 import { HttpException } from "@nestjs/common";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
-import type { DrizzleDB } from "@superbuilder/drizzle";
+import type { DrizzleDB } from "@superbuilder/features-db";
 
 /**
  * User type for authenticated requests

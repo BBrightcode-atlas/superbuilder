@@ -28,7 +28,7 @@
     "typescript": "5.9.2"
   },
   "dependencies": {
-    "@superbuilder/drizzle": "workspace:*",
+    "@superbuilder/features-db": "workspace:*",
     "@superbuilder/features-server": "workspace:*",
     "@supabase/supabase-js": "2.93.3",
     "@tanstack/react-query": "^5.62.8",

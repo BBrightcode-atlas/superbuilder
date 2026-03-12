@@ -2,8 +2,8 @@
  * Centralized Schema Exports
  *
  * All schemas are organized by folder:
- * - Core schemas: packages/drizzle/src/schema/core/
- * - Feature schemas: packages/drizzle/src/schema/features/{feature-name}/
+ * - Core schemas: packages/features-db/src/schema/core/
+ * - Feature schemas: packages/features-db/src/schema/features/{feature-name}/
  *
  * Each feature is independently managed to minimize cross-dependencies.
  * Features should avoid directly referencing other feature schemas.

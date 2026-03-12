@@ -13,8 +13,8 @@ import {
   marketingContents,
   marketingPlatformVariants,
   marketingPublications,
-} from "@superbuilder/drizzle";
-import { profiles } from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
+import { profiles } from "@superbuilder/features-db";
 import { generateSlug } from "../../../shared/utils/slug";
 import { buildPaginatedResult } from "../../../shared/utils/offset-pagination";
 import { createLogger } from "../../../core/logger";

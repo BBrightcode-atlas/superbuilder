@@ -6,14 +6,14 @@ import {
 } from "@nestjs/common";
 import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import { decodeCursor, buildCursorResult } from "../../../shared/utils/pagination";
 import {
   communityPosts,
   communities,
   profiles,
   type CommunityPost,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type { CreatePostDto, UpdatePostDto } from "../dto";
 import { CommunityService } from "./community.service";
 import { assertCommunityPermission } from "../helpers/permission";

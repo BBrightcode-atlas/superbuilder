@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CommunityComment } from "@superbuilder/drizzle";
+import type { CommunityComment } from "@superbuilder/features-db";
 import { TipTapEditor } from "@superbuilder/feature-ui/editor/tiptap-editor";
 import { TipTapViewer } from "@superbuilder/feature-ui/editor/tiptap-viewer";
 import { cn } from "@superbuilder/feature-ui/lib/utils";

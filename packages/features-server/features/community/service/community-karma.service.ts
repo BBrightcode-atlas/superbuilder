@@ -1,8 +1,8 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { eq, inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { userKarma } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { userKarma } from "@superbuilder/features-db";
 
 export interface UserKarmaSummary {
   userId: string;

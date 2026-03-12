@@ -14,7 +14,7 @@ import { TaskCommentInput } from "../components/task-comment-input";
 import { TaskSubtaskList } from "../components/task-subtask-list";
 import { TaskStatusIcon } from "../components/task-status-icon";
 import { useTaskByIdentifier, useUpdateTask } from "../hooks";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 
 interface Props {
   identifier: string;

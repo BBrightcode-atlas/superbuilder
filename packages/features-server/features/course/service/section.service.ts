@@ -1,9 +1,9 @@
 import { Injectable, Inject, NotFoundException } from "@nestjs/common";
 import { eq, asc, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { courseSections, courseLessons } from "@superbuilder/drizzle";
-import type { CourseSection } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { courseSections, courseLessons } from "@superbuilder/features-db";
+import type { CourseSection } from "@superbuilder/features-db";
 import type { CreateSectionInput, UpdateSectionInput, ReorderInput, SectionWithLessons } from "../types";
 
 @Injectable()

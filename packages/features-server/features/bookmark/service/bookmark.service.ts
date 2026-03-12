@@ -1,8 +1,8 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { bookmarks } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { bookmarks } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 import type { ToggleBookmarkResult, BookmarkItem } from "../types";
 

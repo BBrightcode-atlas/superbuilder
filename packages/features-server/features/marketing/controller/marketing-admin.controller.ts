@@ -21,14 +21,14 @@ import {
 import { JwtAuthGuard, NestAdminGuard } from "../../../core/nestjs/auth";
 import { count, desc } from "drizzle-orm";
 import { Inject } from "@nestjs/common";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
   marketingCampaigns,
   marketingContents,
   marketingPublications,
   marketingSnsAccounts,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import { buildPaginatedResult } from "../../../shared/utils/offset-pagination";
 
 @ApiTags("Marketing Admin")

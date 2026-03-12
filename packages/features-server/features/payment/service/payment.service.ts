@@ -3,10 +3,10 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectDrizzle } from '@superbuilder/drizzle';
-import type { DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle } from '@superbuilder/features-db';
+import type { DrizzleDB } from '@superbuilder/features-db';
 import { eq, and, desc, count, ilike, or } from 'drizzle-orm';
-import { products, subscriptions, orders, licenses, webhookEvents, profiles, paymentPlans, refundRequests } from '@superbuilder/drizzle';
+import { products, subscriptions, orders, licenses, webhookEvents, profiles, paymentPlans, refundRequests } from '@superbuilder/features-db';
 import { buildPaginatedResult } from '../../../shared/utils/offset-pagination';
 import { createLogger } from '../../../core/logger';
 import { PaymentProviderFactory } from '../provider/payment-provider.factory';

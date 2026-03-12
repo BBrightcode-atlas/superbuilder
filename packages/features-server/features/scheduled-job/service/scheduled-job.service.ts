@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { buildPaginatedResult } from '../../../shared/utils/offset-pagination';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, desc, count } from 'drizzle-orm';
 import {
   systemScheduledJobs,
   systemJobRuns,
-} from '@superbuilder/drizzle';
+} from '@superbuilder/features-db';
 
 @Injectable()
 export class ScheduledJobService {

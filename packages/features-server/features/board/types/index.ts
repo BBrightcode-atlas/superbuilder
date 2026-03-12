@@ -1,4 +1,4 @@
-import type { Board, BoardPost } from "@superbuilder/drizzle";
+import type { Board, BoardPost } from "@superbuilder/features-db";
 
 export interface CreateBoardInput {
   name: string;

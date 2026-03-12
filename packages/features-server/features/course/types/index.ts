@@ -5,7 +5,7 @@ import type {
   CourseLesson,
   CourseEnrollment,
   CourseAttachment,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 
 // ============================================================================
 // Topic Types

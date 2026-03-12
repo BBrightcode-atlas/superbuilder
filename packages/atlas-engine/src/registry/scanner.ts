@@ -112,7 +112,7 @@ const SCHEMA_DIR_MAP: Record<string, string> = {
 function scanSchemaTables(atlasPath: string, featureName: string): string[] {
   // schema 디렉토리명이 feature 디렉토리명과 다를 수 있음
   const schemaDirName = SCHEMA_DIR_MAP[featureName] ?? featureName;
-  const schemaPath = join(atlasPath, "packages/drizzle/src/schema/features", schemaDirName, "index.ts");
+  const schemaPath = join(atlasPath, "packages/features-db/src/schema/features", schemaDirName, "index.ts");
   if (!existsSync(schemaPath)) return [];
 
   try {
@@ -141,7 +141,7 @@ export function buildRegistryFromScan(atlasPath: string): FeatureRegistry {
 
     const schemaDirName = SCHEMA_DIR_MAP[name] ?? name;
     const hasSchema = existsSync(
-      join(atlasPath, "packages/drizzle/src/schema/features", schemaDirName)
+      join(atlasPath, "packages/features-db/src/schema/features", schemaDirName)
     );
     const hasClientApp = existsSync(
       join(atlasPath, "apps/app/src/features", name)
@@ -175,7 +175,7 @@ export function buildRegistryFromScan(atlasPath: string): FeatureRegistry {
       },
       schema: {
         tables: hasSchema ? scanSchemaTables(atlasPath, name) : [],
-        path: hasSchema ? `packages/drizzle/src/schema/features/${schemaDirName}/` : "",
+        path: hasSchema ? `packages/features-db/src/schema/features/${schemaDirName}/` : "",
       },
 
       ...(type === "widget" && hasWidget

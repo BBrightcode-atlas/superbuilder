@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { agentDeskSessions, agentDeskNormalizedRequirements } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { agentDeskSessions, agentDeskNormalizedRequirements } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 import { LLMService } from "../../../features/ai";
 import type { FlowEdge, ScreenDetail, PanelState, ChatMessage } from "../types";

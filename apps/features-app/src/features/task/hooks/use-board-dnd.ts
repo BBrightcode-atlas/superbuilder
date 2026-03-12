@@ -10,7 +10,7 @@ import type {
   UniqueIdentifier,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 
 interface TaskItem {
   id: string;

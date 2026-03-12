@@ -6,15 +6,15 @@ import {
 } from "@nestjs/common";
 import { eq, desc, asc, and, count, sql, ilike, type SQL } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   courseCourses,
   courseTopics,
   courseSections,
   courseLessons,
   courseEnrollments,
-} from "@superbuilder/drizzle";
-import type { Course } from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
+import type { Course } from "@superbuilder/features-db";
 import type {
   CreateCourseInput,
   UpdateCourseInput,

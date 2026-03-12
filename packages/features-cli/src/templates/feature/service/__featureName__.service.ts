@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { InjectDrizzle } from "@superbuilder/drizzle";
-import type { DrizzleDB } from "@superbuilder/drizzle/types";
-import { {{camelEntity}}s } from "@superbuilder/drizzle";
-import type { {{PascalEntity}}, New{{PascalEntity}} } from "@superbuilder/drizzle";
+import { InjectDrizzle } from "@superbuilder/features-db";
+import type { DrizzleDB } from "@superbuilder/features-db/types";
+import { {{camelEntity}}s } from "@superbuilder/features-db";
+import type { {{PascalEntity}}, New{{PascalEntity}} } from "@superbuilder/features-db";
 import { eq } from "drizzle-orm";
 
 @Injectable()

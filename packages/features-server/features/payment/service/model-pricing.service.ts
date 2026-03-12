@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq } from 'drizzle-orm';
-import { paymentModelPricing } from '@superbuilder/drizzle';
-import type { NewPaymentModelPricing } from '@superbuilder/drizzle';
+import { paymentModelPricing } from '@superbuilder/features-db';
+import type { NewPaymentModelPricing } from '@superbuilder/features-db';
 
 @Injectable()
 export class ModelPricingService {

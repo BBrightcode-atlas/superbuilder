@@ -1,4 +1,4 @@
-import type { Permission, Role } from '@superbuilder/drizzle';
+import type { Permission, Role } from '@superbuilder/features-db';
 
 /**
  * Permission check result

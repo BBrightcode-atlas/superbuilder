@@ -1,7 +1,7 @@
 /**
  * Project Row - 프로젝트 목록의 단일 행
  */
-import type { StoryStudioProject } from "@superbuilder/drizzle";
+import type { StoryStudioProject } from "@superbuilder/features-db";
 import { cn } from "@superbuilder/feature-ui/lib/utils";
 import { Badge } from "@superbuilder/feature-ui/shadcn/badge";
 import { Link } from "@tanstack/react-router";

@@ -1,1 +1,1 @@
-export type { {{PascalEntity}}, New{{PascalEntity}} } from "@superbuilder/drizzle";
+export type { {{PascalEntity}}, New{{PascalEntity}} } from "@superbuilder/features-db";

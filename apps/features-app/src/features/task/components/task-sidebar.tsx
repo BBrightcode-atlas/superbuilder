@@ -16,7 +16,7 @@ import {
 } from "@superbuilder/feature-ui/shadcn/select";
 import { Button } from "@superbuilder/feature-ui/shadcn/button";
 import { Trash2, X } from "lucide-react";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 import { STATUS_DISPLAY_ORDER, PRIORITY_LABELS } from "../constants";
 import { getStatusLabel } from "./task-status-icon";
 import { useUpdateTask, useDeleteTask, useTaskProjects, useTaskCycles } from "../hooks";

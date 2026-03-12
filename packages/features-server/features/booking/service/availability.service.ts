@@ -6,14 +6,14 @@ import {
 } from "@nestjs/common";
 import { eq, and, between, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   bookingWeeklySchedules,
   bookingScheduleOverrides,
   bookingBookings,
   type BookingWeeklySchedule,
   type BookingScheduleOverride,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type { AvailableSlot } from "../types";
 import type { z } from "zod";
 import type { updateWeeklyScheduleSchema } from "../dto/update-weekly-schedule.dto";

@@ -1,6 +1,6 @@
 import { Button } from '@superbuilder/feature-ui/shadcn/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@superbuilder/feature-ui/shadcn/card';
-import type { Product } from '@superbuilder/drizzle';
+import type { Product } from '@superbuilder/features-db';
 
 interface ProductCardProps {
   product: Product;

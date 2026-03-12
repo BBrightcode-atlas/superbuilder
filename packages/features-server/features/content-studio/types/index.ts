@@ -4,7 +4,7 @@ import type {
   StudioContent,
   StudioContentSeo,
   StudioEdge,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 
 /** 스튜디오 + 소유자 정보 */
 export type StudioWithOwner = StudioStudio & {

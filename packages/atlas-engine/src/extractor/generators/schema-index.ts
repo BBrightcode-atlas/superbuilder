@@ -3,7 +3,7 @@ import { join } from "path";
 import type { FeatureRegistry } from "../../registry/types";
 
 /**
- * packages/drizzle/src/schema/index.ts 재생성
+ * packages/features-db/src/schema/index.ts 재생성
  *
  * Core exports는 항상 유지하고, feature exports만 선택된 feature로 필터링
  */
@@ -12,7 +12,7 @@ export function generateSchemaIndex(
   selectedFeatures: string[],
   registry: FeatureRegistry,
 ): string {
-  const filePath = join(targetPath, "packages/drizzle/src/schema/index.ts");
+  const filePath = join(targetPath, "packages/features-db/src/schema/index.ts");
   const original = readFileSync(filePath, "utf-8");
 
   const selectedSet = new Set(selectedFeatures);
@@ -20,11 +20,11 @@ export function generateSchemaIndex(
   const result: string[] = [];
 
   // feature name → schema directory name 매핑 빌드
-  // e.g. "ai" → "agent" (schema.path = "packages/drizzle/src/schema/features/agent/")
+  // e.g. "ai" → "agent" (schema.path = "packages/features-db/src/schema/features/agent/")
   const featureToSchemaDir = new Map<string, string>();
   for (const [name, entry] of Object.entries(registry.features)) {
     if (entry.schema.path) {
-      // "packages/drizzle/src/schema/features/agent/" → "agent"
+      // "packages/features-db/src/schema/features/agent/" → "agent"
       const match = entry.schema.path.match(/features\/([^/]+)\/?$/);
       if (match) {
         featureToSchemaDir.set(name, match[1]);

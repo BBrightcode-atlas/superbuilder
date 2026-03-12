@@ -6,7 +6,7 @@ import { Badge } from "@superbuilder/feature-ui/shadcn/badge";
 import { Link } from "@tanstack/react-router";
 import { VoteButtons } from "./vote-buttons";
 import { ReactionSection } from "@superbuilder/widgets/reaction";
-import type { CommunityPost } from "@superbuilder/drizzle";
+import type { CommunityPost } from "@superbuilder/features-db";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 

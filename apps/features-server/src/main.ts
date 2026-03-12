@@ -18,7 +18,7 @@ import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import { AppModule } from './app.module';
 import { trpcRouter } from './trpc';
-import { DRIZZLE, type DrizzleDB } from '@superbuilder/drizzle';
+import { DRIZZLE, type DrizzleDB } from '@superbuilder/features-db';
 import {
   fastifyTRPCPlugin,
   type FastifyTRPCPluginOptions,

@@ -7,9 +7,9 @@ import {
 } from "@nestjs/common";
 import { eq, asc, and, count, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { courseTopics, courseCourses } from "@superbuilder/drizzle";
-import type { CourseTopic } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { courseTopics, courseCourses } from "@superbuilder/features-db";
+import type { CourseTopic } from "@superbuilder/features-db";
 import type { CreateTopicInput, UpdateTopicInput, ReorderInput } from "../types";
 
 @Injectable()

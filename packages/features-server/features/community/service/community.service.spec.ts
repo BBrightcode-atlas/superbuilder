@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import { TEST_DATES, TEST_IDS, TEST_USER, createMockDb } from "../../__test-utils__";
 import { CommunityService } from "./community.service";
 
@@ -37,7 +37,7 @@ jest.mock("@/core/logger", () => ({
   }),
 }));
 
-jest.mock("@superbuilder/drizzle", () => {
+jest.mock("@superbuilder/features-db", () => {
   const { Inject } = jest.requireActual("@nestjs/common");
   const col = (name: string) => ({ name });
   return {

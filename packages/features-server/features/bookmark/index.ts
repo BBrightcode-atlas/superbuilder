@@ -11,5 +11,5 @@ export type { BookmarkRouter } from "./trpc";
 // Services
 export { BookmarkService } from "./service";
 
-// Schema - centralized in @superbuilder/drizzle
-// Use: import { bookmarks } from "@superbuilder/drizzle"
+// Schema - centralized in @superbuilder/features-db
+// Use: import { bookmarks } from "@superbuilder/features-db"

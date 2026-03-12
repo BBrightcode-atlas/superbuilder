@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { agentDeskRequirementSources, agentDeskNormalizedRequirements } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { agentDeskRequirementSources, agentDeskNormalizedRequirements } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 import { LLMService } from "../../../features/ai";
 import type { NormalizeRequirementsDto } from "../dto/normalize-requirements.dto";

@@ -1,11 +1,11 @@
-# @superbuilder/drizzle
+# @superbuilder/features-db
 
 Drizzle ORM 유틸리티 패키지 - 스키마 작성을 위한 공통 헬퍼
 
 ## 설치
 
 ```bash
-pnpm add @superbuilder/drizzle
+pnpm add @superbuilder/features-db
 ```
 
 ## 사용법
@@ -13,7 +13,7 @@ pnpm add @superbuilder/drizzle
 ### 공통 컬럼 헬퍼
 
 ```typescript
-import { baseColumns, softDelete } from "@superbuilder/drizzle/utils";
+import { baseColumns, softDelete } from "@superbuilder/features-db/utils";
 import { pgTable, text, varchar } from "drizzle-orm/pg-core";
 
 export const posts = pgTable("posts", {
@@ -28,7 +28,7 @@ export const posts = pgTable("posts", {
 ### 개별 헬퍼 사용
 
 ```typescript
-import { id, timestamps } from "@superbuilder/drizzle/utils";
+import { id, timestamps } from "@superbuilder/features-db/utils";
 
 export const categories = pgTable("categories", {
   id: id(),
@@ -41,7 +41,7 @@ export const categories = pgTable("categories", {
 ### 타입 유틸리티
 
 ```typescript
-import type { InsertModel, SelectModel, UpdateModel } from "@superbuilder/drizzle/utils";
+import type { InsertModel, SelectModel, UpdateModel } from "@superbuilder/features-db/utils";
 import { posts } from "./schema";
 
 type Post = SelectModel<typeof posts>;

@@ -149,11 +149,11 @@ export async function createCommand(featureName: string) {
     console.log(chalk.cyan("생성된 파일:"));
     console.log(chalk.gray(`  Server:  packages/features/${featureName}/`));
     console.log(chalk.gray(`  Client:  apps/app/src/features/${featureName}/`));
-    console.log(chalk.gray(`  Schema:  packages/drizzle/src/schema/features/${featureName}/`));
+    console.log(chalk.gray(`  Schema:  packages/features-db/src/schema/features/${featureName}/`));
     console.log();
     console.log(chalk.yellow("다음 단계:"));
-    console.log(chalk.gray("  1. Schema 수정: packages/drizzle/src/schema/features/" + featureName + "/index.ts"));
-    console.log(chalk.gray("  2. Schema re-export 추가: packages/drizzle/src/schema/index.ts"));
+    console.log(chalk.gray("  1. Schema 수정: packages/features-db/src/schema/features/" + featureName + "/index.ts"));
+    console.log(chalk.gray("  2. Schema re-export 추가: packages/features-db/src/schema/index.ts"));
     console.log(chalk.gray("  3. AppModule 등록: apps/atlas-server/src/app.module.ts"));
     console.log(chalk.gray("  4. tRPC Router 등록: packages/features/app-router.ts + apps/atlas-server/src/trpc/router.ts"));
     console.log(chalk.gray("  5. pnpm db:push && pnpm build"));

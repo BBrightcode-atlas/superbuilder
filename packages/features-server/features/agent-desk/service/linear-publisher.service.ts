@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from "@nestjs/common";
 import { eq, and } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { agentDeskLinearPublishJobs, agentDeskSessions } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { agentDeskLinearPublishJobs, agentDeskSessions } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 import type {
   LinearIssueDraft,

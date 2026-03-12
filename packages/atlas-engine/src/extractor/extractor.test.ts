@@ -121,12 +121,12 @@ describe("extractor", () => {
     // blog schema should be removed
     expect(
       existsSync(
-        join(targetPath, "packages/drizzle/src/schema/features/blog"),
+        join(targetPath, "packages/features-db/src/schema/features/blog"),
       ),
     ).toBe(false);
     expect(
       existsSync(
-        join(targetPath, "packages/drizzle/src/schema/features/community"),
+        join(targetPath, "packages/features-db/src/schema/features/community"),
       ),
     ).toBe(false);
   });
@@ -139,7 +139,7 @@ describe("extractor", () => {
     extract({ sourcePath: ATLAS_PATH, targetPath, registry, resolved });
 
     const schemaIndex = readFileSync(
-      join(targetPath, "packages/drizzle/src/schema/index.ts"),
+      join(targetPath, "packages/features-db/src/schema/index.ts"),
       "utf-8",
     );
 
@@ -163,7 +163,7 @@ describe("extractor", () => {
     extract({ sourcePath: ATLAS_PATH, targetPath, registry, resolved });
 
     const drizzleConfig = readFileSync(
-      join(targetPath, "packages/drizzle/drizzle.config.ts"),
+      join(targetPath, "packages/features-db/drizzle.config.ts"),
       "utf-8",
     );
 
@@ -320,10 +320,10 @@ describe("extractor", () => {
     });
 
     expect(result.regeneratedFiles).toContain(
-      "packages/drizzle/src/schema/index.ts",
+      "packages/features-db/src/schema/index.ts",
     );
     expect(result.regeneratedFiles).toContain(
-      "packages/drizzle/drizzle.config.ts",
+      "packages/features-db/drizzle.config.ts",
     );
     expect(result.regeneratedFiles).toContain(
       "packages/features/app-router.ts",

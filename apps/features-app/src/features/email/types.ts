@@ -3,7 +3,7 @@
  *
  * tRPC를 통해 전달되는 데이터는 Date 객체가 string으로 직렬화됩니다.
  */
-import type { EmailStatus, EmailTemplateType, EmailLog as DrizzleEmailLog } from '@superbuilder/drizzle';
+import type { EmailStatus, EmailTemplateType, EmailLog as DrizzleEmailLog } from '@superbuilder/features-db';
 
 /**
  * 이메일 로그 (Frontend)

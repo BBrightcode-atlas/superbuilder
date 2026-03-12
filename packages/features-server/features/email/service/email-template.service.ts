@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { render } from '@react-email/render';
-import type { EmailTemplateType } from '@superbuilder/drizzle';
+import type { EmailTemplateType } from '@superbuilder/features-db';
 import * as templates from '../templates';
 
 /**

@@ -1,4 +1,4 @@
-import type { License } from '@superbuilder/drizzle';
+import type { License } from '@superbuilder/features-db';
 
 /**
  * 라이선스 상태 타입

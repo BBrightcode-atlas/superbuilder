@@ -6,8 +6,8 @@ import {
 } from "@nestjs/common";
 import { eq, asc, and, ilike, count, or, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { bookingCategories, type BookingCategory } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { bookingCategories, type BookingCategory } from "@superbuilder/features-db";
 import type { z } from "zod";
 import type { createCategorySchema } from "../dto/create-category.dto";
 import type { updateCategorySchema } from "../dto/update-category.dto";

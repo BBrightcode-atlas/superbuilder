@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { and, desc, eq, sum } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { agentDeskSessions, agentDeskFiles, agentDeskMessages, agentDeskExecutions } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { agentDeskSessions, agentDeskFiles, agentDeskMessages, agentDeskExecutions } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 import type { CreateSessionDto } from "../dto/create-session.dto";
 import type { ConfirmUploadDto } from "../dto/upload-file.dto";

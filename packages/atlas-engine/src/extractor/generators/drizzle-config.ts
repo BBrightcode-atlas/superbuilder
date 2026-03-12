@@ -3,7 +3,7 @@ import { join } from "path";
 import type { FeatureRegistry } from "../../registry/types";
 
 /**
- * packages/drizzle/drizzle.config.ts 재생성
+ * packages/features-db/drizzle.config.ts 재생성
  *
  * tablesFilter 배열에서 선택되지 않은 feature의 테이블을 제거
  */
@@ -12,7 +12,7 @@ export function generateDrizzleConfig(
   selectedFeatures: string[],
   registry: FeatureRegistry,
 ): string {
-  const filePath = join(targetPath, "packages/drizzle/drizzle.config.ts");
+  const filePath = join(targetPath, "packages/features-db/drizzle.config.ts");
   const original = readFileSync(filePath, "utf-8");
 
   // 선택된 feature들의 테이블 목록 수집

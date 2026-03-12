@@ -10,7 +10,7 @@ import {
 	featureRequestRuns,
 	featureRequests,
 	featureRequestWorktrees,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import {
 	generateFeatureStudioPlan,
 	generateFeatureStudioSpec,

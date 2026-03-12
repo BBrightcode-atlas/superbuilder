@@ -7,7 +7,7 @@ import {
 	featureRequestApprovals,
 	featureRequests,
 	featureRequestWorktrees,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import { FeatureCatalogService } from "../../feature-catalog/server/service";
 
 @Injectable()
