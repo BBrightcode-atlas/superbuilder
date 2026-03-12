@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { UserCog, Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@superbuilder/feature-ui/shadcn/button';
-import type { Role } from '@superbuilder/drizzle';
+import type { Role } from '@superbuilder/features-db';
 import {
   Dialog,
   DialogContent,

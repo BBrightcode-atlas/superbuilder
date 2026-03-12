@@ -13,8 +13,8 @@
     "sourceMap": true,
     "noEmit": true,
     "paths": {
-      "@superbuilder/drizzle": ["../../packages/drizzle/src"],
-      "@superbuilder/drizzle/*": ["../../packages/drizzle/src/*"],
+      "@superbuilder/features-db": ["../../packages/drizzle/src"],
+      "@superbuilder/features-db/*": ["../../packages/drizzle/src/*"],
       "@superbuilder/features-core/*": ["../../packages/features-core/*"]
     }
   },

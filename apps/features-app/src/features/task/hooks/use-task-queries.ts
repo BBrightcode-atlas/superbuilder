@@ -5,7 +5,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 
 /** Reference data (projects, cycles, labels) rarely changes — 5 min staleTime */
 const REFERENCE_STALE_TIME = 5 * 60 * 1000;

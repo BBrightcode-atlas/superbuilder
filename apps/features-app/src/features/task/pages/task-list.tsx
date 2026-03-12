@@ -19,7 +19,7 @@ import {
   CollapsibleTrigger,
 } from "@superbuilder/feature-ui/shadcn/collapsible";
 import { ChevronDown } from "lucide-react";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 import { STATUS_DISPLAY_ORDER, STATUS_CATEGORY_MAP } from "../constants";
 import type { FilterState, TaskRowData, SortByField } from "../constants";
 import { TaskRow, TaskRowOverlay } from "../components/task-row";

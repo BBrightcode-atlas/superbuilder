@@ -16,7 +16,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@superbuilder/features-client": "workspace:^",
     "@superbuilder/features-server": "workspace:^",
-    "@superbuilder/drizzle": "workspace:^",
+    "@superbuilder/features-db": "workspace:^",
     "@superbuilder/feature-ui": "workspace:^",
     "@superbuilder/widgets": "workspace:^",
     "@supabase/supabase-js": "2.93.3",

@@ -39,4 +39,4 @@ export { AuthGuard } from "./guards/auth-guard";
 export { AdminGuard, type AdminRole } from "./guards/admin-guard";
 
 // Note: Schema exports (users, profiles, roles) are now centrally managed
-// Import directly from @superbuilder/drizzle instead
+// Import directly from @superbuilder/features-db instead

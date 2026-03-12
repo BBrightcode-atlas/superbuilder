@@ -152,7 +152,7 @@ export class InicisProvider implements PaymentProvider {
 
     // P_NEXT_URL은 서버의 고정 콜백 엔드포인트를 사용한다.
     // 사용자 리다이렉트 URL은 P_NOTI(customData)에 포함하여 콜백에서 처리한다.
-    const serverCallbackUrl = `${process.env.VITE_SUPABASE_URL ? '' : 'http://localhost:3002'}/api/payment/inicis/callback`;
+    const serverCallbackUrl = `${process.env.API_URL ?? 'http://localhost:3002'}/api/payment/inicis/callback`;
 
     // customData에 사용자 리다이렉트 URL 병합
     const notiData = {

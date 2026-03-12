@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
 } from '@superbuilder/feature-ui/shadcn/accordion';
 import { Badge } from '@superbuilder/feature-ui/shadcn/badge';
-import type { Permission } from '@superbuilder/drizzle';
+import type { Permission } from '@superbuilder/features-db';
 
 interface PermissionTreeProps {
   permissionsByCategory: Record<string, Permission[]>;

@@ -1,4 +1,4 @@
-import type { CommunityPost } from "@superbuilder/drizzle";
+import type { CommunityPost } from "@superbuilder/features-db";
 import { Avatar, AvatarFallback } from "@superbuilder/feature-ui/shadcn/avatar";
 import { Badge } from "@superbuilder/feature-ui/shadcn/badge";
 import { Button } from "@superbuilder/feature-ui/shadcn/button";

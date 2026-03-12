@@ -4,7 +4,7 @@ import { Button } from "@superbuilder/feature-ui/shadcn/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@superbuilder/feature-ui/shadcn/avatar";
 import { Separator } from "@superbuilder/feature-ui/shadcn/separator";
 import { Link } from "@tanstack/react-router";
-import type { Community } from "@superbuilder/drizzle";
+import type { Community } from "@superbuilder/features-db";
 
 interface CommunityCardProps {
   community: Community;

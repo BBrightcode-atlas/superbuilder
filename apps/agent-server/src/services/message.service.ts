@@ -1,6 +1,6 @@
 import { eq, and, desc, asc, lt } from "drizzle-orm";
-import { agentMessages } from "@superbuilder/drizzle/schema";
-import type { NewAgentMessage } from "@superbuilder/drizzle/schema";
+import { agentMessages } from "@superbuilder/features-db/schema";
+import type { NewAgentMessage } from "@superbuilder/features-db/schema";
 import { db } from "../lib/db";
 
 export const messageService = {

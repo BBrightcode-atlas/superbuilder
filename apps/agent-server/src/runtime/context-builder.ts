@@ -1,4 +1,4 @@
-import type { AgentAgent, AgentMessage } from "@superbuilder/drizzle/schema";
+import type { AgentAgent, AgentMessage } from "@superbuilder/features-db/schema";
 import type { CoreMessage } from "ai";
 
 /** DB 메시지를 AI SDK CoreMessage 형식으로 변환 */

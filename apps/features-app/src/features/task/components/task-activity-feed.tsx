@@ -19,7 +19,7 @@ import {
   Hash,
 } from "lucide-react";
 import { useTaskActivities, useTaskComments } from "../hooks";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 import { PRIORITY_LABELS } from "../constants";
 import { getStatusLabel } from "./task-status-icon";
 import { getInitials, formatShortDate, formatRelativeTime } from "../helpers";

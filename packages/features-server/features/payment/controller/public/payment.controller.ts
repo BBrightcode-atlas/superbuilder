@@ -29,7 +29,7 @@ export class PaymentController {
   @ApiBody({ schema: { type: 'object', required: ['variantId'], properties: { variantId: { type: 'string', description: 'Lemon Squeezy Variant ID' }, customPrice: { type: 'integer', minimum: 1, description: '커스텀 가격 (cents)' }, email: { type: 'string', format: 'email', description: '고객 이메일' }, name: { type: 'string', description: '고객 이름' }, discountCode: { type: 'string', description: '할인 코드' }, customData: { type: 'object', description: '추가 커스텀 데이터' }, redirectUrl: { type: 'string', format: 'uri', description: '결제 후 리디렉트 URL' } } } })
   async createCheckout(@Req() req: FastifyRequest, @Body() dto: CreateCheckoutDto) {
     // Optional auth — 로그인 상태면 userId를 전달하여 구독과 사용자 연결
-    const user = parseJwtFromHeader(req.headers.authorization);
+    const user = await parseJwtFromHeader(req.headers.authorization);
     return this.paymentService.createCheckout(dto, user?.id);
   }
 

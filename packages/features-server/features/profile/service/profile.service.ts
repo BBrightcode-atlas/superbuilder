@@ -309,7 +309,7 @@ export class ProfileService {
       throw new NotFoundException('이미 탈퇴된 계정입니다');
     }
 
-    // TODO: 비밀번호 검증 (Supabase Auth 연동)
+    // TODO: 비밀번호 검증 (Better Auth 연동)
 
     await this.db.insert(profileWithdrawalReasons).values({
       userId,

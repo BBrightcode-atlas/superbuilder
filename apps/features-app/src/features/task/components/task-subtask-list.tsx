@@ -5,7 +5,7 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "@superbuilder/feature-ui/lib/utils";
 import { TaskStatusIcon } from "./task-status-icon";
 import { useTasks } from "../hooks";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 
 interface Props {
   taskId: string;

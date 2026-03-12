@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { eq, and, desc, ilike } from "drizzle-orm";
-import { communities, communityPosts } from "@superbuilder/drizzle/schema";
+import { communities, communityPosts } from "@superbuilder/features-db/schema";
 import { db } from "../lib/db";
 
 export const communityTools = {

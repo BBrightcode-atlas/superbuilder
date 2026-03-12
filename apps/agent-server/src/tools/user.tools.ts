@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
-import { profiles } from "@superbuilder/drizzle/schema";
+import { profiles } from "@superbuilder/features-db/schema";
 import { db } from "../lib/db";
 
 export const userTools = {

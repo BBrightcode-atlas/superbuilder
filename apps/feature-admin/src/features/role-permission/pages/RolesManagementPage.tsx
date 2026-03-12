@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@superbuilder/feature-ui/shadcn/button';
-import type { Permission } from '@superbuilder/drizzle';
+import type { Permission } from '@superbuilder/features-db';
 import {
   Dialog,
   DialogContent,

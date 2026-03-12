@@ -1,10 +1,10 @@
 /**
  * Task Feature Constants
  *
- * @superbuilder/drizzle에서 값(value) import 시 NestJS가 브라우저 번들에 포함되어
+ * @superbuilder/features-db에서 값(value) import 시 NestJS가 브라우저 번들에 포함되어
  * process is not defined 에러가 발생하므로, 프론트엔드용 상수를 로컬에 정의
  */
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 
 export type TaskStatusCategory =
   | "backlog"

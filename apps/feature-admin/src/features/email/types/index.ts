@@ -1,4 +1,4 @@
-import type { EmailLog, EmailStatus, EmailTemplateType } from '@superbuilder/drizzle';
+import type { EmailLog, EmailStatus, EmailTemplateType } from '@superbuilder/features-db';
 
 export type { EmailLog, EmailStatus, EmailTemplateType };
 

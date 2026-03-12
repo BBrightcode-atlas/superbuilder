@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DatabaseModule } from '@superbuilder/drizzle';
+import { DatabaseModule } from '@superbuilder/features-db';
 
 // [ATLAS:IMPORTS]
 import { HelloWorldModule } from '@superbuilder/features-server/hello-world';

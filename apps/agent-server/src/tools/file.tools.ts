@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { desc, ilike } from "drizzle-orm";
-import { files } from "@superbuilder/drizzle/schema";
+import { files } from "@superbuilder/features-db/schema";
 import { db } from "../lib/db";
 
 export const fileTools = {
