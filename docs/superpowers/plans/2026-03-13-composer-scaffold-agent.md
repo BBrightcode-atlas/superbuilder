@@ -693,7 +693,7 @@ git commit -m "feat(atlas-engine): add template clone + git init utility"
 - Create: `packages/atlas-engine/src/scaffold/workflow-writer.ts`
 - Create: `packages/atlas-engine/src/scaffold/workflow-writer.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/workflow-writer.test.ts
@@ -764,13 +764,13 @@ describe("generateWorkflowMarkdown", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd packages/atlas-engine && bun test src/scaffold/workflow-writer.test.ts
 ```
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/workflow-writer.ts
@@ -991,13 +991,13 @@ export async function writeInstallWorkflow(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 ```bash
 cd packages/atlas-engine && bun test src/scaffold/workflow-writer.test.ts
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/atlas-engine/src/scaffold/workflow-writer.ts packages/atlas-engine/src/scaffold/workflow-writer.test.ts
