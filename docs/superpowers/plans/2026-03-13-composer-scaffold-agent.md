@@ -24,7 +24,7 @@ This is a manual/semi-automated task: fork `BBrightcodeDev/feature-atlas` into `
 - The template must be a clean shell with NO feature code and NO Supabase references
 - All connection files must have `[ATLAS:*]` markers where features get inserted
 
-- [ ] **Step 1: Fork the repo**
+- [x] **Step 1: Fork the repo**
 
 ```bash
 gh repo fork BBrightcodeDev/feature-atlas \
@@ -35,7 +35,7 @@ cd feature-atlas-template
 git checkout develop
 ```
 
-- [ ] **Step 2: Remove all feature code**
+- [x] **Step 2: Remove all feature code**
 
 Delete these directories (keep the parent dirs empty):
 
@@ -65,7 +65,7 @@ mkdir -p packages/drizzle/src/schema/features
 mkdir -p packages/widgets/src
 ```
 
-- [ ] **Step 3: Clean connection files — add markers**
+- [x] **Step 3: Clean connection files — add markers**
 
 Edit `apps/atlas-server/src/app.module.ts`:
 ```typescript
@@ -158,7 +158,7 @@ Edit `packages/features/package.json` — clean exports:
 
 > **Note:** Since JSON doesn't support comments, package.json exports will use a separate marker file `packages/features/.atlas-exports.json` that the agent reads and merges.
 
-- [ ] **Step 4: Remove Supabase references**
+- [x] **Step 4: Remove Supabase references**
 
 ```bash
 # Delete supabase client files
@@ -183,7 +183,7 @@ BETTER_AUTH_URL=
 
 Update `packages/core/auth/` to use Better Auth patterns from superbuilder's current `packages/features-client/core/auth/`.
 
-- [ ] **Step 5: Add registry placeholder**
+- [x] **Step 5: Add registry placeholder**
 
 Create `registry/features.json`:
 ```json
@@ -194,7 +194,7 @@ Create `registry/features.json`:
 }
 ```
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add -A
@@ -202,7 +202,7 @@ git commit -m "chore: clean template — remove features, supabase, add markers"
 git push origin develop
 ```
 
-- [ ] **Step 7: Verify template builds**
+- [x] **Step 7: Verify template builds**
 
 ```bash
 bun install
@@ -211,7 +211,7 @@ bun run typecheck
 
 Fix any type errors from removed features/supabase. The template must compile clean with zero features installed.
 
-- [ ] **Step 8: Tag the template version**
+- [x] **Step 8: Tag the template version**
 
 ```bash
 git tag v1.0.0
