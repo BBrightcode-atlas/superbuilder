@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./registry": "./src/registry/index.ts",
     "./resolver": "./src/resolver/index.ts",
+    "./scaffold": "./src/scaffold/index.ts",
     "./extractor": "./src/extractor/index.ts"
   },
   "scripts": {

@@ -1014,7 +1014,7 @@ git commit -m "feat(atlas-engine): add workflow writer — generates agent insta
 - Modify: `packages/atlas-engine/src/index.ts`
 - Modify: `packages/atlas-engine/package.json`
 
-- [ ] **Step 1: Write the scaffold orchestrator**
+- [x] **Step 1: Write the scaffold orchestrator**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/scaffold.ts
@@ -1055,7 +1055,7 @@ export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
 }
 ```
 
-- [ ] **Step 2: Write the barrel export**
+- [x] **Step 2: Write the barrel export**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/index.ts
@@ -1067,7 +1067,7 @@ export { generateWorkflowMarkdown, writeInstallWorkflow } from "./workflow-write
 export type * from "./types";
 ```
 
-- [ ] **Step 3: Update main index.ts**
+- [x] **Step 3: Update main index.ts**
 
 ```typescript
 // packages/atlas-engine/src/index.ts
@@ -1078,7 +1078,7 @@ export * from "./config";
 // Note: extractor export removed (deprecated)
 ```
 
-- [ ] **Step 4: Update package.json exports**
+- [x] **Step 4: Update package.json exports**
 
 Add `"./scaffold"` export to `packages/atlas-engine/package.json`:
 
@@ -1094,15 +1094,15 @@ Add `"./scaffold"` export to `packages/atlas-engine/package.json`:
 }
 ```
 
-- [ ] **Step 5: Run all tests**
+- [x] **Step 5: Run all tests**
 
 ```bash
 cd packages/atlas-engine && bun test
 ```
 
-Expected: All existing tests + new scaffold tests pass.
+Scaffold tests: 17 pass, 0 fail. Pre-existing extractor/scanner tests have unrelated failures.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/atlas-engine/src/scaffold/ packages/atlas-engine/src/index.ts packages/atlas-engine/package.json
