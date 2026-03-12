@@ -1,5 +1,5 @@
 /**
- * Atlas MCP Tools — Mastra Tool definitions for Supabase/Vercel operations.
+ * Atlas MCP Tools — Mastra Tool definitions for Neon/Vercel operations.
  * These tools are injected into the agent runtime via `extraTools` in createMastraCode().
  * They reuse the same localDb and token storage as the existing tRPC routers.
  */
@@ -18,10 +18,10 @@ import { decrypt } from "./trpc/routers/auth/utils/crypto-storage";
 // ---------------------------------------------------------------------------
 
 async function getTokenForService(
-	service: "supabase" | "vercel",
+	service: "neon" | "vercel",
 ): Promise<string | null> {
 	// env 우선, DB fallback
-	const envKey = service === "supabase" ? "SUPABASE_ACCESS_TOKEN" : "VERCEL_TOKEN";
+	const envKey = service === "neon" ? "NEON_API_KEY" : "VERCEL_TOKEN";
 	const envToken = process.env[envKey];
 	if (envToken) return envToken;
 
@@ -33,13 +33,13 @@ async function getTokenForService(
 	return decrypt(integration.encryptedToken);
 }
 
-async function supabaseFetch(path: string, options: RequestInit = {}) {
-	const token = await getTokenForService("supabase");
+async function neonFetch(path: string, options: RequestInit = {}) {
+	const token = await getTokenForService("neon");
 	if (!token)
 		throw new Error(
-			"Supabase 토큰이 설정되지 않았습니다. 먼저 Atlas → Composer에서 Supabase를 연결하세요.",
+			"Neon API 키가 설정되지 않았습니다. 먼저 Atlas → Composer에서 Neon을 연결하세요.",
 		);
-	const res = await fetch(`https://api.supabase.com/v1${path}`, {
+	const res = await fetch(`https://console.neon.tech/api/v2${path}`, {
 		...options,
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -49,7 +49,7 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
 	});
 	if (!res.ok) {
 		const body = await res.text();
-		throw new Error(`Supabase API error (${res.status}): ${body}`);
+		throw new Error(`Neon API error (${res.status}): ${body}`);
 	}
 	return res.json();
 }
@@ -76,56 +76,48 @@ async function vercelFetch(path: string, options: RequestInit = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Supabase Tools
+// Neon Tools
 // ---------------------------------------------------------------------------
 
-export const atlasSupabaseStatusTool = createTool({
-	id: "atlas_supabase_status",
+export const atlasNeonStatusTool = createTool({
+	id: "atlas_neon_status",
 	description:
-		"Check if Supabase is connected (PAT token configured). Returns connection status.",
+		"Check if Neon is connected (API key configured). Returns connection status.",
 	inputSchema: z.object({}),
 	outputSchema: z.object({ connected: z.boolean() }),
 	execute: async () => {
-		const token = await getTokenForService("supabase");
+		const token = await getTokenForService("neon");
 		return { connected: !!token };
 	},
 });
 
-export const atlasSupabaseListOrgsTool = createTool({
-	id: "atlas_supabase_list_organizations",
+export const atlasNeonListOrgsTool = createTool({
+	id: "atlas_neon_list_organizations",
 	description:
-		"List all Supabase organizations the user belongs to. Requires Supabase PAT to be configured.",
+		"List all Neon organizations the user belongs to. Requires Neon API key to be configured.",
 	inputSchema: z.object({}),
 	outputSchema: z.object({
 		organizations: z.array(
-			z.object({ id: z.string(), name: z.string(), slug: z.string() }),
+			z.object({ id: z.string(), name: z.string() }),
 		),
 	}),
 	execute: async () => {
-		const orgs = (await supabaseFetch("/organizations")) as Array<{
+		const data = await neonFetch("/organizations");
+		const orgs = (data.organizations ?? data ?? []) as Array<{
 			id: string;
 			name: string;
-			slug: string;
 		}>;
 		return { organizations: orgs };
 	},
 });
 
-export const atlasSupabaseCreateProjectTool = createTool({
-	id: "atlas_supabase_create_project",
+export const atlasNeonCreateProjectTool = createTool({
+	id: "atlas_neon_create_project",
 	description:
-		"Create a new Supabase project in the given organization. Returns the project URL and ID. Optionally links to an Atlas project.",
+		"Create a new Neon project. Returns the project ID, name, and connection URI. Optionally links to an Atlas project.",
 	inputSchema: z.object({
 		name: z.string().describe("Project name"),
-		organizationId: z.string().describe("Supabase organization ID"),
-		dbPassword: z
-			.string()
-			.min(8)
-			.describe("Database password (min 8 chars)"),
-		region: z
-			.string()
-			.default("ap-northeast-2")
-			.describe("Supabase region (default: ap-northeast-2)"),
+		orgId: z.string().optional().describe("Neon organization ID (optional)"),
 		atlasProjectId: z
 			.string()
 			.optional()
@@ -134,26 +126,30 @@ export const atlasSupabaseCreateProjectTool = createTool({
 	outputSchema: z.object({
 		id: z.string(),
 		name: z.string(),
-		region: z.string(),
-		url: z.string(),
+		connectionUri: z.string(),
 	}),
 	execute: async (input) => {
-		const project = await supabaseFetch("/projects", {
+		const projectPayload: Record<string, unknown> = {
+			name: input.name,
+		};
+		if (input.orgId) {
+			projectPayload.org_id = input.orgId;
+		}
+
+		const data = await neonFetch("/projects", {
 			method: "POST",
-			body: JSON.stringify({
-				name: input.name,
-				organization_id: input.organizationId,
-				db_pass: input.dbPassword,
-				region: input.region,
-			}),
+			body: JSON.stringify({ project: projectPayload }),
 		});
+
+		const project = data.project;
+		const connectionUri = data.connection_uris?.[0]?.connection_uri ?? "";
 
 		if (input.atlasProjectId) {
 			await localDb
 				.update(atlasProjects)
 				.set({
-					supabaseProjectId: project.id,
-					supabaseProjectUrl: `https://${project.id}.supabase.co`,
+					neonProjectId: project.id,
+					neonConnectionString: connectionUri,
 					updatedAt: Date.now(),
 				})
 				.where(eq(atlasProjects.id, input.atlasProjectId));
@@ -162,45 +158,19 @@ export const atlasSupabaseCreateProjectTool = createTool({
 		return {
 			id: project.id,
 			name: project.name,
-			region: project.region,
-			url: `https://${project.id}.supabase.co`,
+			connectionUri,
 		};
 	},
 });
 
-export const atlasSupabaseGetApiKeysTool = createTool({
-	id: "atlas_supabase_get_api_keys",
+export const atlasNeonWriteEnvTool = createTool({
+	id: "atlas_neon_write_env",
 	description:
-		"Get the anon key and service_role key for a Supabase project. Useful for setting up .env files.",
-	inputSchema: z.object({
-		projectRef: z.string().describe("Supabase project reference ID"),
-	}),
-	outputSchema: z.object({
-		anonKey: z.string().nullable(),
-		serviceRoleKey: z.string().nullable(),
-	}),
-	execute: async (input) => {
-		const keys = (await supabaseFetch(
-			`/projects/${input.projectRef}/api-keys?reveal=true`,
-		)) as Array<{ name: string; api_key: string }>;
-		const anonKey = keys.find((k) => k.name === "anon");
-		const serviceKey = keys.find((k) => k.name === "service_role");
-		return {
-			anonKey: anonKey?.api_key ?? null,
-			serviceRoleKey: serviceKey?.api_key ?? null,
-		};
-	},
-});
-
-export const atlasSupabaseWriteEnvTool = createTool({
-	id: "atlas_supabase_write_env",
-	description:
-		"Write Supabase environment variables (URL, anon key, service role key) to a .env file in the given project path.",
+		"Write Neon environment variables (DATABASE_URL, NEON_PROJECT_ID) to a .env file in the given project path.",
 	inputSchema: z.object({
 		projectPath: z.string().describe("Absolute path to the project directory"),
-		projectRef: z.string().describe("Supabase project reference ID"),
-		anonKey: z.string().describe("Supabase anon key"),
-		serviceRoleKey: z.string().describe("Supabase service role key"),
+		connectionUri: z.string().describe("Neon connection URI"),
+		neonProjectId: z.string().describe("Neon project ID"),
 	}),
 	outputSchema: z.object({ envPath: z.string() }),
 	execute: async (input) => {
@@ -212,15 +182,14 @@ export const atlasSupabaseWriteEnvTool = createTool({
 			// File doesn't exist yet
 		}
 
-		const supabaseEnv = [
-			`VITE_SUPABASE_URL=https://${input.projectRef}.supabase.co`,
-			`VITE_SUPABASE_PUBLISHABLE_KEY=${input.anonKey}`,
-			`SUPABASE_SECRET_KEY=${input.serviceRoleKey}`,
+		const neonEnv = [
+			`DATABASE_URL=${input.connectionUri}`,
+			`NEON_PROJECT_ID=${input.neonProjectId}`,
 		].join("\n");
 
 		const newContent = existing
-			? `${existing}\n\n# Supabase (auto-generated by Atlas Agent)\n${supabaseEnv}\n`
-			: `# Supabase (auto-generated by Atlas Agent)\n${supabaseEnv}\n`;
+			? `${existing}\n\n# Neon (auto-generated by Atlas Agent)\n${neonEnv}\n`
+			: `# Neon (auto-generated by Atlas Agent)\n${neonEnv}\n`;
 
 		await writeFile(envPath, newContent, "utf-8");
 		return { envPath };
@@ -404,7 +373,7 @@ export const atlasListProjectsTool = createTool({
 				localPath: z.string(),
 				features: z.array(z.string()),
 				status: z.string(),
-				supabaseProjectUrl: z.string().nullable(),
+				neonProjectId: z.string().nullable(),
 				vercelUrl: z.string().nullable(),
 			}),
 		),
@@ -418,7 +387,7 @@ export const atlasListProjectsTool = createTool({
 				localPath: p.localPath,
 				features: p.features,
 				status: p.status,
-				supabaseProjectUrl: p.supabaseProjectUrl,
+				neonProjectId: p.neonProjectId,
 				vercelUrl: p.vercelUrl,
 			})),
 		};
@@ -431,11 +400,10 @@ export const atlasListProjectsTool = createTool({
 
 export function getAtlasMcpTools(): Record<string, unknown> {
 	return {
-		atlas_supabase_status: atlasSupabaseStatusTool,
-		atlas_supabase_list_organizations: atlasSupabaseListOrgsTool,
-		atlas_supabase_create_project: atlasSupabaseCreateProjectTool,
-		atlas_supabase_get_api_keys: atlasSupabaseGetApiKeysTool,
-		atlas_supabase_write_env: atlasSupabaseWriteEnvTool,
+		atlas_neon_status: atlasNeonStatusTool,
+		atlas_neon_list_organizations: atlasNeonListOrgsTool,
+		atlas_neon_create_project: atlasNeonCreateProjectTool,
+		atlas_neon_write_env: atlasNeonWriteEnvTool,
 		atlas_vercel_status: atlasVercelStatusTool,
 		atlas_vercel_list_teams: atlasVercelListTeamsTool,
 		atlas_vercel_create_project: atlasVercelCreateProjectTool,
