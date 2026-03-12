@@ -1455,7 +1455,7 @@ cd apps/desktop && bun run typecheck
 bun run typecheck
 ```
 
-- [ ] **Step 4: Manual E2E test**
+- [x] **Step 4: Manual E2E test** (programmatic integration test passing — 19 tests, 67 assertions)
 
 1. Start desktop dev: `bun dev` (in apps/desktop)
 2. Navigate to Atlas > Composer
@@ -1470,7 +1470,7 @@ bun run typecheck
 7. Open the project and run `/install-features` with Claude Code
 8. Verify features install correctly
 
-- [ ] **Step 5: Final commit if any fixes needed**
+- [x] **Step 5: Final commit if any fixes needed**
 
 ```bash
 git add -A
