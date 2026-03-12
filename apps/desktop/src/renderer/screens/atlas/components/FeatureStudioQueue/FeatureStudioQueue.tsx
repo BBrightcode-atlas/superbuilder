@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Badge } from "@superset/ui/badge";
 import { Button } from "@superset/ui/button";
+import { FeaturePipelineIndicator } from "./FeaturePipelineIndicator";
 
 export interface FeatureStudioQueueData {
 	requests: Array<{
@@ -80,6 +81,9 @@ export function FeatureStudioQueue({
 											</Badge>
 										) : null}
 									</div>
+									<FeaturePipelineIndicator
+										status={request.status}
+									/>
 									<p className="text-sm text-muted-foreground">
 										{request.summary ?? "요약이 아직 없습니다."}
 									</p>

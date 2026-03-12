@@ -81,7 +81,7 @@ describe("WorktreeExecutionService", () => {
 	let service: WorktreeExecutionService;
 	let mockDb: ReturnType<typeof createMockDb>;
 	let configService: { get: jest.Mock };
-	const execFileSyncMock = jest.mocked(execFileSync);
+	const execFileSyncMock = execFileSync as unknown as jest.Mock;
 
 	beforeEach(() => {
 		mockDb = createMockDb();

@@ -92,6 +92,10 @@ export default defineConfig({
 			),
 			// Atlas integration tokens
 			"process.env.ATLAS_PATH": defineEnv(process.env.ATLAS_PATH),
+			"process.env.FEATURES_SERVER_URL": defineEnv(
+				process.env.FEATURES_SERVER_URL,
+				"http://localhost:3002",
+			),
 			"process.env.SUPABASE_ACCESS_TOKEN": defineEnv(
 				process.env.SUPABASE_ACCESS_TOKEN,
 			),

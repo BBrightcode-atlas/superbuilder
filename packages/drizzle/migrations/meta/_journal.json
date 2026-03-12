@@ -127,6 +127,13 @@
       "when": 1773075487326,
       "tag": "0017_perpetual_jack_power",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1773285054934,
+      "tag": "0018_feature_studio_tables",
+      "breakpoints": true
     }
   ]
 }

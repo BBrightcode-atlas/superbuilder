@@ -61,7 +61,11 @@ async function getFeatureStudioAuthorizationHeader(): Promise<
 	};
 }
 
-const featureStudioClient = createTRPCProxyClient<FeatureStudioContractRouter>({
+// The features-server nests the router under `featureStudio`, so we create
+// a root-level client and extract the nested proxy to keep call sites flat.
+const rootClient = createTRPCProxyClient<{
+	featureStudio: FeatureStudioContractRouter;
+}>({
 	links: [
 		httpBatchLink({
 			url: `${env.FEATURES_SERVER_URL}/trpc`,
@@ -69,6 +73,7 @@ const featureStudioClient = createTRPCProxyClient<FeatureStudioContractRouter>({
 		}),
 	],
 });
+const featureStudioClient = rootClient.featureStudio;
 
 export const createAtlasFeatureStudioRouter = () =>
 	router({
