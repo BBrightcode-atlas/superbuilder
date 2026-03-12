@@ -1,3 +1,5 @@
+// TODO: Better Auth users 테이블로 점진적 마이그레이션
+// 현재는 profiles + baUsers 공존. FK 참조는 profiles.id 유지.
 import { boolean, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const authProviderEnum = pgEnum("auth_provider", [

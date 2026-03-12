@@ -10,7 +10,8 @@
  */
 
 // Core Schemas (base tables that features depend on)
-export * from "./core/auth";
+export * from "./core/better-auth";
+export * from "./core/auth"; // 호환 re-export
 export * from "./core/profiles";
 export * from "./core/files";
 export * from "./core/reviews";
