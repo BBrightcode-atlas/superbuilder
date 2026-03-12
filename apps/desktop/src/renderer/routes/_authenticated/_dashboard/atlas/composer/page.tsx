@@ -153,7 +153,7 @@ function ComposerPage() {
         updateStep(2, "running", "GitHub 저장소 생성 및 Push 중...");
         try {
           const ghResult = await pushToGitHubMutation.mutateAsync({
-            projectPath: result.targetPath,
+            projectPath: result.projectDir,
             repoName: serviceName,
             isPrivate: true,
             atlasProjectId: result.projectId,
@@ -176,7 +176,7 @@ function ComposerPage() {
         ...prev,
         result: {
           projectId: result.projectId,
-          targetPath: result.targetPath,
+          targetPath: result.projectDir,
           features: result.features,
           gitInitialized: result.gitInitialized,
           gitHubOwner,
