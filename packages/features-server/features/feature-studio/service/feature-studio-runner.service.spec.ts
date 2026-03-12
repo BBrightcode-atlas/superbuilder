@@ -35,11 +35,15 @@ jest.mock("@superbuilder/drizzle", () => ({
 	},
 }));
 
-const { generateFeatureStudioPlan, generateFeatureStudioSpec } =
-	jest.requireMock("@superset/agent") as {
-		generateFeatureStudioPlan: jest.Mock;
-		generateFeatureStudioSpec: jest.Mock;
-	};
+// Import the mocked module - jest.mock hoists to top so these are already mocked
+import {
+	generateFeatureStudioPlan,
+	generateFeatureStudioSpec,
+} from "@superset/agent";
+const generateFeatureStudioPlanMock =
+	generateFeatureStudioPlan as unknown as jest.Mock;
+const generateFeatureStudioSpecMock =
+	generateFeatureStudioSpec as unknown as jest.Mock;
 
 const requestId = "123e4567-e89b-12d3-a456-426614174099";
 const userId = "123e4567-e89b-12d3-a456-426614174000";
@@ -119,8 +123,8 @@ describe("FeatureStudioRunnerService", () => {
 			mockDb as never,
 			worktreeExecutionService as never,
 		);
-		generateFeatureStudioSpec.mockReset();
-		generateFeatureStudioPlan.mockReset();
+		generateFeatureStudioSpecMock.mockReset();
+		generateFeatureStudioPlanMock.mockReset();
 	});
 
 	afterEach(() => {
@@ -137,8 +141,8 @@ describe("FeatureStudioRunnerService", () => {
 			status: "draft",
 			createdById: userId,
 		});
-		generateFeatureStudioSpec.mockResolvedValue("# Spec");
-		generateFeatureStudioPlan.mockResolvedValue("# Plan");
+		generateFeatureStudioSpecMock.mockResolvedValue("# Spec");
+		generateFeatureStudioPlanMock.mockResolvedValue("# Plan");
 		mockDb._queueResolve("returning", [{ id: "run_1" }]);
 		mockDb._queueResolve("returning", [
 			{ id: requestId, status: "pending_spec_approval" },
@@ -146,8 +150,8 @@ describe("FeatureStudioRunnerService", () => {
 
 		const result = await service.advance(requestId);
 
-		expect(generateFeatureStudioSpec).toHaveBeenCalled();
-		expect(generateFeatureStudioPlan).toHaveBeenCalled();
+		expect(generateFeatureStudioSpecMock).toHaveBeenCalled();
+		expect(generateFeatureStudioPlanMock).toHaveBeenCalled();
 		if (!("status" in result)) {
 			throw new Error("Expected a feature request result");
 		}
@@ -163,7 +167,7 @@ describe("FeatureStudioRunnerService", () => {
 			status: "draft",
 			createdById: userId,
 		});
-		generateFeatureStudioSpec.mockRejectedValue(
+		generateFeatureStudioSpecMock.mockRejectedValue(
 			new Error("Could not find API key process.env.ANTHROPIC_API_KEY"),
 		);
 		mockDb._queueResolve("returning", [{ id: "run_1" }]);
