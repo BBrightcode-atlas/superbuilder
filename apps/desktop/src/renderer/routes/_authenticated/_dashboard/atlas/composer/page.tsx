@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import type { AgentLaunchRequest } from "@superset/shared/agent-launch";
 import { Button } from "@superset/ui/button";
 import { Spinner } from "@superset/ui/spinner";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { launchAgentSession } from "renderer/lib/agent-session-orchestrator";
+import { useCreateWorkspace } from "renderer/react-query/workspaces";
 import { ComposerStepper } from "renderer/screens/atlas/components/ComposerStepper";
 import { FeatureSelector } from "renderer/screens/atlas/components/FeatureSelector";
 import { ResolutionPreview } from "renderer/screens/atlas/components/ResolutionPreview";
@@ -86,8 +89,10 @@ function ComposerPage() {
   const composeMutation = electronTrpc.atlas.composer.compose.useMutation();
   const pushToGitHubMutation =
     electronTrpc.atlas.composer.pushToGitHub.useMutation();
-  const launchAgentMutation =
-    electronTrpc.atlas.composer.launchInstallAgent.useMutation();
+  const openFromPathMutation = electronTrpc.projects.openFromPath.useMutation();
+  const createWorkspace = useCreateWorkspace({ skipNavigation: true });
+  const terminalCreateOrAttach = electronTrpc.terminal.createOrAttach.useMutation();
+  const terminalWrite = electronTrpc.terminal.write.useMutation();
   const neonCreateMutation =
     electronTrpc.atlas.neon.createProject.useMutation();
   const neonWriteEnvMutation =
@@ -205,14 +210,63 @@ function ComposerPage() {
     }
   };
 
+  const [agentLaunching, setAgentLaunching] = useState(false);
+
   const handleLaunchAgent = async () => {
     if (!pipeline.result) return;
 
-    updateStep(2, "running", "CLI Agent 실행 중...");
+    setAgentLaunching(true);
+    updateStep(2, "running", "프로젝트를 열고 Agent를 실행하는 중...");
     try {
-      await launchAgentMutation.mutateAsync({
-        projectDir: pipeline.result.projectDir,
+      // 1. Register project in Desktop
+      const openResult = await openFromPathMutation.mutateAsync({
+        path: pipeline.result.projectDir,
       });
+
+      if (openResult.canceled || openResult.error || !openResult.project) {
+        // If project needs git init, it should already be initialized by scaffold
+        throw new Error(openResult.error ?? "프로젝트를 열 수 없습니다");
+      }
+
+      const project = openResult.project;
+
+      // 2. Create workspace for the project
+      const launchRequest: AgentLaunchRequest = {
+        kind: "terminal",
+        workspaceId: "pending-workspace",
+        agentType: "claude",
+        source: "open-in-workspace",
+        terminal: {
+          command: "claude --dangerously-skip-permissions",
+          name: "install-features",
+          taskPromptContent: "/install-features",
+          taskPromptFileName: "install-features.md",
+          autoExecute: true,
+        },
+      };
+
+      const wsResult = await createWorkspace.mutateAsyncWithPendingSetup(
+        {
+          projectId: project.id,
+          name: "install-features",
+        },
+        { agentLaunchRequest: launchRequest },
+      );
+
+      // 3. Launch agent session
+      const finalRequest: AgentLaunchRequest = {
+        ...launchRequest,
+        workspaceId: wsResult.workspace.id,
+      };
+
+      await launchAgentSession({
+        request: finalRequest,
+        source: "open-in-workspace",
+        createOrAttach: (input) =>
+          terminalCreateOrAttach.mutateAsync(input),
+        write: (input) => terminalWrite.mutateAsync(input),
+      });
+
       updateStep(2, "done", "Agent가 features를 설치 중입니다. 완료 후 다음 단계로 진행하세요.");
       setAgentPhase("launched");
 
@@ -225,6 +279,8 @@ function ComposerPage() {
         "failed",
         error instanceof Error ? error.message : "Agent 실행 실패",
       );
+    } finally {
+      setAgentLaunching(false);
     }
   };
 
@@ -386,8 +442,8 @@ function ComposerPage() {
               Agent가 프로젝트를 열고 <code>/install-features</code> 명령을 실행합니다.
             </p>
             <div className="flex gap-2">
-              <Button onClick={handleLaunchAgent} disabled={launchAgentMutation.isPending}>
-                {launchAgentMutation.isPending ? "실행 중..." : "에이전트 실행"}
+              <Button onClick={handleLaunchAgent} disabled={agentLaunching}>
+                {agentLaunching ? "실행 중..." : "에이전트 실행"}
               </Button>
               <Button variant="outline" onClick={handleSkipAgent}>
                 나중에 설치
