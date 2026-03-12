@@ -21,8 +21,8 @@ export const atlasProjects = sqliteTable(
 		features: text("features", { mode: "json" }).$type<string[]>().notNull(),
 		gitInitialized: integer("git_initialized", { mode: "boolean" }).default(false),
 		gitRemoteUrl: text("git_remote_url"),
-		supabaseProjectId: text("supabase_project_id"),
-		supabaseProjectUrl: text("supabase_project_url"),
+		neonProjectId: text("neon_project_id"),
+		neonConnectionString: text("neon_connection_string"),
 		vercelProjectId: text("vercel_project_id"),
 		vercelUrl: text("vercel_url"),
 		vercelDeploymentId: text("vercel_deployment_id"),
@@ -50,7 +50,7 @@ export const atlasIntegrations = sqliteTable("atlas_integrations", {
 	id: text("id")
 		.primaryKey()
 		.$defaultFn(() => uuidv4()),
-	service: text("service").$type<"supabase" | "vercel">().notNull().unique(),
+	service: text("service").$type<"neon" | "vercel">().notNull().unique(),
 	encryptedToken: blob("encrypted_token", { mode: "buffer" }).notNull(),
 	metadata: text("metadata", { mode: "json" }).$type<Record<string, string>>(),
 	createdAt: integer("created_at")
