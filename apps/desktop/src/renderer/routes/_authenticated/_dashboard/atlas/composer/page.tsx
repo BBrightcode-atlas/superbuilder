@@ -6,7 +6,7 @@ import { ComposerStepper } from "renderer/screens/atlas/components/ComposerStepp
 import { FeatureSelector } from "renderer/screens/atlas/components/FeatureSelector";
 import { ResolutionPreview } from "renderer/screens/atlas/components/ResolutionPreview";
 import { ProjectConfig } from "renderer/screens/atlas/components/ProjectConfig";
-import { SupabaseSetup } from "renderer/screens/atlas/components/SupabaseSetup";
+import { NeonSetup } from "renderer/screens/atlas/components/NeonSetup";
 import { VercelSetup } from "renderer/screens/atlas/components/VercelSetup";
 import {
   PipelineProgress,
@@ -44,7 +44,7 @@ const INITIAL_PIPELINE: PipelineState = {
     { label: "파일 추출", status: "pending" },
     { label: "Git 초기화", status: "pending" },
     { label: "GitHub Push", status: "pending" },
-    { label: "Supabase 프로젝트", status: "pending" },
+    { label: "Neon 프로젝트", status: "pending" },
     { label: "Vercel 배포", status: "pending" },
   ],
   result: null,
@@ -65,7 +65,7 @@ function ComposerPage() {
 
   const navigate = useNavigate();
   const [pipeline, setPipeline] = useState<PipelineState>(INITIAL_PIPELINE);
-  const [supabasePhase, setSupabasePhase] = useState<
+  const [neonPhase, setNeonPhase] = useState<
     "idle" | "setup" | "creating" | "done" | "skipped"
   >("idle");
   const [vercelPhase, setVercelPhase] = useState<
@@ -83,17 +83,14 @@ function ComposerPage() {
   const composeMutation = electronTrpc.atlas.composer.compose.useMutation();
   const pushToGitHubMutation =
     electronTrpc.atlas.composer.pushToGitHub.useMutation();
-  const supabaseCreateMutation =
-    electronTrpc.atlas.supabase.createProject.useMutation();
-  const supabaseHealthMutation =
-    electronTrpc.atlas.supabase.waitForHealthy.useMutation();
-  const supabaseWriteEnvMutation =
-    electronTrpc.atlas.supabase.writeEnvFile.useMutation();
+  const neonCreateMutation =
+    electronTrpc.atlas.neon.createProject.useMutation();
+  const neonWriteEnvMutation =
+    electronTrpc.atlas.neon.writeEnvFile.useMutation();
   const vercelCreateMutation =
     electronTrpc.atlas.vercel.createProject.useMutation();
   const vercelConnectGitMutation =
     electronTrpc.atlas.vercel.connectGitRepo.useMutation();
-  const trpcUtils = electronTrpc.useUtils();
 
   if (registryLoading || !registryData) {
     return (
@@ -108,7 +105,7 @@ function ComposerPage() {
   const canCompose =
     projectName.trim() && targetPath.trim() && !!resolution && !composeMutation.isPending;
 
-  // 외부 서비스(GitHub, Supabase, Vercel)에 사용할 고유 이름
+  // 외부 서비스(GitHub, Neon, Vercel)에 사용할 고유 이름
   const slug = projectName.trim().toLowerCase();
   const shortHash = Date.now().toString(36).slice(-4);
   const serviceName = slug
@@ -128,7 +125,7 @@ function ComposerPage() {
     if (!canCompose) return;
 
     setPipeline({ ...INITIAL_PIPELINE, active: true });
-    setSupabasePhase("idle");
+    setNeonPhase("idle");
     setVercelPhase("idle");
     setStep(3);
 
@@ -188,10 +185,10 @@ function ComposerPage() {
         },
       }));
 
-      // Pause for Supabase setup
-      setSupabasePhase("setup");
-      updateStep(3, "pending", "Supabase 연결을 설정하세요");
-      updateStep(4, "pending", "Supabase 완료 후 진행");
+      // Pause for Neon setup
+      setNeonPhase("setup");
+      updateStep(3, "pending", "Neon 연결을 설정하세요");
+      updateStep(4, "pending", "Neon 완료 후 진행");
     } catch (error) {
       updateStep(
         0,
@@ -206,71 +203,45 @@ function ComposerPage() {
     setStep(2); // Go back to project config
   };
 
-  const handleSupabaseComplete = async (orgId: string, _orgName: string) => {
+  const handleNeonComplete = async (orgId: string, _orgName: string) => {
     if (!pipeline.result) return;
 
-    setSupabasePhase("creating");
-    updateStep(3, "running", "Supabase 프로젝트 생성 중...");
+    setNeonPhase("creating");
+    updateStep(3, "running", "Neon 프로젝트 생성 중...");
 
     try {
-      const dbPassword =
-        crypto.randomUUID().replace(/-/g, "").slice(0, 16) + "Aa1!";
-
-      const sbProject = await supabaseCreateMutation.mutateAsync({
+      const neonProject = await neonCreateMutation.mutateAsync({
         name: serviceName,
-        organizationId: orgId,
-        dbPassword,
+        orgId,
         atlasProjectId: pipeline.result.projectId,
       });
 
-      updateStep(3, "running", "프로젝트 초기화 대기 중...");
-      const health = await supabaseHealthMutation.mutateAsync({
-        projectRef: sbProject.id,
+      // Neon projects are available immediately — no health check needed
+      updateStep(3, "running", ".env 파일 작성 중...");
+      await neonWriteEnvMutation.mutateAsync({
+        projectPath: pipeline.result.targetPath,
+        connectionUri: neonProject.connectionUri,
+        neonProjectId: neonProject.id,
       });
+      updateStep(3, "done", `Neon 프로젝트 ${neonProject.name} 생성 완료`);
 
-      if (!health.healthy) {
-        updateStep(3, "failed", "프로젝트 초기화 시간 초과");
-        setSupabasePhase("done");
-        setVercelPhase("setup");
-        updateStep(4, "pending", "Vercel 연결을 설정하세요");
-        return;
-      }
-
-      updateStep(3, "running", "API 키 가져오는 중...");
-      const keys = await trpcUtils.atlas.supabase.getApiKeys.fetch({
-        projectRef: sbProject.id,
-      });
-
-      if (keys.anonKey && keys.serviceRoleKey) {
-        updateStep(3, "running", ".env 파일 작성 중...");
-        await supabaseWriteEnvMutation.mutateAsync({
-          projectPath: pipeline.result.targetPath,
-          projectRef: sbProject.id,
-          anonKey: keys.anonKey,
-          serviceRoleKey: keys.serviceRoleKey,
-        });
-        updateStep(3, "done", `${sbProject.url} 생성 완료`);
-      } else {
-        updateStep(3, "done", `${sbProject.url} 생성 완료 (API 키 대기 중 — 나중에 .env 설정 필요)`);
-      }
-      setSupabasePhase("done");
-
+      setNeonPhase("done");
       setVercelPhase("setup");
       updateStep(4, "pending", "Vercel 연결을 설정하세요");
     } catch (error) {
       updateStep(
         3,
         "failed",
-        error instanceof Error ? error.message : "Supabase 프로젝트 생성 실패",
+        error instanceof Error ? error.message : "Neon 프로젝트 생성 실패",
       );
-      setSupabasePhase("done");
+      setNeonPhase("done");
       setVercelPhase("setup");
       updateStep(4, "pending", "Vercel 연결을 설정하세요");
     }
   };
 
-  const handleSupabaseSkip = () => {
-    setSupabasePhase("skipped");
+  const handleNeonSkip = () => {
+    setNeonPhase("skipped");
     updateStep(3, "skipped", "나중에 연결");
     setVercelPhase("setup");
     updateStep(4, "pending", "Vercel 연결을 설정하세요");
@@ -328,8 +299,8 @@ function ComposerPage() {
   };
 
   // Pipeline step index → Stepper step index mapping
-  // Pipeline: [파일추출(0), Git초기화(1), GitHub Push(2), Supabase(3), Vercel(4)]
-  // Stepper:  [Feature선택(0), 의존성(1), 설정(2), 프로젝트생성(3), Supabase(4), Vercel(5)]
+  // Pipeline: [파일추출(0), Git초기화(1), GitHub Push(2), Neon(3), Vercel(4)]
+  // Stepper:  [Feature선택(0), 의존성(1), 설정(2), 프로젝트생성(3), Neon(4), Vercel(5)]
   const PIPELINE_TO_STEPPER = [3, 3, 3, 4, 5] as const;
 
   // Pipeline active: show progress
@@ -376,24 +347,24 @@ function ComposerPage() {
           </div>
         ) : null}
 
-        {supabasePhase === "setup" ? (
-          <SupabaseSetup
-            onComplete={handleSupabaseComplete}
-            onSkip={handleSupabaseSkip}
+        {neonPhase === "setup" ? (
+          <NeonSetup
+            onComplete={handleNeonComplete}
+            onSkip={handleNeonSkip}
           />
         ) : null}
 
-        {supabasePhase === "done" && pipeline.steps[3].status === "failed" ? (
+        {neonPhase === "done" && pipeline.steps[3].status === "failed" ? (
           <div className="flex gap-2 pt-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                setSupabasePhase("setup");
-                updateStep(3, "pending", "Supabase 연결을 다시 설정하세요");
+                setNeonPhase("setup");
+                updateStep(3, "pending", "Neon 연결을 다시 설정하세요");
               }}
             >
-              Supabase 재시도
+              Neon 재시도
             </Button>
           </div>
         ) : null}
@@ -421,7 +392,7 @@ function ComposerPage() {
         ) : null}
 
         {pipeline.result &&
-        (supabasePhase === "done" || supabasePhase === "skipped") &&
+        (neonPhase === "done" || neonPhase === "skipped") &&
         (vercelPhase === "done" || vercelPhase === "skipped") ? (
           <div className="space-y-4 pt-4 border-t">
             <div className="flex items-center gap-2">

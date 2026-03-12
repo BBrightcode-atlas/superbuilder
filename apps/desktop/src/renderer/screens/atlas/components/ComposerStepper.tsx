@@ -6,7 +6,7 @@ const STEPS = [
   { label: "의존성 확인", description: "자동 포함되는 Feature를 확인하세요" },
   { label: "프로젝트 설정", description: "이름과 저장 경로를 설정하세요" },
   { label: "프로젝트 생성", description: "파일 추출 및 Git 초기화" },
-  { label: "Supabase", description: "데이터베이스 프로젝트 생성" },
+  { label: "Neon", description: "데이터베이스 프로젝트 생성" },
   { label: "Vercel", description: "프로젝트 배포" },
 ];
 
