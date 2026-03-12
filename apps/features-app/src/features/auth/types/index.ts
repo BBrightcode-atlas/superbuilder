@@ -1,6 +1,7 @@
-import type { Session, User } from "@supabase/supabase-js";
+import type { BetterAuthSession } from "@superbuilder/features-client/core/auth";
 
-export type { Session, User };
+export type Session = BetterAuthSession;
+export type User = BetterAuthSession["user"];
 
 export interface AuthState {
   session: Session | null;

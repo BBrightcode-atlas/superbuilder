@@ -1,13 +1,20 @@
-import type { SignInWithOAuthCredentials } from "@supabase/supabase-js";
 import { useNavigate } from "@tanstack/react-router";
-import { useSupabaseAuthAction } from "./use-supabase-auth-action";
+import { authClient, useAuthAction } from "./use-auth-action";
 
-export function useSignInWithOAuth(credential: SignInWithOAuthCredentials) {
+interface OAuthCredential {
+  provider: "google" | "github";
+  callbackURL?: string;
+}
+
+export function useSignInWithOAuth(credential: OAuthCredential) {
   const navigate = useNavigate();
 
-  return useSupabaseAuthAction(
-    (supabase) => {
-      return supabase.auth.signInWithOAuth(credential);
+  return useAuthAction(
+    () => {
+      return authClient.signIn.social({
+        provider: credential.provider,
+        callbackURL: credential.callbackURL,
+      });
     },
     {
       onSuccess: () => {

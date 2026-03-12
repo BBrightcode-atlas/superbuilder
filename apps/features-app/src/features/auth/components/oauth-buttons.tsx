@@ -20,20 +20,16 @@ interface OAuthButtonsProps {
 
 export function OAuthButtons({ disabled }: OAuthButtonsProps) {
   const providers = getEnabledOAuthProviders();
+  const callbackURL = typeof window !== "undefined" ? window.location.origin : undefined;
 
   const { execute: signInWithGoogle } = useSignInWithOAuth({
     provider: "google",
-    options: {
-      redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-      queryParams: { access_type: "offline", prompt: "consent" },
-    },
+    callbackURL,
   });
 
   const { execute: signInWithKakao } = useSignInWithOAuth({
-    provider: "kakao",
-    options: {
-      redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-    },
+    provider: "google", // TODO: Better Auth에서 kakao provider 설정 후 변경
+    callbackURL,
   });
 
   if (providers.length === 0) return null;
@@ -42,9 +38,11 @@ export function OAuthButtons({ disabled }: OAuthButtonsProps) {
     const config = OAUTH_PROVIDER_CONFIG[provider];
 
     if (config.supabaseNative) {
+      // Better Auth social sign-in 사용
       if (provider === "google") signInWithGoogle();
       if (provider === "kakao") signInWithKakao();
     } else {
+      // 커스텀 OAuth 엔드포인트 (naver 등)
       const apiUrl = import.meta.env.VITE_API_URL;
       const redirectTo = encodeURIComponent(window.location.origin);
       window.location.href = `${apiUrl}/api/auth/${provider}/authorize?redirect_to=${redirectTo}`;

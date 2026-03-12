@@ -3,9 +3,9 @@ import { useCallback } from "react";
 import {
   AuthGuard,
   authenticatedAtom,
-  getSupabaseAtom,
   profileAtom,
 } from "@superbuilder/features-client/core/auth";
+import { authClient } from "@/lib/auth-client";
 import { useAtomValue } from "jotai";
 import { Outlet, Link, useNavigate } from "@tanstack/react-router";
 
@@ -146,14 +146,13 @@ export function AppShell02() {
   const navigate = useNavigate();
   const authenticated = useAtomValue(authenticatedAtom);
   const profile = useAtomValue(profileAtom);
-  const supabase = useAtomValue(getSupabaseAtom);
 
   const handleUnauthenticated = useCallback(() => {
     navigate({ to: "/sign-in", replace: true });
   }, [navigate]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authClient.signOut();
     navigate({ to: "/sign-in", replace: true });
   };
 

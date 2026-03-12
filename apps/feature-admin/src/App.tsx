@@ -1,8 +1,6 @@
 import {
-  supabaseAtom,
   useAuthStateSync,
   useProfileSync,
-  setSupabaseForRefresh,
   refreshSessionToken,
   isUnauthorizedError,
 } from "@superbuilder/features-client/core/auth";
@@ -18,18 +16,13 @@ import {
 } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { Provider as JotaiProvider } from "jotai";
-import { useHydrateAtoms } from "jotai/utils";
 import { Toaster } from "sonner";
-import { getSupabase } from "./lib/supabase";
 import { TRPCProvider, createTRPCQueryClient, API_URL } from "./lib/trpc";
 import { createAppRouter } from "./router";
 
 configureFileUpload({ apiUrl: API_URL });
 // i18n 초기화
 import "./lib/feature-i18n";
-
-// Supabase 클라이언트를 세션 갱신 유틸에 등록
-setSupabaseForRefresh(getSupabase());
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,11 +77,6 @@ const router = createAppRouter(queryClient);
 const POSTHOG_API_KEY = import.meta.env.VITE_POSTHOG_API_KEY ?? "";
 const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST ?? "https://us.i.posthog.com";
 
-function HydrateAtoms({ children }: { children: React.ReactNode }) {
-  useHydrateAtoms([[supabaseAtom, getSupabase()]]);
-  return children;
-}
-
 function AuthSync({ children }: { children: React.ReactNode }) {
   useAuthStateSync();
   useProfileSync();
@@ -102,14 +90,12 @@ export function App() {
         <QueryClientProvider client={queryClient}>
           <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
             <JotaiProvider>
-              <HydrateAtoms>
-                <ThemeProvider>
-                  <AuthSync>
-                    <RouterProvider router={router} />
-                    <Toaster position="top-right" richColors />
-                  </AuthSync>
-                </ThemeProvider>
-              </HydrateAtoms>
+              <ThemeProvider>
+                <AuthSync>
+                  <RouterProvider router={router} />
+                  <Toaster position="top-right" richColors />
+                </AuthSync>
+              </ThemeProvider>
             </JotaiProvider>
           </TRPCProvider>
         </QueryClientProvider>

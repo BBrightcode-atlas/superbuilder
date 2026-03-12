@@ -8,10 +8,10 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AdminGuard,
   authenticatedAtom,
-  getSupabaseAtom,
   profileAtom,
   userRoleAtom,
 } from "@superbuilder/features-client/core/auth";
+import { authClient } from "@/lib/auth-client";
 import { useTRPC } from "@/lib/trpc";
 import {
   DropdownMenuItem,
@@ -74,7 +74,6 @@ export function AdminLayout() {
 
 function AdminSidebar() {
   const profile = useAtomValue(profileAtom);
-  const supabase = useAtomValue(getSupabaseAtom);
   const navigate = useNavigate();
   const routerState = useRouterState();
   const trpc = useTRPC();
@@ -85,7 +84,7 @@ function AdminSidebar() {
   const featureMenus = useMemo(() => getSortedFeatureMenus(), []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authClient.signOut();
     navigate({ to: "/login", replace: true });
   };
 
