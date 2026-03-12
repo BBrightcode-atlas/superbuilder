@@ -225,7 +225,7 @@ git push origin v1.0.0
 **Files:**
 - Create: `packages/atlas-engine/src/scaffold/types.ts`
 
-- [ ] **Step 1: Create the types file**
+- [x] **Step 1: Create the types file**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/types.ts
