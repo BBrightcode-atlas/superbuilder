@@ -320,7 +320,7 @@ export interface ScaffoldResult {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/atlas-engine/src/scaffold/types.ts
@@ -335,7 +335,7 @@ git commit -m "feat(atlas-engine): add scaffold types — ProjectSpec, ScaffoldI
 - Create: `packages/atlas-engine/src/scaffold/path-mapping.ts`
 - Create: `packages/atlas-engine/src/scaffold/path-mapping.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/path-mapping.test.ts
@@ -395,7 +395,7 @@ describe("resolveTargetPath", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd packages/atlas-engine && bun test src/scaffold/path-mapping.test.ts
@@ -403,7 +403,7 @@ cd packages/atlas-engine && bun test src/scaffold/path-mapping.test.ts
 
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/path-mapping.ts
@@ -463,7 +463,7 @@ export function resolveTargetPath(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 ```bash
 cd packages/atlas-engine && bun test src/scaffold/path-mapping.test.ts
@@ -471,7 +471,7 @@ cd packages/atlas-engine && bun test src/scaffold/path-mapping.test.ts
 
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/atlas-engine/src/scaffold/path-mapping.ts packages/atlas-engine/src/scaffold/path-mapping.test.ts
