@@ -6,10 +6,9 @@ import { localDb } from "main/lib/local-db";
 import { decrypt } from "../auth/utils/crypto-storage";
 
 async function getTokenForService(
-	service: "supabase" | "vercel",
+	service: "neon" | "vercel",
 ): Promise<string | null> {
-	const envKey =
-		service === "supabase" ? "SUPABASE_ACCESS_TOKEN" : "VERCEL_TOKEN";
+	const envKey = service === "neon" ? "NEON_API_KEY" : "VERCEL_TOKEN";
 	const envToken = process.env[envKey];
 	if (envToken) return envToken;
 
@@ -50,13 +49,13 @@ export const createAtlasDeploymentsRouter = () =>
 					.where(eq(atlasProjects.id, input.id));
 
 				if (project) {
-					// Supabase 프로젝트 삭제
-					if (project.supabaseProjectId) {
+					// Neon 프로젝트 삭제
+					if (project.neonProjectId) {
 						try {
-							const token = await getTokenForService("supabase");
+							const token = await getTokenForService("neon");
 							if (token) {
 								const res = await fetch(
-									`https://api.supabase.com/v1/projects/${project.supabaseProjectId}`,
+									`https://console.neon.tech/api/v2/projects/${project.neonProjectId}`,
 									{
 										method: "DELETE",
 										headers: {
@@ -67,12 +66,12 @@ export const createAtlasDeploymentsRouter = () =>
 								);
 								if (!res.ok && res.status !== 404) {
 									console.warn(
-										`Supabase 프로젝트 삭제 실패 (${res.status})`,
+										`Neon 프로젝트 삭제 실패 (${res.status})`,
 									);
 								}
 							}
 						} catch {
-							// Supabase 삭제 실패해도 로컬 삭제는 진행
+							// Neon 삭제 실패해도 로컬 삭제는 진행
 						}
 					}
 
