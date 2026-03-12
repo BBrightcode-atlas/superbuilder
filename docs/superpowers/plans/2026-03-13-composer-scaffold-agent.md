@@ -612,7 +612,7 @@ git commit -m "feat(atlas-engine): add spec writer — builds and writes superbu
 **Files:**
 - Create: `packages/atlas-engine/src/scaffold/template-clone.ts`
 
-- [ ] **Step 1: Write the implementation**
+- [x] **Step 1: Write the implementation**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/template-clone.ts
@@ -678,7 +678,7 @@ export async function initGitRepo(projectDir: string): Promise<void> {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/atlas-engine/src/scaffold/template-clone.ts
