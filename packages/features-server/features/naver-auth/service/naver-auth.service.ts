@@ -2,14 +2,15 @@
  * Naver Auth Feature - Service
  *
  * Naver OAuth 2.0 서버사이드 인증 처리.
- * Supabase Admin API를 사용하여 사용자 생성/조회 및 세션 발급.
+ * Better Auth users/accounts/sessions 테이블을 직접 사용하여 사용자 생성/조회 및 세션 발급.
  */
 
-import { Injectable, UnauthorizedException, InternalServerErrorException } from "@nestjs/common";
+import { Injectable, Inject, UnauthorizedException, InternalServerErrorException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { createClient } from "@supabase/supabase-js";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { eq, and } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { randomUUID } from "crypto";
+import { DRIZZLE, baUsers, baAccounts, baSessions, profiles } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 import type {
   NaverTokenResponse,
@@ -21,22 +22,26 @@ import type {
 
 const logger = createLogger("naver-auth");
 
+/** 세션 토큰 생성 (crypto.randomUUID 기반) */
+function generateSessionToken(): string {
+  return randomUUID();
+}
+
 @Injectable()
 export class NaverAuthService {
   private readonly clientId: string;
   private readonly clientSecret: string;
-  private readonly supabaseUrl: string;
-  private readonly supabaseSecretKey: string;
   private readonly appUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(DRIZZLE) private readonly db: NodePgDatabase<Record<string, never>>,
+  ) {
     this.clientId = this.configService.get<string>("NAVER_CLIENT_ID") ?? "";
     this.clientSecret = this.configService.get<string>("NAVER_CLIENT_SECRET") ?? "";
-    this.supabaseUrl = this.configService.get<string>("SUPABASE_URL")
-      ?? this.configService.get<string>("VITE_SUPABASE_URL")
-      ?? "";
-    this.supabaseSecretKey = this.configService.get<string>("SUPABASE_SECRET_KEY") ?? "";
-    this.appUrl = this.configService.get<string>("APP_URL") ?? "http://localhost:3002";
+    this.appUrl = this.configService.get<string>("APP_URL")
+      ?? this.configService.get<string>("NEXT_PUBLIC_API_URL")
+      ?? "http://localhost:3002";
   }
 
   /**
@@ -66,9 +71,16 @@ export class NaverAuthService {
   }
 
   /**
-   * OAuth 콜백 처리 (code -> token -> profile -> supabase user -> verify URL)
+   * OAuth 콜백 처리 (code -> token -> profile -> Better Auth user -> session)
+   *
+   * @returns redirectUrl + sessionToken (컨트롤러에서 Set-Cookie 처리)
    */
-  async handleCallback(code: string, state: string): Promise<NaverCallbackResult> {
+  async handleCallback(
+    code: string,
+    state: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<NaverCallbackResult & { sessionToken: string; sessionExpiresAt: Date }> {
     let redirectTo: string;
 
     try {
@@ -88,17 +100,26 @@ export class NaverAuthService {
       const tokenResponse = await this.exchangeCodeForToken(code);
 
       // Step 2: Get user profile
-      const profile = await this.getUserProfile(tokenResponse.access_token);
+      const naverProfile = await this.getUserProfile(tokenResponse.access_token);
 
-      // Step 3: Find or create Supabase user and get verify URL
-      const verifyUrl = await this.findOrCreateSupabaseUser(profile, redirectTo);
+      // Step 3: Find or create Better Auth user + session
+      const { sessionToken, expiresAt } = await this.findOrCreateUser(
+        naverProfile,
+        tokenResponse,
+        ipAddress,
+        userAgent,
+      );
 
       logger.info("Naver OAuth completed", {
-        "naver-auth.email": profile.email,
-        "naver-auth.naver_id": profile.id,
+        "naver-auth.email": naverProfile.email,
+        "naver-auth.naver_id": naverProfile.id,
       });
 
-      return { redirectUrl: verifyUrl };
+      return {
+        redirectUrl: redirectTo,
+        sessionToken,
+        sessionExpiresAt: expiresAt,
+      };
     } catch (error) {
       if (error instanceof UnauthorizedException || error instanceof InternalServerErrorException) {
         throw error;
@@ -198,66 +219,105 @@ export class NaverAuthService {
   }
 
   /**
-   * Supabase에서 사용자 조회/생성 후 magiclink verify URL 반환
+   * Better Auth 테이블에서 사용자 조회/생성 후 세션 토큰 반환
    */
-  private async findOrCreateSupabaseUser(
+  private async findOrCreateUser(
     profile: NaverUserProfile,
-    redirectTo: string,
-  ): Promise<string> {
-    const supabaseAdmin = this.getSupabaseAdmin();
-
+    tokenResponse: NaverTokenResponse,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{ sessionToken: string; expiresAt: Date }> {
     try {
-      // 1. 기존 사용자 검색 (email 기반)
-      const { data: userList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-
-      if (listError) {
-        throw new Error(`Failed to list users: ${listError.message}`);
-      }
-
-      const existingUser = userList.users.find((u) => u.email === profile.email);
+      // 1. 기존 사용자 검색 (email 기반 — baUsers 테이블)
+      const [existingUser] = await this.db
+        .select()
+        .from(baUsers)
+        .where(eq(baUsers.email, profile.email))
+        .limit(1);
 
       let userId: string;
 
       if (existingUser) {
-        // 기존 사용자 메타데이터 업데이트
         userId = existingUser.id;
 
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
-          user_metadata: {
-            ...existingUser.user_metadata,
+        // 사용자 정보 업데이트 (이름, 이미지)
+        await this.db
+          .update(baUsers)
+          .set({
             name: profile.name,
-            avatar_url: profile.profileImage,
-            naver_id: profile.id,
-            provider: "naver",
-          },
-        });
+            image: profile.profileImage ?? existingUser.image,
+          })
+          .where(eq(baUsers.id, userId));
+
+        // Naver 계정이 연결되어 있지 않으면 추가
+        const [existingAccount] = await this.db
+          .select()
+          .from(baAccounts)
+          .where(
+            and(
+              eq(baAccounts.userId, userId),
+              eq(baAccounts.providerId, "naver"),
+            ),
+          )
+          .limit(1);
+
+        if (!existingAccount) {
+          await this.db.insert(baAccounts).values({
+            accountId: profile.id,
+            providerId: "naver",
+            userId,
+            accessToken: tokenResponse.access_token,
+            refreshToken: tokenResponse.refresh_token,
+            accessTokenExpiresAt: new Date(Date.now() + tokenResponse.expires_in * 1000),
+          });
+        } else {
+          // 토큰 갱신
+          await this.db
+            .update(baAccounts)
+            .set({
+              accessToken: tokenResponse.access_token,
+              refreshToken: tokenResponse.refresh_token,
+              accessTokenExpiresAt: new Date(Date.now() + tokenResponse.expires_in * 1000),
+            })
+            .where(eq(baAccounts.id, existingAccount.id));
+        }
 
         logger.info("Naver user found", {
           "naver-auth.email": profile.email,
           "naver-auth.user_id": userId,
         });
       } else {
-        // 새 사용자 생성
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email: profile.email,
-          email_confirm: true,
-          user_metadata: {
+        // 새 사용자 생성 (baUsers)
+        const [newUser] = await this.db
+          .insert(baUsers)
+          .values({
             name: profile.name,
-            avatar_url: profile.profileImage,
-            naver_id: profile.id,
-            provider: "naver",
-          },
-          app_metadata: {
-            provider: "naver",
-            providers: ["naver"],
-          },
+            email: profile.email,
+            emailVerified: true,
+            image: profile.profileImage,
+          })
+          .returning();
+
+        userId = newUser.id;
+
+        // Naver 계정 연결 (baAccounts)
+        await this.db.insert(baAccounts).values({
+          accountId: profile.id,
+          providerId: "naver",
+          userId,
+          accessToken: tokenResponse.access_token,
+          refreshToken: tokenResponse.refresh_token,
+          accessTokenExpiresAt: new Date(Date.now() + tokenResponse.expires_in * 1000),
         });
 
-        if (createError) {
-          throw new Error(`Failed to create user: ${createError.message}`);
-        }
-
-        userId = newUser.user.id;
+        // profiles 테이블에도 생성 (기존 Feature들이 profiles를 참조하므로)
+        await this.db.insert(profiles).values({
+          id: userId,
+          name: profile.name,
+          email: profile.email,
+          avatar: profile.profileImage,
+          authProvider: "naver",
+        });
 
         logger.info("Naver user created", {
           "naver-auth.email": profile.email,
@@ -267,48 +327,33 @@ export class NaverAuthService {
       }
 
       // 2. profiles 테이블의 auth_provider 업데이트
-      await supabaseAdmin
-        .from("profiles")
-        .update({ auth_provider: "naver" })
-        .eq("id", userId);
+      await this.db
+        .update(profiles)
+        .set({ authProvider: "naver" })
+        .where(eq(profiles.id, userId));
 
-      // 3. Magiclink 생성
-      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email: profile.email,
+      // 3. Better Auth 세션 생성 (baSessions 테이블)
+      const sessionToken = generateSessionToken();
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30일
+
+      await this.db.insert(baSessions).values({
+        token: sessionToken,
+        userId,
+        expiresAt,
+        ipAddress: ipAddress ?? null,
+        userAgent: userAgent ?? null,
       });
 
-      if (linkError || !linkData) {
-        throw new Error(`Failed to generate magic link: ${linkError?.message}`);
-      }
-
-      const hashedToken = linkData.properties.hashed_token;
-
-      // 4. Verify URL 조립
-      const verifyUrl = `${this.supabaseUrl}/auth/v1/verify?token=${hashedToken}&type=magiclink&redirect_to=${encodeURIComponent(redirectTo)}`;
-
-      return verifyUrl;
+      return { sessionToken, expiresAt };
     } catch (error) {
       const err = error as Error;
-      logger.error("Supabase user management failed", {
-        "naver-auth.step": "supabase_user",
+      logger.error("Better Auth user management failed", {
+        "naver-auth.step": "user_management",
         "naver-auth.email": profile.email,
         "error.type": err.constructor.name,
         "error.message": err.message,
       });
       throw new InternalServerErrorException("Failed to create or find user in authentication system");
     }
-  }
-
-  /**
-   * Supabase Admin Client 생성
-   */
-  private getSupabaseAdmin(): SupabaseClient {
-    return createClient(this.supabaseUrl, this.supabaseSecretKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
   }
 }
