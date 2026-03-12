@@ -16,10 +16,15 @@ function FeatureStudioStudioPage() {
 	const [title, setTitle] = useState("");
 	const [rawPrompt, setRawPrompt] = useState("");
 
-	const { data: queue, isLoading } =
-		electronTrpc.atlas.featureStudio.listQueue.useQuery();
+	const { data: queue, isLoading, isError } =
+		electronTrpc.atlas.featureStudio.listQueue.useQuery(undefined, {
+			retry: 1,
+		});
 	const { data: readyToRegister } =
-		electronTrpc.atlas.featureStudio.listReadyToRegister.useQuery();
+		electronTrpc.atlas.featureStudio.listReadyToRegister.useQuery(undefined, {
+			retry: 1,
+			enabled: !isError,
+		});
 
 	const createRequestMutation =
 		electronTrpc.atlas.featureStudio.createRequest.useMutation({
@@ -84,13 +89,22 @@ function FeatureStudioStudioPage() {
 				</div>
 			</div>
 
-			{isLoading || !queue ? (
+			{isLoading ? (
 				<div className="flex items-center justify-center py-12">
 					<Spinner className="size-5" />
 				</div>
+			) : isError ? (
+				<div className="rounded-xl border border-dashed border-border p-8 text-center">
+					<p className="text-sm text-muted-foreground">
+						Feature Studio 서버에 연결할 수 없습니다.
+					</p>
+					<p className="mt-1 text-xs text-muted-foreground">
+						features-server가 실행 중인지 확인하세요.
+					</p>
+				</div>
 			) : (
 				<FeatureStudioQueue
-					queue={queue}
+					queue={queue ?? { requests: [], pendingApprovals: [] }}
 					readyToRegisterCount={readyToRegister?.length ?? 0}
 					onAdvance={(featureRequestId) =>
 						advanceMutation.mutate({ featureRequestId })
