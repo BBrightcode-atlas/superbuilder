@@ -43,7 +43,7 @@ export function DeploymentCard({
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [confirmText, setConfirmText] = useState("");
 
-	const hasSupabase = !!project.supabaseProjectId;
+	const hasNeon = !!project.neonProjectId;
 	const hasVercel = !!project.vercelProjectId;
 	const canDelete = confirmText === project.name;
 
@@ -96,15 +96,15 @@ export function DeploymentCard({
 				</a>
 			) : null}
 
-			{project.supabaseProjectUrl ? (
+			{project.neonProjectId ? (
 					<a
-						href={project.supabaseProjectUrl}
+						href={`https://console.neon.tech/app/projects/${project.neonProjectId}`}
 						target="_blank"
 						rel="noopener noreferrer"
 						className="flex items-center gap-1 text-xs text-primary hover:underline"
 					>
 						<LuExternalLink className="size-3" />
-						Supabase: {project.supabaseProjectUrl}
+						Neon: {project.neonProjectId}
 					</a>
 				) : null}
 
@@ -156,10 +156,10 @@ export function DeploymentCard({
 									<strong className="text-foreground">{project.name}</strong>{" "}
 									프로젝트를 삭제합니다.
 								</span>
-								{(hasSupabase || hasVercel) ? (
+								{(hasNeon || hasVercel) ? (
 									<span className="block text-destructive">
 										{[
-											hasSupabase ? "Supabase" : null,
+											hasNeon ? "Neon" : null,
 											hasVercel ? "Vercel" : null,
 										]
 											.filter(Boolean)

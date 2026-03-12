@@ -4,39 +4,37 @@ import { Input } from "@superset/ui/input";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { LuCheck, LuExternalLink, LuKeyboard } from "react-icons/lu";
 
-interface SupabaseSetupProps {
+interface NeonSetupProps {
   onComplete: (orgId: string, orgName: string) => void;
   onSkip: () => void;
 }
 
-export function SupabaseSetup({ onComplete, onSkip }: SupabaseSetupProps) {
+export function NeonSetup({ onComplete, onSkip }: NeonSetupProps) {
   const [token, setToken] = useState("");
   const [step, setStep] = useState<"token" | "org">("token");
 
   const { data: status, isLoading: statusLoading, refetch: refetchStatus } =
-    electronTrpc.atlas.supabase.getConnectionStatus.useQuery();
+    electronTrpc.atlas.neon.getConnectionStatus.useQuery();
 
   const { data: orgs } =
-    electronTrpc.atlas.supabase.listOrganizations.useQuery(undefined, {
+    electronTrpc.atlas.neon.listOrganizations.useQuery(undefined, {
       enabled: status?.connected === true,
     });
 
   const saveTokenMutation =
-    electronTrpc.atlas.supabase.saveToken.useMutation({
+    electronTrpc.atlas.neon.saveToken.useMutation({
       onSuccess: () => {
         refetchStatus();
         setStep("org");
       },
     });
 
-  // If already connected, go straight to org selection
   useEffect(() => {
     if (status?.connected && step === "token") {
       setStep("org");
     }
   }, [status?.connected, step]);
 
-  // 상태 로딩 중에는 아무것도 표시하지 않음
   if (statusLoading) {
     return null;
   }
@@ -46,11 +44,11 @@ export function SupabaseSetup({ onComplete, onSkip }: SupabaseSetupProps) {
       <div className="space-y-4 p-4 rounded-lg border border-border">
         <div className="flex items-center gap-2">
           <LuKeyboard className="size-5 text-primary" />
-          <h3 className="text-sm font-semibold">Supabase 연결</h3>
+          <h3 className="text-sm font-semibold">Neon 연결</h3>
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Supabase 대시보드에서 Personal Access Token을 생성하세요.
+          Neon 콘솔에서 API 키를 생성하세요.
         </p>
 
         <Button
@@ -59,19 +57,19 @@ export function SupabaseSetup({ onComplete, onSkip }: SupabaseSetupProps) {
           className="p-0 h-auto text-xs"
           onClick={() => {
             window.open(
-              "https://supabase.com/dashboard/account/tokens",
+              "https://console.neon.tech/app/settings/api-keys",
               "_blank",
             );
           }}
         >
           <LuExternalLink className="size-3 mr-1" />
-          Supabase 토큰 페이지 열기
+          Neon API 키 페이지 열기
         </Button>
 
         <div className="flex gap-2">
           <Input
             type="password"
-            placeholder="sbp_xxxxxxxxxxxxxxxx"
+            placeholder="napi_xxxxxxxxxxxxxxxx"
             value={token}
             onChange={(e) => setToken(e.target.value)}
             className="font-mono text-xs"
@@ -100,12 +98,11 @@ export function SupabaseSetup({ onComplete, onSkip }: SupabaseSetupProps) {
     );
   }
 
-  // Org selection step
   return (
     <div className="space-y-4 p-4 rounded-lg border border-border">
       <div className="flex items-center gap-2">
         <LuCheck className="size-5 text-green-500" />
-        <h3 className="text-sm font-semibold">Supabase 연결됨</h3>
+        <h3 className="text-sm font-semibold">Neon 연결됨</h3>
       </div>
 
       <p className="text-xs text-muted-foreground">
@@ -123,7 +120,6 @@ export function SupabaseSetup({ onComplete, onSkip }: SupabaseSetupProps) {
             >
               <div>
                 <p className="text-sm font-medium">{org.name}</p>
-                <p className="text-xs text-muted-foreground">{org.slug}</p>
               </div>
             </Button>
           ))}
