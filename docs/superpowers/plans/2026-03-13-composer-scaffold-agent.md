@@ -1118,7 +1118,7 @@ git commit -m "feat(atlas-engine): add scaffold orchestrator — cloneTemplate �
 **Files:**
 - Modify: `apps/desktop/src/lib/trpc/routers/atlas/composer.ts`
 
-- [ ] **Step 1: Replace extract() with scaffold()**
+- [x] **Step 1: Replace extract() with scaffold()**
 
 Replace the existing `compose` mutation. Key changes:
 - Import `scaffold` instead of `extract`
@@ -1268,24 +1268,24 @@ export const createAtlasComposerRouter = () =>
   });
 ```
 
-- [ ] **Step 2: Update env — add SUPERBUILDER_PATH**
+- [x] **Step 2: Update env — add SUPERBUILDER_PATH**
 
 The Desktop app needs `SUPERBUILDER_PATH` pointing to the superbuilder monorepo root. Add to `.env`:
 ```
 SUPERBUILDER_PATH=/Users/bright/Projects/superbuilder
 ```
 
-- [ ] **Step 3: Update pushToGitHub org**
+- [x] **Step 3: Update pushToGitHub org**
 
 Note in the updated code above, `orgName` changed from `"BBrightcodeDev"` to `"BBrightcode-atlas"` to match the new org for generated projects.
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 ```bash
 cd apps/desktop && bun run typecheck
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/desktop/src/lib/trpc/routers/atlas/composer.ts
@@ -1301,7 +1301,7 @@ git commit -m "feat(desktop): replace extract() with scaffold() in composer rout
 
 This task updates the existing stepper to call `scaffold()` instead of `extract()`, and adds Step 4.5 for agent-based feature installation.
 
-- [ ] **Step 1: Update the pipeline step that calls compose**
+- [x] **Step 1: Update the pipeline step that calls compose**
 
 In the `handleCreate` function (or equivalent), change:
 - The compose mutation input now includes `config`
@@ -1318,7 +1318,7 @@ Key UI changes:
 }
 ```
 
-- [ ] **Step 2: Add agent launch button in PipelineProgress**
+- [x] **Step 2: Add agent launch button in PipelineProgress**
 
 After scaffold completes, show:
 ```
@@ -1330,11 +1330,11 @@ After scaffold completes, show:
 
 The button calls `launchInstallAgent` mutation, which the Desktop main process will handle by opening the workspace and running Claude Code with `/install-features`.
 
-- [ ] **Step 3: Verify the UI renders**
+- [x] **Step 3: Verify the UI renders**
 
 Start desktop dev and navigate to Atlas > Composer. Verify the stepper shows the updated steps.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/desktop/src/renderer/routes/_authenticated/_dashboard/atlas/composer/page.tsx
@@ -1350,14 +1350,14 @@ git commit -m "feat(desktop): update composer stepper — scaffold step + agent 
 
 This connects the `launchInstallAgent` mutation to the Desktop's existing CLI agent launcher system.
 
-- [ ] **Step 1: Research current agent launch pattern**
+- [x] **Step 1: Research current agent launch pattern**
 
 Read these files to understand how Desktop currently launches CLI agents:
 - `apps/desktop/src/main/lib/agent-setup/agent-wrappers.ts`
 - `apps/desktop/src/main/lib/agent-setup/agent-wrappers-claude-codex-opencode.ts`
 - `packages/shared/src/agent-command.ts`
 
-- [ ] **Step 2: Implement the agent launch IPC**
+- [x] **Step 2: Implement the agent launch IPC**
 
 The exact implementation depends on the current agent launcher API. The goal is:
 1. Open the scaffold'd project directory as a workspace
@@ -1365,7 +1365,7 @@ The exact implementation depends on the current agent launcher API. The goal is:
 3. Send initial prompt: `/install-features`
 4. Desktop hooks capture progress events
 
-- [ ] **Step 3: Verify end-to-end**
+- [x] **Step 3: Verify end-to-end**
 
 1. Select features in Composer
 2. Click "생성"
@@ -1374,7 +1374,7 @@ The exact implementation depends on the current agent launcher API. The goal is:
 5. Claude Code opens in the new project
 6. Verify `/install-features` command is available
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/desktop/src/main/
@@ -1390,7 +1390,7 @@ git commit -m "feat(desktop): wire agent launcher for feature installation"
 **Files:**
 - Modify: `plans/atlas-composer-deploy-pipeline.md`
 
-- [ ] **Step 1: Update Phase 1 to reflect scaffold changes**
+- [x] **Step 1: Update Phase 1 to reflect scaffold changes**
 
 Add notes about:
 - Extractor replaced by Scaffold Engine
@@ -1398,7 +1398,7 @@ Add notes about:
 - CLI agent-based feature installation (Step 4.5)
 - Supabase fully removed, Neon + Better Auth only
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add plans/atlas-composer-deploy-pipeline.md
@@ -1412,7 +1412,7 @@ git commit -m "docs: update pipeline plan — scaffold+agent architecture, supab
 **Files:**
 - Modify: `packages/atlas-engine/src/extractor/index.ts`
 
-- [ ] **Step 1: Add deprecation notice**
+- [x] **Step 1: Add deprecation notice**
 
 ```typescript
 // packages/atlas-engine/src/extractor/index.ts
@@ -1426,7 +1426,7 @@ export { extract } from "./extractor";
 export type * from "./types";
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/atlas-engine/src/extractor/index.ts
@@ -1437,19 +1437,19 @@ git commit -m "chore(atlas-engine): mark extractor as deprecated — use scaffol
 
 ### Task 13: Final integration test
 
-- [ ] **Step 1: Run all atlas-engine tests**
+- [x] **Step 1: Run all atlas-engine tests**
 
 ```bash
 cd packages/atlas-engine && bun test
 ```
 
-- [ ] **Step 2: Run desktop typecheck**
+- [x] **Step 2: Run desktop typecheck**
 
 ```bash
 cd apps/desktop && bun run typecheck
 ```
 
-- [ ] **Step 3: Run full monorepo typecheck**
+- [x] **Step 3: Run full monorepo typecheck**
 
 ```bash
 bun run typecheck
