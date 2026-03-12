@@ -7,6 +7,7 @@ import { apiKeyRouter } from "./router/api-key";
 import { billingRouter } from "./router/billing";
 import { chatRouter } from "./router/chat";
 import { deviceRouter } from "./router/device";
+import { featureStudioRouter } from "./router/feature-studio";
 import { integrationRouter } from "./router/integration";
 import { organizationRouter } from "./router/organization";
 import { projectRouter } from "./router/project";
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter({
 	billing: billingRouter,
 	chat: chatRouter,
 	device: deviceRouter,
+	featureStudio: featureStudioRouter,
 	integration: integrationRouter,
 	organization: organizationRouter,
 	project: projectRouter,

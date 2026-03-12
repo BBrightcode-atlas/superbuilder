@@ -1,79 +1,28 @@
+import type { AppRouter } from "@superset/trpc";
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
+import superjson from "superjson";
 import { z } from "zod";
 import { env } from "main/env.main";
 import { loadToken } from "../auth/utils/auth-functions";
 import { publicProcedure, router } from "../..";
-import type { FeatureStudioContractRouter } from "./feature-studio-contract";
 
-function isJwtToken(token: string): boolean {
-	return token.split(".").length === 3;
-}
-
-async function exchangeSessionTokenForJwt(
-	sessionToken: string,
-): Promise<string | null> {
-	try {
-		const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/token`, {
-			headers: {
-				Authorization: `Bearer ${sessionToken}`,
-			},
-		});
-		if (!response.ok) {
-			console.warn(
-				"[feature-studio] failed to exchange desktop session token for JWT",
-				response.status,
-				response.statusText,
-			);
-			return null;
-		}
-		const data = (await response.json()) as { token?: string };
-		return data.token ?? null;
-	} catch (error) {
-		console.warn(
-			"[feature-studio] failed to reach auth token endpoint",
-			error,
-		);
-		return null;
-	}
-}
-
-async function getFeatureStudioAuthorizationHeader(): Promise<
-	Record<string, string>
-> {
+async function getAuthHeaders(): Promise<Record<string, string>> {
 	const { token } = await loadToken();
 	if (!token) {
 		return {};
 	}
-
-	if (isJwtToken(token)) {
-		return {
-			Authorization: `Bearer ${token}`,
-		};
-	}
-
-	const jwt = await exchangeSessionTokenForJwt(token);
-	if (!jwt) {
-		return {};
-	}
-
-	return {
-		Authorization: `Bearer ${jwt}`,
-	};
+	return { Authorization: `Bearer ${token}` };
 }
 
-// The features-server nests the router under `featureStudio`, so we create
-// a root-level client and extract the nested proxy to keep call sites flat.
-const rootClient = createTRPCProxyClient<{
-	featureStudio: FeatureStudioContractRouter;
-}>({
+const apiClient = createTRPCProxyClient<AppRouter>({
 	links: [
 		httpBatchLink({
-			url: `${env.FEATURES_SERVER_URL}/trpc`,
-			headers: getFeatureStudioAuthorizationHeader,
+			url: `${env.NEXT_PUBLIC_API_URL}/api/trpc`,
+			transformer: superjson,
+			headers: getAuthHeaders,
 		}),
 	],
 });
-const featureStudioClient = rootClient.featureStudio;
 
 export const createAtlasFeatureStudioRouter = () =>
 	router({
@@ -87,13 +36,13 @@ export const createAtlasFeatureStudioRouter = () =>
 				}),
 			)
 			.mutation(async ({ input }) => {
-				return featureStudioClient.createRequest.mutate(input);
+				return apiClient.featureStudio.createRequest.mutate(input);
 			}),
 
 		getRequest: publicProcedure
 			.input(z.object({ id: z.string().uuid() }))
 			.query(async ({ input }) => {
-				return featureStudioClient.getRequest.query(input);
+				return apiClient.featureStudio.getRequest.query(input);
 			}),
 
 		listQueue: publicProcedure
@@ -122,17 +71,17 @@ export const createAtlasFeatureStudioRouter = () =>
 					.optional(),
 			)
 			.query(async ({ input }) => {
-				return featureStudioClient.listQueue.query(input);
+				return apiClient.featureStudio.listQueue.query(input);
 			}),
 
 		listReadyToRegister: publicProcedure.query(async () => {
-			return featureStudioClient.listReadyToRegister.query();
+			return apiClient.featureStudio.listReadyToRegister.query();
 		}),
 
 		advance: publicProcedure
 			.input(z.object({ featureRequestId: z.string().uuid() }))
 			.mutation(async ({ input }) => {
-				return featureStudioClient.advance.mutate(input);
+				return apiClient.featureStudio.advance.mutate(input);
 			}),
 
 		respondToApproval: publicProcedure
@@ -144,19 +93,21 @@ export const createAtlasFeatureStudioRouter = () =>
 				}),
 			)
 			.mutation(async ({ input }) => {
-				return featureStudioClient.respondToApproval.mutate(input);
+				return apiClient.featureStudio.respondToApproval.mutate(input);
 			}),
 
 		requestRegistrationApproval: publicProcedure
 			.input(z.object({ featureRequestId: z.string().uuid() }))
 			.mutation(async ({ input }) => {
-				return featureStudioClient.requestRegistrationApproval.mutate(input);
+				return apiClient.featureStudio.requestRegistrationApproval.mutate(
+					input,
+				);
 			}),
 
 		registerRequest: publicProcedure
 			.input(z.object({ featureRequestId: z.string().uuid() }))
 			.mutation(async ({ input }) => {
-				return featureStudioClient.registerRequest.mutate(input);
+				return apiClient.featureStudio.registerRequest.mutate(input);
 			}),
 	});
 
