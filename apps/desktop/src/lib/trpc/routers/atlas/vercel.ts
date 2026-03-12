@@ -101,20 +101,33 @@ export const createAtlasVercelRouter = () =>
 					teamId: z.string().optional(),
 					framework: z.string().default("vite"),
 					atlasProjectId: z.string().min(1),
+					gitOwner: z.string().optional(),
+					gitRepo: z.string().optional(),
 				}),
 			)
 			.mutation(async ({ input }) => {
 				const queryParams = input.teamId
 					? `?teamId=${input.teamId}`
 					: "";
+
+				const body: Record<string, unknown> = {
+					name: input.name,
+					framework: input.framework,
+				};
+
+				// Git 연동: 생성 시 gitRepository 포함하면 자동 연결
+				if (input.gitOwner && input.gitRepo) {
+					body.gitRepository = {
+						type: "github",
+						repo: `${input.gitOwner}/${input.gitRepo}`,
+					};
+				}
+
 				const project = await vercelFetch(
 					`/v10/projects${queryParams}`,
 					{
 						method: "POST",
-						body: JSON.stringify({
-							name: input.name,
-							framework: input.framework,
-						}),
+						body: JSON.stringify(body),
 					},
 				);
 

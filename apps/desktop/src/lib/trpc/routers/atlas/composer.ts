@@ -41,8 +41,8 @@ async function createGitHubRepo(
 ): Promise<{ repoUrl: string; owner: string; repo: string }> {
 	const visibility = isPrivate ? "--private" : "--public";
 
-	// Organization repo로 생성 (BBrightcode-atlas)
-	const orgName = "BBrightcode-atlas";
+	// Organization repo로 생성 (BBrightcodeDev — Vercel GitHub App 설치됨)
+	const orgName = "BBrightcodeDev";
 	const fullName = `${orgName}/${name}`;
 	await execFileAsync("gh", ["repo", "create", fullName, visibility, "--source", projectPath, "--push"], {
 		cwd: projectPath,

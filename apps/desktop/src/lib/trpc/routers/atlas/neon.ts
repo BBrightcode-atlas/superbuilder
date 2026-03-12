@@ -86,11 +86,32 @@ export const createAtlasNeonRouter = () =>
 		}),
 
 		listOrganizations: publicProcedure.query(async () => {
-			const data = await neonFetch("/organizations");
-			return (data.organizations ?? data ?? []) as Array<{
-				id: string;
-				name: string;
-			}>;
+			// Try /users/me/organizations first (personal API key)
+			// Fall back to extracting org info from /projects (org API key)
+			try {
+				const data = await neonFetch("/users/me/organizations");
+				return (data.organizations ?? data ?? []) as Array<{
+					id: string;
+					name: string;
+				}>;
+			} catch {
+				// Org API key — extract org info from projects list
+				try {
+					const data = await neonFetch("/projects?limit=1");
+					const projects = data.projects ?? [];
+					if (projects.length > 0 && projects[0].org_id) {
+						return [
+							{
+								id: projects[0].org_id as string,
+								name: projects[0].org_id as string,
+							},
+						];
+					}
+				} catch {
+					// ignore
+				}
+				return [] as Array<{ id: string; name: string }>;
+			}
 		}),
 
 		createProject: publicProcedure
