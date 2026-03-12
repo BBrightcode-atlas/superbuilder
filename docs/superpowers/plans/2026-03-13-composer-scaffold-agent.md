@@ -486,7 +486,7 @@ git commit -m "feat(atlas-engine): add path mapping utility with import alias ma
 - Create: `packages/atlas-engine/src/scaffold/spec-writer.ts`
 - Create: `packages/atlas-engine/src/scaffold/spec-writer.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/spec-writer.test.ts
@@ -534,13 +534,13 @@ describe("buildProjectSpec", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd packages/atlas-engine && bun test src/scaffold/spec-writer.test.ts
 ```
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```typescript
 // packages/atlas-engine/src/scaffold/spec-writer.ts
@@ -592,13 +592,13 @@ export async function writeProjectSpec(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 ```bash
 cd packages/atlas-engine && bun test src/scaffold/spec-writer.test.ts
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/atlas-engine/src/scaffold/spec-writer.ts packages/atlas-engine/src/scaffold/spec-writer.test.ts
