@@ -7,7 +7,7 @@ import type { PlanService } from './service/plan.service';
 import type { CreditService } from './service/credit.service';
 import type { ModelPricingService } from './service/model-pricing.service';
 import { eq } from 'drizzle-orm';
-import { paymentCreditBalances } from '@superbuilder/drizzle';
+import { paymentCreditBalances } from '@superbuilder/features-db';
 import {
   createCheckoutSchema,
   updateSubscriptionSchema,

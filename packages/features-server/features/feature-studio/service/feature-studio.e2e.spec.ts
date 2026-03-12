@@ -15,7 +15,7 @@ jest.mock("drizzle-orm", () => ({
 	eq: jest.fn((field: unknown, value: unknown) => ({ field, value, type: "eq" })),
 }));
 
-jest.mock("@superbuilder/drizzle", () => ({
+jest.mock("@superbuilder/features-db", () => ({
 	InjectDrizzle: () => () => undefined,
 	featureRequests: {
 		id: { name: "id" },

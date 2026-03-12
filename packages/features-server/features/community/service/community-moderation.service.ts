@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { eq, and, count, desc } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   communityReports,
   communityBans,
@@ -19,7 +19,7 @@ import {
   type CommunityRule,
   type CommunityFlair,
   type CommunityModerator,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type {
   CreateReportDto,
   ResolveReportDto,

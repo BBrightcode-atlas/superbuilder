@@ -6,7 +6,7 @@ import {
 	featureRequestApprovals,
 	featureRequestArtifacts,
 	featureRequests,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 
 export interface BrowserQaCheckInput {
 	label: string;

@@ -4,7 +4,7 @@
  * 즉시 발행, 예약 발행, 플랫폼 제약사항 조회 프로시저
  */
 import { authProcedure, getAuthUserId, publicProcedure, router } from "../../../core/trpc";
-import { marketingPlatformVariants, marketingPublications } from "@superbuilder/drizzle";
+import { marketingPlatformVariants, marketingPublications } from "@superbuilder/features-db";
 import { eq } from "drizzle-orm";
 import { publishNowSchema, schedulePublishSchema } from "../dto";
 import { getMarketingServices } from "./index";

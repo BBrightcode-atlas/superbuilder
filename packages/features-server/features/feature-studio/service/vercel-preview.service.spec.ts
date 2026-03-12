@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { VercelPreviewService } from "./vercel-preview.service";
 
-jest.mock("@superbuilder/drizzle", () => ({
+jest.mock("@superbuilder/features-db", () => ({
 	InjectDrizzle: () => () => undefined,
 	featureRequests: {
 		id: { name: "id" },

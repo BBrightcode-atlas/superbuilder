@@ -10,10 +10,10 @@ import {
   ForbiddenException,
   Logger,
 } from "@nestjs/common";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import type { DrizzleDB } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import type { DrizzleDB } from "@superbuilder/features-db";
 import { eq, and, desc, ne } from "drizzle-orm";
-import { studioStudios, studioContents } from "@superbuilder/drizzle";
+import { studioStudios, studioContents } from "@superbuilder/features-db";
 import { LLMService } from "../../../features/ai";
 
 // ============================================================================

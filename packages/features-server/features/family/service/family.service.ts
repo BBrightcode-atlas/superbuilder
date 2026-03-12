@@ -15,7 +15,7 @@ import {
   familyChildren,
   familyChildAssignments,
   profiles,
-} from '@superbuilder/drizzle';
+} from '@superbuilder/features-db';
 import { createLogger } from '../../../core/logger';
 import type {
   CreateGroupInput,

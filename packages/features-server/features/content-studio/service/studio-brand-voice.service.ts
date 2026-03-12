@@ -5,15 +5,15 @@ import {
   ForbiddenException,
   ConflictException,
 } from "@nestjs/common";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import type { DrizzleDB } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import type { DrizzleDB } from "@superbuilder/features-db";
 import { eq, and, or } from "drizzle-orm";
 import {
   studioStudios,
   studioBrandProfiles,
   studioTonePresets,
-} from "@superbuilder/drizzle";
-import type { StudioTonePreset } from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
+import type { StudioTonePreset } from "@superbuilder/features-db";
 import { LLMService } from "../../../features/ai";
 
 @Injectable()

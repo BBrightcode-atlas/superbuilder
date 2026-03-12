@@ -8,7 +8,7 @@ jest.mock("drizzle-orm", () => ({
 	})),
 }));
 
-jest.mock("@superbuilder/drizzle", () => ({
+jest.mock("@superbuilder/features-db", () => ({
 	InjectDrizzle: () => () => undefined,
 	featureRequests: {
 		id: { name: "id" },

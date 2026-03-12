@@ -1,4 +1,4 @@
-import type { EmailLog, EmailTemplateType, EmailStatus } from '@superbuilder/drizzle';
+import type { EmailLog, EmailTemplateType, EmailStatus } from '@superbuilder/features-db';
 import type { QueryLogsDto } from '../dto/query-logs.dto';
 
 /**

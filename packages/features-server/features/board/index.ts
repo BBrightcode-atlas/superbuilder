@@ -14,5 +14,5 @@ export { BoardService, PostService } from "./service";
 // Types
 export * from "./types";
 
-// Schema - now centralized in @superbuilder/drizzle
-// Use: import { boards, boardPosts } from "@superbuilder/drizzle"
+// Schema - now centralized in @superbuilder/features-db
+// Use: import { boards, boardPosts } from "@superbuilder/features-db"

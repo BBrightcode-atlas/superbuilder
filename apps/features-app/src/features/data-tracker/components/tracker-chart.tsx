@@ -20,7 +20,7 @@ import {
 } from "recharts";
 import type { PieLabelRenderProps } from "recharts";
 import { format } from "date-fns";
-import type { DataTrackerChartConfig } from "@superbuilder/drizzle";
+import type { DataTrackerChartConfig } from "@superbuilder/features-db";
 
 interface ColumnInfo {
   id: string;

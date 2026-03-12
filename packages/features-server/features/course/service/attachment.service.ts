@@ -1,9 +1,9 @@
 import { Injectable, Inject, NotFoundException } from "@nestjs/common";
 import { eq, asc, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { courseAttachments, files } from "@superbuilder/drizzle";
-import type { CourseAttachment } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { courseAttachments, files } from "@superbuilder/features-db";
+import type { CourseAttachment } from "@superbuilder/features-db";
 import type { ReorderInput } from "../types";
 
 @Injectable()

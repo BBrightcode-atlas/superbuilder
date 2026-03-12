@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { SnsPlatform } from "@superbuilder/drizzle";
+import type { SnsPlatform } from "@superbuilder/features-db";
 
 @Injectable()
 export class UtmService {

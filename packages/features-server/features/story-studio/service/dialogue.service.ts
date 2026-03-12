@@ -5,12 +5,12 @@ import {
   storyStudioDialogues,
   storyStudioGraphNodes,
   storyStudioChapters,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type {
   DrizzleDB,
   NewStoryStudioDialogue,
   StoryStudioDialogue,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 
 const logger = createLogger("story-studio");

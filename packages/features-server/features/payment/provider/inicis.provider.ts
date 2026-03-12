@@ -1,8 +1,8 @@
 import { Injectable, Inject, NotImplementedException } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
-import { InjectDrizzle } from '@superbuilder/drizzle';
-import type { DrizzleDB } from '@superbuilder/drizzle';
-import { products, orders } from '@superbuilder/drizzle';
+import { InjectDrizzle } from '@superbuilder/features-db';
+import type { DrizzleDB } from '@superbuilder/features-db';
+import { products, orders } from '@superbuilder/features-db';
 import { eq } from 'drizzle-orm';
 import { createLogger } from '../../../core/logger';
 import { paymentConfig } from '../config/payment.config';

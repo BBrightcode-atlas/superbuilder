@@ -1,4 +1,4 @@
-// packages/drizzle/src/schema/features/story-studio/index.ts
+// packages/features-db/src/schema/features/story-studio/index.ts
 import {
   boolean,
   integer,

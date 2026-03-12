@@ -12,7 +12,7 @@ jest.mock("drizzle-orm", () => DRIZZLE_ORM_MOCK);
 
 jest.mock("@/core/logger", () => LOGGER_MOCK);
 
-jest.mock("@superbuilder/drizzle", () => {
+jest.mock("@superbuilder/features-db", () => {
   const { Inject } = jest.requireActual("@nestjs/common");
   return {
     ...DRIZZLE_BASE_MOCK_WITH_INJECT(Inject),
@@ -53,7 +53,7 @@ jest.mock("@superbuilder/drizzle", () => {
 
 import { NotFoundException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import { LessonService } from "./lesson.service";
 
 // ============================================================================

@@ -11,7 +11,7 @@ import {
 	featureRequestArtifacts,
 	featureRequests,
 	featureRequestWorktrees,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 
 export interface PrepareWorktreeInput {
 	featureRequestId: string;

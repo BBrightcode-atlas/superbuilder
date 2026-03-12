@@ -1,13 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { buildPaginatedResult } from '../../../shared/utils/offset-pagination';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, desc, count } from 'drizzle-orm';
 import {
   paymentCreditBalances,
   paymentCreditTransactions,
   paymentModelPricing,
-} from '@superbuilder/drizzle';
-import type { PaymentCreditBalance } from '@superbuilder/drizzle';
+} from '@superbuilder/features-db';
+import type { PaymentCreditBalance } from '@superbuilder/features-db';
 
 @Injectable()
 export class CreditService {

@@ -4,9 +4,9 @@ import {
   ForbiddenException,
   BadRequestException,
 } from "@nestjs/common";
-import { InjectDrizzle } from "@superbuilder/drizzle";
-import type { DrizzleDB } from "@superbuilder/drizzle";
-import { aiImageGenerations, aiImageStyleTemplates } from "@superbuilder/drizzle";
+import { InjectDrizzle } from "@superbuilder/features-db";
+import type { DrizzleDB } from "@superbuilder/features-db";
+import { aiImageGenerations, aiImageStyleTemplates } from "@superbuilder/features-db";
 import { eq, and, desc, count } from "drizzle-orm";
 import { createLogger } from "../../../core/logger";
 import { Subject } from "rxjs";

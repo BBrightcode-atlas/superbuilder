@@ -6,7 +6,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
-import { userRoles, roles } from "@superbuilder/drizzle";
+import { userRoles, roles } from "@superbuilder/features-db";
 import { middleware, authProcedure } from "./trpc";
 
 const ADMIN_ROLE_SLUGS = ["owner", "admin"];

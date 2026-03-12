@@ -4,7 +4,7 @@ import type {
   MarketingPlatformVariant,
   MarketingPublication,
   SnsPlatform,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 
 // 캠페인 + 통계
 export interface CampaignWithStats extends MarketingCampaign {

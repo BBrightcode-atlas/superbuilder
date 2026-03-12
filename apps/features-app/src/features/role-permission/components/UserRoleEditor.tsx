@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from '@superbuilder/feature-ui/shadcn/card';
 import { ScrollArea } from '@superbuilder/feature-ui/shadcn/scroll-area';
-import type { Role } from '@superbuilder/drizzle';
+import type { Role } from '@superbuilder/features-db';
 
 interface UserRoleEditorProps {
   availableRoles: Role[];

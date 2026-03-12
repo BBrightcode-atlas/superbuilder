@@ -1,9 +1,9 @@
 import { Injectable, Inject, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { eq, desc, and, sql, count } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { profiles } from "@superbuilder/drizzle";
-import { boards, boardPosts, boardPostAttachments } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { profiles } from "@superbuilder/features-db";
+import { boards, boardPosts, boardPostAttachments } from "@superbuilder/features-db";
 import type {
   CreatePostInput,
   UpdatePostInput,

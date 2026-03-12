@@ -1,5 +1,5 @@
 {
-  "name": "@superbuilder/drizzle",
+  "name": "@superbuilder/features-db",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",

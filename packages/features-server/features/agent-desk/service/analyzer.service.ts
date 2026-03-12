@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { agentDeskSessions, agentDeskFiles, agentDeskMessages } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { agentDeskSessions, agentDeskFiles, agentDeskMessages } from "@superbuilder/features-db";
 import { LLMService } from "../../../features/ai";
 import type { TokenUsage } from "../../../features/ai";
 import { createLogger } from "../../../core/logger";
@@ -145,7 +145,7 @@ Claude Code가 실행할 수 있는 구현 프롬프트를 Markdown으로 작성
 ### 디렉토리 규칙
 | 코드 유형 | 위치 |
 |-----------|------|
-| DB Schema | \`packages/drizzle/src/schema/features/{name}/index.ts\` |
+| DB Schema | \`packages/features-db/src/schema/features/{name}/index.ts\` |
 | Server Feature (Module, Service, Controller, Router, DTO) | \`packages/features/{name}/\` |
 | Client Feature (Pages, Components, Hooks, Routes) | \`apps/app/src/features/{name}/\` |
 | Admin Feature | \`apps/feature-admin/src/features/{name}/\` |
@@ -170,7 +170,7 @@ packages/features/{name}/
 \`\`\`
 
 ### 구현 단계 (각 Feature별)
-1. **Schema 정의** — \`packages/drizzle/src/schema/features/{name}/index.ts\`
+1. **Schema 정의** — \`packages/features-db/src/schema/features/{name}/index.ts\`
 2. **Types 정의** — \`packages/features/{name}/types/index.ts\`
 3. **DTO + Validation** — Zod 기반 DTO
 4. **Service 구현** — NestJS \`@Injectable()\` + 로깅
@@ -182,8 +182,8 @@ packages/features/{name}/
 ### 등록 위치 (필수)
 | 항목 | 파일 |
 |------|------|
-| Schema re-export | \`packages/drizzle/src/schema/index.ts\` |
-| Drizzle tablesFilter | \`packages/drizzle/drizzle.config.ts\` |
+| Schema re-export | \`packages/features-db/src/schema/index.ts\` |
+| Drizzle tablesFilter | \`packages/features-db/drizzle.config.ts\` |
 | NestJS Module | \`apps/atlas-server/src/app.module.ts\` |
 | tRPC 타입 | \`packages/features/app-router.ts\` |
 | tRPC 런타임 | \`apps/atlas-server/src/trpc/router.ts\` |
@@ -192,7 +192,7 @@ packages/features/{name}/
 
 ### Schema 정의
 \`\`\`typescript
-// packages/drizzle/src/schema/features/{name}/index.ts
+// packages/features-db/src/schema/features/{name}/index.ts
 import { pgTable, pgEnum, text, timestamp, uuid, boolean, varchar } from "drizzle-orm/pg-core";
 import { baseColumns } from "../../../utils";
 import { profiles } from "../../core/profiles";
@@ -214,8 +214,8 @@ export type NewFaqCategory = typeof faqCategories.$inferInsert;
 // packages/features/{name}/service/{name}.service.ts
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, desc, and, count } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { faqCategories } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { faqCategories } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 
 const logger = createLogger("{name}");

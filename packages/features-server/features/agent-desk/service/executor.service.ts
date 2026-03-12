@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { agentDeskSessions, agentDeskExecutions } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { agentDeskSessions, agentDeskExecutions } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";

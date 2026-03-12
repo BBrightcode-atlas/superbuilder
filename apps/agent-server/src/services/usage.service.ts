@@ -1,6 +1,6 @@
 import { eq, gte, desc, count, sum, avg } from "drizzle-orm";
-import { agentUsageLogs, agentAgents } from "@superbuilder/drizzle/schema";
-import type { NewAgentUsageLog } from "@superbuilder/drizzle/schema";
+import { agentUsageLogs, agentAgents } from "@superbuilder/features-db/schema";
+import type { NewAgentUsageLog } from "@superbuilder/features-db/schema";
 import { db } from "../lib/db";
 
 export const usageService = {

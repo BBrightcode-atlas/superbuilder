@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { eq, and, desc, count, sql, lt, inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   bookingBookings,
   bookingProviders,
@@ -15,7 +15,7 @@ import {
   profiles,
   type BookingBooking,
   type BookingStatus,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type { z } from "zod";
 import type { createBookingSchema } from "../dto/create-booking.dto";
 import type { bookingQuerySchema } from "../dto/booking-query.dto";

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, and, desc, asc, count, gte, lte, lt } from 'drizzle-orm';
 import {
   profiles,
   systemAnalyticsEvents,
   systemDailyMetrics,
-} from '@superbuilder/drizzle';
+} from '@superbuilder/features-db';
 
 @Injectable()
 export class AnalyticsService {

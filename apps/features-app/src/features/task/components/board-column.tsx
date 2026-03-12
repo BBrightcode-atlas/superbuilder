@@ -10,7 +10,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@superbuilder/feature-ui/lib/utils";
 import { Skeleton } from "@superbuilder/feature-ui/shadcn/skeleton";
 import { ChevronDown } from "lucide-react";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 import { TaskStatusIcon, getStatusLabel } from "./task-status-icon";
 import { BoardCard } from "./board-card";
 import type { CardSize, BoardCardData } from "../constants";

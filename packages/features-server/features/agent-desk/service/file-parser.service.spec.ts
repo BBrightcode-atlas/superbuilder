@@ -9,7 +9,7 @@ jest.mock("drizzle-orm", () => ({
   eq: jest.fn((field: any, value: any) => ({ field, value, type: "eq" })),
 }));
 
-jest.mock("@superbuilder/drizzle", () => ({
+jest.mock("@superbuilder/features-db", () => ({
   DRIZZLE: "DRIZZLE_TOKEN",
   InjectDrizzle: () => () => undefined,
   agentDeskFiles: {

@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { eq, and, desc, ilike } from "drizzle-orm";
-import { boards, boardPosts } from "@superbuilder/drizzle/schema";
+import { boards, boardPosts } from "@superbuilder/features-db/schema";
 import { db } from "../lib/db";
 
 export const boardTools = {

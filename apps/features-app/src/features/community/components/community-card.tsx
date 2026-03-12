@@ -1,4 +1,4 @@
-import type { Community } from "@superbuilder/drizzle";
+import type { Community } from "@superbuilder/features-db";
 import { Avatar, AvatarFallback, AvatarImage } from "@superbuilder/feature-ui/shadcn/avatar";
 import { Button } from "@superbuilder/feature-ui/shadcn/button";
 import { Link } from "@tanstack/react-router";

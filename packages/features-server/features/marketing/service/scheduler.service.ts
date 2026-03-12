@@ -6,7 +6,7 @@ import {
   marketingPublications,
   marketingPlatformVariants,
   marketingSnsAccounts,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import { SnsPublisherService } from "./sns-publisher.service";
 
 @Injectable()

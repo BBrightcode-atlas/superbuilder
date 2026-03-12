@@ -5,7 +5,7 @@ jest.mock("node:child_process", () => ({
 	execFileSync: jest.fn(),
 }));
 
-jest.mock("@superbuilder/drizzle", () => ({
+jest.mock("@superbuilder/features-db", () => ({
 	InjectDrizzle: () => () => undefined,
 	featureRequests: {
 		id: { name: "id" },

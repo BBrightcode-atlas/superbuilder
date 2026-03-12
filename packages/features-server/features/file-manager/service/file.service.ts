@@ -5,8 +5,8 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { eq, desc, count } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { files } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { files } from "@superbuilder/features-db";
 import { buildPaginatedResult } from "../../../shared/utils/offset-pagination";
 import { SupabaseStorageService } from "./supabase-storage.service";
 import type {

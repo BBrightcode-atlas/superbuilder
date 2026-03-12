@@ -27,7 +27,7 @@ describe("buildRegistryFromScan", () => {
     expect(blog).toBeDefined();
     expect(blog.name).toBe("blog");
     expect(blog.server.module).toContain("packages/features/blog/");
-    expect(blog.schema.path).toContain("packages/drizzle/src/schema/features/blog/");
+    expect(blog.schema.path).toContain("packages/features-db/src/schema/features/blog/");
   });
 
   test("should detect widget features", () => {

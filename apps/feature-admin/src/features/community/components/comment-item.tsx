@@ -6,7 +6,7 @@ import { Badge } from "@superbuilder/feature-ui/shadcn/badge";
 import { Textarea } from "@superbuilder/feature-ui/shadcn/textarea";
 import { VoteButtons } from "./vote-buttons";
 import { ReactionSection } from "@superbuilder/widgets/reaction";
-import type { CommunityComment } from "@superbuilder/drizzle";
+import type { CommunityComment } from "@superbuilder/features-db";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { cn } from "@superbuilder/feature-ui/lib/utils";

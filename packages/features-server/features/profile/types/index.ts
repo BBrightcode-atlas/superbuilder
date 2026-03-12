@@ -1,4 +1,4 @@
-import type { Profile } from '@superbuilder/drizzle';
+import type { Profile } from '@superbuilder/features-db';
 
 export type { Profile };
 

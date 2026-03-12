@@ -2,7 +2,7 @@
  * 기본 플랜 시드 데이터
  *
  * 사용법:
- *   npx tsx packages/drizzle/src/seed/plans.ts
+ *   npx tsx packages/features-db/src/seed/plans.ts
  */
 import type { NewPaymentPlan } from "../schema/features/payment/plans";
 

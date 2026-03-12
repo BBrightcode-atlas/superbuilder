@@ -1,6 +1,6 @@
 import { eq, and, desc } from "drizzle-orm";
-import { agentThreads } from "@superbuilder/drizzle/schema";
-import type { NewAgentThread } from "@superbuilder/drizzle/schema";
+import { agentThreads } from "@superbuilder/features-db/schema";
+import type { NewAgentThread } from "@superbuilder/features-db/schema";
 import { db } from "../lib/db";
 
 export const threadService = {

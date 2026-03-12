@@ -66,7 +66,7 @@ module.exports = (options, webpack) => {
         "node_modules",
       ],
       alias: {
-        "@superbuilder/drizzle": path.resolve(__dirname, "../../packages/drizzle/src"),
+        "@superbuilder/features-db": path.resolve(__dirname, "../../packages/features-db/src"),
         // Subpath aliases from package.json exports (webpack doesn't resolve exports field natively)
         ...buildAliasesFromExports("@superbuilder/features-server", featuresServerDir),
         ...buildAliasesFromExports("@superbuilder/features-client", featuresClientDir),

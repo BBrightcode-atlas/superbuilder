@@ -5,9 +5,9 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from "@nestjs/common";
-import { InjectDrizzle } from "@superbuilder/drizzle";
-import type { DrizzleDB } from "@superbuilder/drizzle";
-import { aiImageContentThemes } from "@superbuilder/drizzle";
+import { InjectDrizzle } from "@superbuilder/features-db";
+import type { DrizzleDB } from "@superbuilder/features-db";
+import { aiImageContentThemes } from "@superbuilder/features-db";
 import { eq, asc } from "drizzle-orm";
 import { createLogger } from "../../../core/logger";
 

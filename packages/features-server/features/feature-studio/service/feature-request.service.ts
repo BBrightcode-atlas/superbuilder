@@ -8,7 +8,7 @@ import {
   featureRequestMessages,
   featureRequests,
   featureRequestWorktrees,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type {
   AppendFeatureRequestMessageDto,
   CreateFeatureRequestDto,

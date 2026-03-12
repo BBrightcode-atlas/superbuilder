@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { buildPaginatedResult } from '../../../shared/utils/offset-pagination';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, and, desc, count, gte, lte, type SQL } from 'drizzle-orm';
-import { systemAuditLogs } from '@superbuilder/drizzle';
-import type { NewSystemAuditLog } from '@superbuilder/drizzle';
+import { systemAuditLogs } from '@superbuilder/features-db';
+import type { NewSystemAuditLog } from '@superbuilder/features-db';
 
 @Injectable()
 export class AuditLogService {

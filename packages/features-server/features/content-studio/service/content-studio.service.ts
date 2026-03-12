@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException, ForbiddenException } from "@nestjs/common";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import type { DrizzleDB } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import type { DrizzleDB } from "@superbuilder/features-db";
 import {
   eq,
   and,
@@ -17,8 +17,8 @@ import {
   studioContentAnalysis,
   studioEdges,
   studioRecurrences,
-} from "@superbuilder/drizzle";
-import { profiles } from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
+import { profiles } from "@superbuilder/features-db";
 
 @Injectable()
 export class ContentStudioService {

@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { eq, and, desc } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   bookingRefundPolicy,
   bookingBookings,
@@ -15,7 +15,7 @@ import {
   type BookingRefundPolicy,
   type BookingBooking,
   type RefundRule,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type { z } from "zod";
 import type { updateRefundPolicySchema } from "../dto/update-refund-policy.dto";
 import type { RefundPreview } from "../types";

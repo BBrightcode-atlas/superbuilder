@@ -16,8 +16,8 @@ jest.mock("drizzle-orm", () => ({
   desc: jest.fn((field: any) => ({ field, type: "desc" })),
 }));
 
-/* ----- @superbuilder/drizzle mock ----- */
-jest.mock("@superbuilder/drizzle", () => {
+/* ----- @superbuilder/features-db mock ----- */
+jest.mock("@superbuilder/features-db", () => {
   const { Inject } = jest.requireActual("@nestjs/common");
   return {
     DRIZZLE: "DRIZZLE_TOKEN",

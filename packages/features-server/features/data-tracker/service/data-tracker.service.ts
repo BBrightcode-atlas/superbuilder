@@ -4,14 +4,14 @@
  * 트래커 템플릿 CRUD, 데이터 엔트리 관리, 차트 데이터 조회
  */
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, and, desc, asc, count, gte } from 'drizzle-orm';
 import {
   dataTrackerTrackers,
   dataTrackerColumns,
   dataTrackerEntries,
   type DataTrackerChartConfig,
-} from '@superbuilder/drizzle';
+} from '@superbuilder/features-db';
 import { createLogger } from '../../../core/logger';
 
 const logger = createLogger('data-tracker');

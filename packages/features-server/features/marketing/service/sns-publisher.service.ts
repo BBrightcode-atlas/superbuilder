@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type { MarketingPlatformVariant, MarketingSnsAccount, SnsPlatform } from "@superbuilder/drizzle";
+import type { MarketingPlatformVariant, MarketingSnsAccount, SnsPlatform } from "@superbuilder/features-db";
 import type { PlatformConstraints, PublishResult } from "../types";
 import type { SnsPublisher } from "./publishers/publisher.interface";
 import { FacebookPublisher } from "./publishers/facebook.publisher";

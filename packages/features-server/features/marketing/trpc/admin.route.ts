@@ -13,7 +13,7 @@ import {
   marketingContents,
   marketingPublications,
   marketingSnsAccounts,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 // ============================================================================
 // Router
 // ============================================================================

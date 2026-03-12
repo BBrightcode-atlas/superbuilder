@@ -1,4 +1,4 @@
-import type { AiImageGeneration, AiImageStyleTemplate } from "@superbuilder/drizzle";
+import type { AiImageGeneration, AiImageStyleTemplate } from "@superbuilder/features-db";
 
 export type GenerationWithStyle = AiImageGeneration & {
   styleTemplate?: AiImageStyleTemplate | null;

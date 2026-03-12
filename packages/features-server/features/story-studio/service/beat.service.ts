@@ -4,12 +4,12 @@ import {
   InjectDrizzle,
   storyStudioBeats,
   storyStudioBeatTemplates,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type {
   DrizzleDB,
   NewStoryStudioBeat,
   NewStoryStudioBeatTemplate,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 
 const logger = createLogger("story-studio");

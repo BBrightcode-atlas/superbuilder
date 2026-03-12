@@ -21,5 +21,5 @@ export {
 // Types
 export * from "./types";
 
-// Schema - centralized in @superbuilder/drizzle
-// Use: import { taskTasks, taskProjects, ... } from "@superbuilder/drizzle"
+// Schema - centralized in @superbuilder/features-db
+// Use: import { taskTasks, taskProjects, ... } from "@superbuilder/features-db"

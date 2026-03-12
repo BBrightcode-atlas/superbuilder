@@ -1,6 +1,6 @@
 import { eq, and, desc } from "drizzle-orm";
-import { agentAgents } from "@superbuilder/drizzle/schema";
-import type { NewAgentAgent } from "@superbuilder/drizzle/schema";
+import { agentAgents } from "@superbuilder/features-db/schema";
+import type { NewAgentAgent } from "@superbuilder/features-db/schema";
 import { db } from "../lib/db";
 
 export const agentService = {

@@ -23,7 +23,7 @@ module.exports = {
 	},
 	testEnvironment: "node",
 	moduleNameMapper: {
-		"^@superbuilder/drizzle$": "<rootDir>/../drizzle/src/index.ts",
+		"^@superbuilder/features-db$": "<rootDir>/../drizzle/src/index.ts",
 		"^@superset/agent$": "<rootDir>/../agent/src/index.ts",
 		"^@/core/(.*)$": "<rootDir>/core/$1",
 		"^@/shared/(.*)$": "<rootDir>/shared/$1",

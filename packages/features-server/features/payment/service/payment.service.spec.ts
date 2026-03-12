@@ -7,7 +7,7 @@ jest.mock('drizzle-orm', () => ({
   or: jest.fn((...conds: any[]) => ({ conditions: conds, type: 'or' })),
 }));
 
-jest.mock('@superbuilder/drizzle', () => {
+jest.mock('@superbuilder/features-db', () => {
   const { Inject } = require('@nestjs/common');
   return {
     DRIZZLE: 'DRIZZLE_TOKEN',
@@ -99,7 +99,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { PaymentProviderFactory } from '../provider/payment-provider.factory';
-import { DRIZZLE } from '@superbuilder/drizzle';
+import { DRIZZLE } from '@superbuilder/features-db';
 import { createMockDb, createMockProvider, TEST_USER, TEST_PLAN } from '../__test-utils__';
 
 // ============================================================================

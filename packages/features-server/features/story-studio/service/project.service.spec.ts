@@ -5,7 +5,7 @@ jest.mock("drizzle-orm", () => ({
   count: jest.fn(() => ({ type: "count" })),
 }));
 
-jest.mock("@superbuilder/drizzle", () => {
+jest.mock("@superbuilder/features-db", () => {
   const { Inject } = jest.requireActual("@nestjs/common");
   const col = (name: string) => ({ name });
   return {

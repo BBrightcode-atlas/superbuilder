@@ -1,8 +1,8 @@
 import { Injectable, Inject, NotFoundException } from "@nestjs/common";
 import { eq, desc, asc, and, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { boards, boardPosts } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { boards, boardPosts } from "@superbuilder/features-db";
 import type { CreateBoardInput, UpdateBoardInput, BoardWithStats } from "../types";
 
 @Injectable()

@@ -1,4 +1,4 @@
-import type { RefundRule } from "@superbuilder/drizzle";
+import type { RefundRule } from "@superbuilder/features-db";
 
 // 상담사 + 프로필 + 카테고리 정보
 export interface ProviderWithDetails {

@@ -1,5 +1,5 @@
 import { streamText } from "ai";
-import type { AgentAgent, AgentMessage } from "@superbuilder/drizzle/schema";
+import type { AgentAgent, AgentMessage } from "@superbuilder/features-db/schema";
 import type { CoreTool } from "ai";
 import { getModel } from "../providers";
 import { selectModel, type RoutingContext } from "../providers";

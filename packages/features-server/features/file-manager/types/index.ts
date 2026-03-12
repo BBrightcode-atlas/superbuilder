@@ -1,4 +1,4 @@
-import type { File } from "@superbuilder/drizzle";
+import type { File } from "@superbuilder/features-db";
 import type { PaginationInput, PaginatedResult } from "../../../shared/types/pagination";
 
 export type FileRecord = File;

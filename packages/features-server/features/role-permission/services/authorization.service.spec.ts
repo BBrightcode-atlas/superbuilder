@@ -1,6 +1,6 @@
 import { NotFoundException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import { AuthorizationService } from "./authorization.service";
 
 // Mock Drizzle ORM functions
@@ -11,7 +11,7 @@ jest.mock("drizzle-orm", () => ({
 }));
 
 // Mock schema tables
-jest.mock("@superbuilder/drizzle", () => {
+jest.mock("@superbuilder/features-db", () => {
   const { Inject } = jest.requireActual("@nestjs/common");
   return {
     DRIZZLE: "DRIZZLE_TOKEN",

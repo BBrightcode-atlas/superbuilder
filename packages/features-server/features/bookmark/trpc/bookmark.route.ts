@@ -1,7 +1,7 @@
 import { authProcedure, getAuthUserId, router } from "../../../core/trpc";
 import { and, eq, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { bookmarks } from "@superbuilder/drizzle";
+import { bookmarks } from "@superbuilder/features-db";
 
 // Input schemas
 const toggleBookmarkSchema = z.object({

@@ -2,7 +2,7 @@
  * Task Status Icon - Linear 스타일 SVG 기반 상태 아이콘
  */
 import { cn } from "@superbuilder/feature-ui/lib/utils";
-import type { TaskStatus } from "@superbuilder/drizzle";
+import type { TaskStatus } from "@superbuilder/features-db";
 
 interface Props {
   status: TaskStatus;

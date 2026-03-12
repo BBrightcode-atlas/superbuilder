@@ -1,6 +1,6 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { DrizzleModule } from '@superbuilder/drizzle';
+import { DrizzleModule } from '@superbuilder/features-db';
 import { createLogger } from '../../core/logger';
 import { paymentConfig } from './config/payment.config';
 
