@@ -6,12 +6,17 @@
 
 ## 전체 아키텍처
 
+> **v2 (2026-03-13 업데이트)**: Extractor → Scaffold Engine으로 교체.
+> Supabase 완전 제거, Neon + Better Auth 단일 스택.
+> CLI Agent 기반 Feature 설치 단계 추가.
+
 ```
 Feature Catalog ──→ Composer Wizard ──→ Pipeline
                     (feature 선택)       │
-                                         ├─ Extract (파일 추출)
-                                         ├─ Git Init
-                                         ├─ Supabase (DB 생성)
+                                         ├─ Scaffold (template clone + spec + workflow)
+                                         ├─ GitHub Push
+                                         ├─ CLI Agent (feature 설치 — /install-features)
+                                         ├─ Neon (DB 생성)
                                          ├─ Vercel (프론트 배포)
                                          └─→ Deployments (목록/모니터링)
 ```
@@ -22,8 +27,8 @@ Feature Catalog ──→ Composer Wizard ──→ Pipeline
 atlas/
 ├── registry    — Feature 조회
 ├── resolver    — 의존성 해석
-├── composer    — extract + git init
-├── supabase    — PAT 토큰 + 프로젝트 생성
+├── composer    — scaffold + launchInstallAgent + pushToGitHub
+├── neon        — PAT 토큰 + 프로젝트 생성
 ├── vercel      — PAT 토큰 + 배포
 └── deployments — 프로젝트 목록 CRUD
 ```
@@ -72,11 +77,26 @@ packages/
 | Feature Atlas registry 확장 | ✅ | `registry.ts` |
 | 의존성 해결 알고리즘 (토폴로지 정렬 + 순환 감지) | ✅ | `resolver.ts` |
 | DB 스키마 (atlasProjects, atlasIntegrations) | ✅ | `packages/local-db/src/schema/atlas.ts` |
-| Git init (composer에서 처리) | ✅ | `composer.ts` |
+| ~~Extract (파일 추출)~~ → **Scaffold Engine** | ✅ | `packages/atlas-engine/src/scaffold/` |
 | Deployments CRUD (list, getById, delete, updateStatus) | ✅ | `deployments.ts` |
 | Pipeline UI (ComposerStepper 6단계, PipelineProgress) | ✅ | 컴포넌트 구현 완료 |
 | Deployments 페이지 (카드 그리드, 빈 상태, 폴더 열기) | ✅ | `deployments/page.tsx` |
 | Atlas Router 통합 (6개 라우터 등록) | ✅ | `atlas/index.ts` |
+
+### Phase 1 v2 업데이트 (2026-03-13)
+
+Extractor를 Scaffold Engine으로 교체:
+
+| 변경 | 이전 | 이후 |
+|------|------|------|
+| 프로젝트 생성 방식 | Subtractive (파일 추출/삭제) | Additive (template clone + agent install) |
+| Template 소스 | feature-atlas monorepo 직접 | `BBrightcode-atlas/feature-atlas-template` |
+| Feature 설치 | 추출 시 일괄 처리 | CLI Agent (`/install-features`) 단계적 설치 |
+| DB/Auth 스택 | Supabase | Neon + Better Auth |
+| 프로젝트 명세 | 없음 | `superbuilder.json` (ProjectSpec) |
+| 설치 워크플로우 | 없음 | `.claude/commands/install-features.md` |
+
+상세 설계: `docs/superpowers/specs/2026-03-13-composer-scaffold-agent-design.md`
 
 ---
 
