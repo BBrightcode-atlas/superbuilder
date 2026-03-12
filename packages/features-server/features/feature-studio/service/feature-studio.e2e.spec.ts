@@ -151,7 +151,13 @@ describe("Feature Studio happy path", () => {
 		browserQaService = new BrowserQaService(mockDb as never);
 		registrationService = new FeatureRegistrationService(
 			mockDb as never,
-			{ create: jest.fn() } as never,
+			{
+				create: jest.fn().mockImplementation((input: { slug: string; name: string }) => ({
+					id: "catalog_1",
+					slug: input.slug,
+					name: input.name,
+				})),
+			} as never,
 		);
 		global.fetch = jest.fn().mockResolvedValue({
 			ok: true,
@@ -165,7 +171,7 @@ describe("Feature Studio happy path", () => {
 		mockDb._resetQueue();
 	});
 
-	it("runs from request creation to pending registration", async () => {
+	it("runs full lifecycle from request creation to registered", async () => {
 		mockDb._queueResolve("returning", [
 			{
 				id: requestId,
@@ -299,5 +305,196 @@ describe("Feature Studio happy path", () => {
 		expect(mockDb.set).toHaveBeenCalledWith(
 			expect.objectContaining({ status: "pending_registration" }),
 		);
+
+		// ── Step 8: Approve registration ──
+		mockDb.query.featureRequestApprovals.findFirst.mockResolvedValueOnce({
+			id: "approval_registration",
+			featureRequestId: requestId,
+			approvalType: "registration",
+			status: "pending",
+		});
+		mockDb._queueResolve("returning", [
+			{ id: "approval_registration", status: "approved", decidedById: userId },
+		]);
+		await requestService.respondToApproval({
+			approvalId: "approval_registration",
+			action: "approved",
+			decidedById: userId,
+		});
+
+		// ── Step 9: Register the feature (final state) ──
+		mockDb.query.featureRequests.findFirst.mockResolvedValueOnce({
+			id: requestId,
+			title: "Lead capture widget",
+			rawPrompt: "Build a reusable lead capture widget",
+			summary: "A reusable lead capture widget for landing pages",
+			status: "pending_registration",
+		});
+		mockDb.query.featureRequestApprovals.findFirst.mockResolvedValueOnce({
+			id: "approval_registration",
+			featureRequestId: requestId,
+			approvalType: "registration",
+			status: "approved",
+			decidedById: userId,
+		});
+		mockDb.query.featureRequestWorktrees.findFirst.mockResolvedValueOnce({
+			id: "worktree_1",
+			featureRequestId: requestId,
+			branchName: "codex/feature-studio-123e4567",
+			worktreePath: "/tmp/feature-studio",
+			headCommitSha: "abc123",
+			lastVerifiedCommitSha: "def456",
+			previewUrl: "https://preview.vercel.app",
+		});
+		mockDb._queueResolve("returning", [
+			{
+				id: "registration_1",
+				featureRequestId: requestId,
+				featureKey: "lead-capture-widget",
+				status: "registered",
+			},
+		]);
+
+		const result = await registrationService.registerRequest(requestId);
+
+		expect(result.registration.status).toBe("registered");
+		expect(result.registration.featureKey).toBe("lead-capture-widget");
+		expect(result.catalogFeature).toBeDefined();
+		expect(result.catalogFeature.slug).toBe("lead-capture-widget");
+
+		// Verify the feature request was updated to registered status
+		expect(mockDb.set).toHaveBeenCalledWith(
+			expect.objectContaining({ status: "registered" }),
+		);
+	});
+
+	it("transitions to discarded when any approval is discarded", async () => {
+		mockDb.query.featureRequestApprovals.findFirst.mockResolvedValueOnce({
+			id: "approval_spec",
+			featureRequestId: requestId,
+			approvalType: "spec_plan",
+			status: "pending",
+		});
+		mockDb._queueResolve("returning", [
+			{ id: "approval_spec", status: "discarded" },
+		]);
+		await requestService.respondToApproval({
+			approvalId: "approval_spec",
+			action: "discarded",
+			decidedById: userId,
+		});
+
+		// Second .set call is the feature request status update (first is the approval update)
+		expect(mockDb.set).toHaveBeenNthCalledWith(2, { status: "discarded" });
+	});
+
+	it("transitions to customization when human_qa approval is rejected", async () => {
+		mockDb.query.featureRequestApprovals.findFirst.mockResolvedValueOnce({
+			id: "approval_human",
+			featureRequestId: requestId,
+			approvalType: "human_qa",
+			status: "pending",
+		});
+		mockDb._queueResolve("returning", [
+			{ id: "approval_human", status: "rejected" },
+		]);
+		await requestService.respondToApproval({
+			approvalId: "approval_human",
+			action: "rejected",
+			decidedById: userId,
+		});
+
+		// Second .set call is the feature request status update
+		expect(mockDb.set).toHaveBeenNthCalledWith(2, { status: "customization" });
+	});
+
+	it("transitions to customization when registration approval is rejected", async () => {
+		mockDb.query.featureRequestApprovals.findFirst.mockResolvedValueOnce({
+			id: "approval_reg",
+			featureRequestId: requestId,
+			approvalType: "registration",
+			status: "pending",
+		});
+		mockDb._queueResolve("returning", [
+			{ id: "approval_reg", status: "rejected" },
+		]);
+		await requestService.respondToApproval({
+			approvalId: "approval_reg",
+			action: "rejected",
+			decidedById: userId,
+		});
+
+		// Second .set call is the feature request status update
+		expect(mockDb.set).toHaveBeenNthCalledWith(2, { status: "customization" });
+	});
+
+	it("marks request and run as failed when spec generation errors", async () => {
+		const { generateFeatureStudioSpec } = await import("@superset/agent");
+		const specMock = generateFeatureStudioSpec as unknown as jest.Mock;
+		specMock.mockRejectedValueOnce(new Error("API key missing"));
+
+		mockDb.query.featureRequests.findFirst.mockResolvedValueOnce({
+			id: requestId,
+			title: "Widget",
+			rawPrompt: "Build widget",
+			rulesetReference: "rules/feature.md",
+			status: "draft",
+			createdById: userId,
+		});
+		mockDb.query.featureRequests.findFirst.mockResolvedValueOnce({
+			id: requestId,
+			title: "Widget",
+			rawPrompt: "Build widget",
+			rulesetReference: "rules/feature.md",
+			status: "draft",
+			createdById: userId,
+		});
+		mockDb._queueResolve("returning", [{ id: "run_1" }]);
+
+		await expect(runnerService.advance(requestId)).rejects.toThrow(
+			"API key missing",
+		);
+
+		// Verify both run and request were marked failed
+		expect(mockDb.set).toHaveBeenCalledWith(
+			expect.objectContaining({
+				status: "failed",
+				lastError: "API key missing",
+			}),
+		);
+		expect(mockDb.set).toHaveBeenCalledWith(
+			expect.objectContaining({
+				status: "failed",
+				currentRunId: "run_1",
+			}),
+		);
+
+		// Restore mock for other tests
+		specMock.mockResolvedValue("# Spec");
+	});
+
+	it("throws NotFoundException for non-existent approval", async () => {
+		mockDb.query.featureRequestApprovals.findFirst.mockResolvedValueOnce(null);
+
+		await expect(
+			requestService.respondToApproval({
+				approvalId: "nonexistent",
+				action: "approved",
+				decidedById: userId,
+			}),
+		).rejects.toThrow("not found");
+	});
+
+	it("throws BadRequestException when registering without approved registration", async () => {
+		mockDb.query.featureRequests.findFirst.mockResolvedValueOnce({
+			id: requestId,
+			title: "Widget",
+			status: "pending_registration",
+		});
+		mockDb.query.featureRequestApprovals.findFirst.mockResolvedValueOnce(null);
+
+		await expect(
+			registrationService.registerRequest(requestId),
+		).rejects.toThrow("Registration approval is required");
 	});
 });
