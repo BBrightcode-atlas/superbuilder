@@ -6,10 +6,18 @@ Scope: Rebuild the existing `agent-desk` style feature creation flow as a persis
 
 ## Implementation Snapshot
 
-As of 2026-03-11, phase 1 implementation has landed in a working branch with the following pieces in place:
+As of 2026-03-13, the Feature Studio data layer has been migrated from
+`packages/features-server` to the superbuilder Neon DB (`@superset/db` +
+`@superset/trpc`). The following pieces are in place:
 
-- durable `feature-studio` schema and status model in Postgres-backed Drizzle,
-- `packages/features-server` request, approval, runner, worktree, preview, browser QA, and registration services,
+- durable `feature-studio` schema in `packages/db/src/schema/feature-studio.ts`
+  (7 tables: `feature_requests`, `feature_specs`, `feature_plans`,
+  `feature_approvals`, `feature_artifacts`, `feature_queue_items`,
+  `feature_rulesets`; 8 enums),
+- tRPC router in `packages/trpc/src/router/feature-studio/` (8 procedures),
+- Drizzle migration `packages/db/drizzle/0027_feature_studio_tables.sql`,
+- desktop proxy updated to route through `apps/api` (`/api/trpc`) using
+  `@superset/trpc` AppRouter instead of the old `features-server` proxy,
 - `packages/agent` generation entrypoints for spec and plan creation,
 - desktop Atlas `Studio` queue/detail surfaces,
 - preview review UI with explicit approval actions,
@@ -18,7 +26,6 @@ As of 2026-03-11, phase 1 implementation has landed in a working branch with the
 Remaining gaps are primarily rollout and verification work:
 
 - broader end-to-end verification against a real database and runtime,
-- migration generation and deployment on a Neon branch,
 - operational env setup in shared environments,
 - progressive cutover from `agent-desk` to `feature-studio`.
 
@@ -229,7 +236,11 @@ This ensures the system can always answer which build was reviewed and approved.
 
 ## Database Strategy
 
-Postgres is the canonical persistence layer for this system.
+Postgres (Neon) is the canonical persistence layer for this system.
+
+As of 2026-03-13, the Feature Studio schema lives in `packages/db/src/schema/feature-studio.ts`
+and is served through `packages/trpc/src/router/feature-studio/`. The desktop
+client accesses this through `apps/api` at `/api/trpc`.
 
 `local-db` must not be used as the system of record for Feature Studio because the workflow is:
 

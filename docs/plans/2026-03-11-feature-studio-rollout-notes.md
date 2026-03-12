@@ -1,11 +1,28 @@
 # Feature Studio Rollout Notes
 
 Date: 2026-03-11
+Updated: 2026-03-13
 Status: Draft rollout guide
 
 ## Purpose
 
 This note captures the operational guardrails for rolling out `feature-studio` while keeping the existing `agent-desk` path available.
+
+## Data Layer Migration (2026-03-13)
+
+Feature Studio data layer has been migrated from `packages/features-server` to the
+superbuilder Neon DB:
+
+- **Schema**: `packages/db/src/schema/feature-studio.ts` (7 tables, 8 enums)
+- **tRPC Router**: `packages/trpc/src/router/feature-studio/` (8 procedures)
+- **Migration**: `packages/db/drizzle/0027_feature_studio_tables.sql`
+- **Desktop proxy**: `apps/desktop/src/lib/trpc/routers/atlas/feature-studio.ts`
+  now points to `apps/api` via `@superset/trpc` AppRouter instead of
+  `features-server`
+
+The desktop client no longer needs `FEATURES_SERVER_URL` for Feature Studio
+routing. All Feature Studio tRPC calls go through `apps/api` at
+`/api/trpc`.
 
 ## Required Environment
 
@@ -17,7 +34,6 @@ The following environment variables must be configured before enabling real exec
 - `FEATURE_STUDIO_REPO_ROOT`
 - `FEATURE_STUDIO_WORKTREE_BASE`
 - `FEATURE_STUDIO_BASE_BRANCH`
-- `FEATURES_SERVER_URL` for desktop-to-server routing in local and staged environments
 
 ## Database and Migration Guardrails
 
@@ -35,12 +51,13 @@ The following environment variables must be configured before enabling real exec
 
 ## Rollout Sequence
 
-1. Deploy the `features-server` schema and server feature to a staging environment.
-2. Configure Vercel credentials and verify preview creation from staging.
-3. Enable Atlas Studio surfaces in desktop for internal users only.
-4. Run the happy-path request flow through spec generation, approval, preview QA, customization, and registration.
-5. Mark `agent-desk` as deprecated for new feature authoring work.
-6. Keep old `agent-desk` code in place until Feature Studio reaches operational parity.
+1. Deploy the schema migration (`0027_feature_studio_tables.sql`) to the Neon database.
+2. Deploy the API server (`apps/api`) with the updated `@superset/trpc` router.
+3. Configure Vercel credentials and verify preview creation from staging.
+4. Enable Atlas Studio surfaces in desktop for internal users only.
+5. Run the happy-path request flow through spec generation, approval, preview QA, customization, and registration.
+6. Mark `agent-desk` as deprecated for new feature authoring work.
+7. Keep old `agent-desk` code in place until Feature Studio reaches operational parity.
 
 ## Validation Checklist
 
