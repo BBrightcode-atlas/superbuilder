@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
-import { InjectDrizzle } from "@superbuilder/drizzle";
-import type { DrizzleDB } from "@superbuilder/drizzle";
-import { taskProjects } from "@superbuilder/drizzle";
+import { InjectDrizzle } from "@superbuilder/features-db";
+import type { DrizzleDB } from "@superbuilder/features-db";
+import { taskProjects } from "@superbuilder/features-db";
 import { eq, and, desc } from "drizzle-orm";
 import { createLogger } from "../../../core/logger";
 

@@ -1,4 +1,4 @@
-import type { Subscription } from '@superbuilder/drizzle';
+import type { Subscription } from '@superbuilder/features-db';
 
 /**
  * 구독 상태 타입

@@ -1,13 +1,13 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { eq, desc, and, inArray, sql, gte } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   communityPosts,
   communityMemberships,
   communities,
   type CommunityPost,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 
 export interface FeedOptions {
   sort?: "hot" | "new" | "top" | "rising" | "controversial";

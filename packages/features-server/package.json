@@ -113,7 +113,7 @@
     "@polar-sh/sdk": "^0.43.1",
     "@react-email/components": "^1.0.6",
     "@react-email/render": "^2.0.4",
-    "@superbuilder/drizzle": "workspace:^",
+    "@superbuilder/features-db": "workspace:^",
     "@supabase/supabase-js": "2.93.3",
     "@trpc/server": "^11.8.1",
     "class-transformer": "^0.5.1",

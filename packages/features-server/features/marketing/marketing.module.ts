@@ -1,5 +1,5 @@
 import { Module, OnModuleInit } from "@nestjs/common";
-import { DrizzleModule } from "@superbuilder/drizzle";
+import { DrizzleModule } from "@superbuilder/features-db";
 import {
   MarketingService,
   PublishOrchestratorService,

@@ -1,4 +1,4 @@
-import type { PaymentCoupon, PaymentCouponRedemption } from "@superbuilder/drizzle";
+import type { PaymentCoupon, PaymentCouponRedemption } from "@superbuilder/features-db";
 
 export type CouponWithRedemptions = PaymentCoupon & {
   redemptions?: PaymentCouponRedemption[];

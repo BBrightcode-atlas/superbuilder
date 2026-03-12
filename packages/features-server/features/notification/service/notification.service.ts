@@ -1,8 +1,8 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { eq, and, desc, count, isNull, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DRIZZLE } from '@superbuilder/drizzle';
-import { notifications, notificationSettings, profiles } from '@superbuilder/drizzle';
+import { DRIZZLE } from '@superbuilder/features-db';
+import { notifications, notificationSettings, profiles } from '@superbuilder/features-db';
 import type {
   CreateNotificationInput,
   UpdateSettingsInput,

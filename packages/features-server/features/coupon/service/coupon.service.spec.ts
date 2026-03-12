@@ -10,7 +10,7 @@ jest.mock('drizzle-orm', () => ({
   count: jest.fn(() => ({ type: 'count' })),
 }));
 
-jest.mock('@superbuilder/drizzle', () => {
+jest.mock('@superbuilder/features-db', () => {
   const { Inject } = require('@nestjs/common');
   return {
     DRIZZLE: 'DRIZZLE_TOKEN',
@@ -64,7 +64,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { CouponService } from './coupon.service';
-import { DRIZZLE } from '@superbuilder/drizzle';
+import { DRIZZLE } from '@superbuilder/features-db';
 import {
   createMockDb,
   TEST_USER,

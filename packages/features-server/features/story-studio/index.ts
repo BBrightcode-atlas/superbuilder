@@ -33,5 +33,5 @@ export { BeatService } from "./service/beat.service";
 export { EndingService } from "./service/ending.service";
 export { EventService } from "./service/event.service";
 
-// Schema - centralized in @superbuilder/drizzle
-// Use: import { storyStudioProjects, storyStudioChapters, ... } from "@superbuilder/drizzle"
+// Schema - centralized in @superbuilder/features-db
+// Use: import { storyStudioProjects, storyStudioChapters, ... } from "@superbuilder/features-db"

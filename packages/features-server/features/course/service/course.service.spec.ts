@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import { TEST_DATES, TEST_IDS, TEST_USER, createMockDb } from "../../__test-utils__";
 import { CourseService } from "./course.service";
 
@@ -19,7 +19,7 @@ jest.mock("drizzle-orm", () => {
   };
 });
 
-jest.mock("@superbuilder/drizzle", () => {
+jest.mock("@superbuilder/features-db", () => {
   const { Inject } = require("@nestjs/common");
   return {
     DRIZZLE: "DRIZZLE_TOKEN",

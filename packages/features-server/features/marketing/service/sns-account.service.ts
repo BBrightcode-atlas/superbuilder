@@ -8,11 +8,11 @@ import {
 } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE, marketingSnsAccounts } from "@superbuilder/drizzle";
+import { DRIZZLE, marketingSnsAccounts } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 
 const logger = createLogger("marketing");
-import type { MarketingSnsAccount } from "@superbuilder/drizzle";
+import type { MarketingSnsAccount } from "@superbuilder/features-db";
 import type { ConnectAccountDto } from "../dto";
 
 @Injectable()

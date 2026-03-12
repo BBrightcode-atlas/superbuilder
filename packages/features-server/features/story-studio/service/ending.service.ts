@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { InjectDrizzle, storyStudioEndings } from "@superbuilder/drizzle";
-import type { DrizzleDB, NewStoryStudioEnding, StoryStudioCondition } from "@superbuilder/drizzle";
+import { InjectDrizzle, storyStudioEndings } from "@superbuilder/features-db";
+import type { DrizzleDB, NewStoryStudioEnding, StoryStudioCondition } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 
 const logger = createLogger("story-studio");

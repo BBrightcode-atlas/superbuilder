@@ -7,7 +7,7 @@ jest.mock("drizzle-orm", () => ({
   })),
 }));
 
-jest.mock("@superbuilder/drizzle", () => {
+jest.mock("@superbuilder/features-db", () => {
   const { Inject } = require("@nestjs/common");
   return {
     DRIZZLE: "DRIZZLE_TOKEN",
@@ -32,7 +32,7 @@ jest.mock("@/core/logger", () => ({
 }));
 
 import { Test, type TestingModule } from "@nestjs/testing";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import { CommunityKarmaService } from "./community-karma.service";
 import { createMockDb, TEST_USER, TEST_IDS, TEST_DATES } from "../../__test-utils__";
 

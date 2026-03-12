@@ -10,5 +10,5 @@ export * from './service/plan.service';
 export * from './service/credit.service';
 export * from './service/model-pricing.service';
 
-// Schema - now centralized in @superbuilder/drizzle
-// Use: import { products, orders, subscriptions, licenses, webhookEvents } from "@superbuilder/drizzle"
+// Schema - now centralized in @superbuilder/features-db
+// Use: import { products, orders, subscriptions, licenses, webhookEvents } from "@superbuilder/features-db"

@@ -5,7 +5,7 @@
  *   npx tsx packages/drizzle/src/seed/tone-presets.ts
  *
  * 또는 서버 초기화 시 수동 삽입:
- *   import { SYSTEM_TONE_PRESETS } from "@superbuilder/drizzle/seed/tone-presets";
+ *   import { SYSTEM_TONE_PRESETS } from "@superbuilder/features-db/seed/tone-presets";
  */
 import type { NewStudioTonePreset } from "../schema/features/content-studio";
 

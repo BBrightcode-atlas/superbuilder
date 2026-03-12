@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { agentDeskSessions, agentDeskFiles, agentDeskMessages } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { agentDeskSessions, agentDeskFiles, agentDeskMessages } from "@superbuilder/features-db";
 import { LLMService } from "../../../features/ai";
 import type { TokenUsage } from "../../../features/ai";
 import { createLogger } from "../../../core/logger";
@@ -214,8 +214,8 @@ export type NewFaqCategory = typeof faqCategories.$inferInsert;
 // packages/features/{name}/service/{name}.service.ts
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, desc, and, count } from "drizzle-orm";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
-import { faqCategories } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
+import { faqCategories } from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 
 const logger = createLogger("{name}");

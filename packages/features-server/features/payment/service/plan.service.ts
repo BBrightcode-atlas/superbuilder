@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, asc } from 'drizzle-orm';
-import { paymentPlans, paymentCreditBalances } from '@superbuilder/drizzle';
-import type { NewPaymentPlan } from '@superbuilder/drizzle';
+import { paymentPlans, paymentCreditBalances } from '@superbuilder/features-db';
+import type { NewPaymentPlan } from '@superbuilder/features-db';
 import { createLogger } from '../../../core/logger';
 import type { PaymentProvider } from '../provider/payment-provider.interface';
 

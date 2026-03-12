@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException, ConflictException, ForbiddenException } from "@nestjs/common";
-import { InjectDrizzle, type DrizzleDB, blogPosts, blogClaps, blogResponses, blogBookmarks } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB, blogPosts, blogClaps, blogResponses, blogBookmarks } from "@superbuilder/features-db";
 import { eq, and, sql, desc } from "drizzle-orm";
 import { CreateBlogPostDto, UpdateBlogPostDto, ClapPostDto, CreateResponseDto } from "../../dto";
 

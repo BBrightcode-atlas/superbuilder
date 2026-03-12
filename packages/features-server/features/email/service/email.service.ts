@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
-import { emailLogs, type EmailLog, type EmailTemplateType } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
+import { emailLogs, type EmailLog, type EmailTemplateType } from '@superbuilder/features-db';
 import { eq, and, gte, desc, ilike } from 'drizzle-orm';
 import { EmailProviderService } from './email-provider.service';
 import { EmailTemplateService } from './email-template.service';

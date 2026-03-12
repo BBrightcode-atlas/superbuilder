@@ -1,4 +1,4 @@
-import type { MarketingPlatformVariant, MarketingSnsAccount } from "@superbuilder/drizzle";
+import type { MarketingPlatformVariant, MarketingSnsAccount } from "@superbuilder/features-db";
 import type { PlatformConstraints, PublishResult } from "../../types";
 import type { SnsPublisher } from "./publisher.interface";
 

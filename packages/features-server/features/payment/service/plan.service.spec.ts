@@ -3,7 +3,7 @@ jest.mock('drizzle-orm', () => ({
   asc: jest.fn((field: any) => ({ field, type: 'asc' })),
 }));
 
-jest.mock('@superbuilder/drizzle', () => {
+jest.mock('@superbuilder/features-db', () => {
   const { Inject } = require('@nestjs/common');
   return {
     DRIZZLE: 'DRIZZLE_TOKEN',
@@ -34,7 +34,7 @@ jest.mock('@/core/logger', () => ({
 import { Test, type TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { PlanService } from './plan.service';
-import { DRIZZLE } from '@superbuilder/drizzle';
+import { DRIZZLE } from '@superbuilder/features-db';
 import {
   createMockDb,
   createMockProvider,

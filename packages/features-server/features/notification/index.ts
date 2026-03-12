@@ -6,5 +6,5 @@ export * from './service/notification.service';
 export * from './service/notification-emitter.service';
 export * from './gateway/notification.gateway';
 
-// Schema - centralized in @superbuilder/drizzle
-// Use: import { notifications, notificationSettings } from "@superbuilder/drizzle"
+// Schema - centralized in @superbuilder/features-db
+// Use: import { notifications, notificationSettings } from "@superbuilder/features-db"

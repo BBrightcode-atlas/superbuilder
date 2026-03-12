@@ -4,12 +4,12 @@ import {
   BadRequestException,
   ConflictException,
 } from "@nestjs/common";
-import { InjectDrizzle, type DrizzleDB } from "@superbuilder/drizzle";
+import { InjectDrizzle, type DrizzleDB } from "@superbuilder/features-db";
 import { eq, and, desc, sql, count } from "drizzle-orm";
 import {
   paymentCoupons,
   paymentCouponRedemptions,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 import type { CreateCouponDto } from "../dto/create-coupon.dto";
 import type { UpdateCouponDto } from "../dto/update-coupon.dto";

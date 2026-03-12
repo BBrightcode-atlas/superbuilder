@@ -11,5 +11,5 @@ export type { ReactionRouter } from "./trpc";
 // Services
 export { ReactionService } from "./service";
 
-// Schema - now centralized in @superbuilder/drizzle
-// Use: import { reactions } from "@superbuilder/drizzle"
+// Schema - now centralized in @superbuilder/features-db
+// Use: import { reactions } from "@superbuilder/features-db"

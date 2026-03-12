@@ -1,8 +1,8 @@
 import { Injectable, Inject, NotFoundException, ForbiddenException, BadRequestException, InternalServerErrorException } from "@nestjs/common";
 import { eq, desc, and, sql, count } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { comments, type Comment } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { comments, type Comment } from "@superbuilder/features-db";
 
 export interface CommentWithAuthor extends Comment {
   author: {

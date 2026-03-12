@@ -9,7 +9,7 @@ import {
 import { eq, desc, and, count, or, ilike, sql, asc } from "drizzle-orm";
 import { decodeCursor, buildCursorResult } from "../../../shared/utils/pagination";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   communities,
   communityMemberships,
@@ -18,7 +18,7 @@ import {
   communityComments,
   type Community,
   type CommunityMembership,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type { CreateCommunityDto, UpdateCommunityDto } from "../dto";
 
 export interface PaginationOptions {

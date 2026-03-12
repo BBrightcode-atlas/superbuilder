@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException, ConflictException, ForbiddenException, InternalServerErrorException } from "@nestjs/common";
 import { and, eq, desc, asc, sql, isNull, inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   reviews,
   reviewHelpful,
@@ -11,7 +11,7 @@ import {
   type ReportReason,
   type ReportStatus,
   type ReviewStatus,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 
 // ============================================================================
 // Types

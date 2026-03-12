@@ -9,7 +9,7 @@ import { createLogger } from "../../../core/logger";
 import type {
   StoryStudioCondition,
   StoryStudioEffect,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import { ProjectService } from "./project.service";
 import { ChapterService } from "./chapter.service";
 import { GraphService } from "./graph.service";

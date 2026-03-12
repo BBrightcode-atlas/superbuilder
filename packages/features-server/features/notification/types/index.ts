@@ -1,8 +1,8 @@
 /**
  * Notification Feature Types
  *
- * DB Types are imported from @superbuilder/drizzle:
- * import { Notification, NotificationSetting, NotificationType } from "@superbuilder/drizzle"
+ * DB Types are imported from @superbuilder/features-db:
+ * import { Notification, NotificationSetting, NotificationType } from "@superbuilder/features-db"
  */
 
 // ============================================================================

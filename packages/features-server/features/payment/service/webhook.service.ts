@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { InjectDrizzle } from '@superbuilder/drizzle';
-import type { DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle } from '@superbuilder/features-db';
+import type { DrizzleDB } from '@superbuilder/features-db';
 import { eq } from 'drizzle-orm';
-import { subscriptions, orders, licenses, webhookEvents, profiles, products, paymentPlans } from '@superbuilder/drizzle';
-import type { OrderStatus } from '@superbuilder/drizzle';
+import { subscriptions, orders, licenses, webhookEvents, profiles, products, paymentPlans } from '@superbuilder/features-db';
+import type { OrderStatus } from '@superbuilder/features-db';
 import { createLogger } from '../../../core/logger';
 import type {
   NormalizedWebhookEvent,

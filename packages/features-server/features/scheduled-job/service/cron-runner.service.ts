@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, lte, sql } from 'drizzle-orm';
 import {
   paymentCreditBalances,
   paymentCreditTransactions,
   paymentPlans,
-} from '@superbuilder/drizzle';
+} from '@superbuilder/features-db';
 import { ScheduledJobService } from './scheduled-job.service';
 
 @Injectable()

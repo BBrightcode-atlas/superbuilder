@@ -19,8 +19,8 @@ import {
   Inject,
 } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import { userRoles, roles } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import { userRoles, roles } from "@superbuilder/features-db";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 const ADMIN_ROLE_SLUGS = ["owner", "admin"];

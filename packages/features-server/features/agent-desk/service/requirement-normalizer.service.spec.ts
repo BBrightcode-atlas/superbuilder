@@ -7,7 +7,7 @@ jest.mock("drizzle-orm", () => ({
 }));
 
 // Mock schema tables
-jest.mock("@superbuilder/drizzle", () => ({
+jest.mock("@superbuilder/features-db", () => ({
   DRIZZLE: "DRIZZLE_TOKEN",
   InjectDrizzle: () => () => undefined,
   agentDeskRequirementSources: {

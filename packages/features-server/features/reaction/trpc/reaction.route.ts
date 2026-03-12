@@ -2,7 +2,7 @@ import { publicProcedure, authProcedure, getAuthUserId, router } from "../../../
 import { and, count, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { ReactionCounts, ReactionType, UserReactionStatus } from "../types";
-import { reactions } from "@superbuilder/drizzle";
+import { reactions } from "@superbuilder/features-db";
 
 // Input schemas
 const toggleReactionSchema = z.object({

@@ -5,15 +5,15 @@ import {
   ForbiddenException,
   Logger,
 } from "@nestjs/common";
-import { DRIZZLE } from "@superbuilder/drizzle";
-import type { DrizzleDB } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
+import type { DrizzleDB } from "@superbuilder/features-db";
 import { eq, and, lte, desc, sql } from "drizzle-orm";
 import {
   studioStudios,
   studioTopics,
   studioContents,
   studioAiRecurrences,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import { LLMService } from "../../../features/ai";
 import type { TopicSuggestion } from "../../../features/ai";
 import { StudioBrandVoiceService } from "./studio-brand-voice.service";

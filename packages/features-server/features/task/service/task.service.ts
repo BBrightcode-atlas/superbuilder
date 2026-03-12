@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectDrizzle } from "@superbuilder/drizzle";
-import type { DrizzleDB } from "@superbuilder/drizzle";
+import { InjectDrizzle } from "@superbuilder/features-db";
+import type { DrizzleDB } from "@superbuilder/features-db";
 import {
   taskTasks,
   taskTaskLabels,
   taskComments,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import {
   eq,
   and,

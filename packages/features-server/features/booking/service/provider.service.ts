@@ -8,7 +8,7 @@ import {
 } from "@nestjs/common";
 import { eq, and, desc, count, ilike, inArray, or, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   bookingProviders,
   bookingProviderCategories,
@@ -17,7 +17,7 @@ import {
   bookingSessionProducts,
   profiles,
   type BookingProvider,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type { z } from "zod";
 import type { createProviderSchema } from "../dto/create-provider.dto";
 import type { updateProviderProfileSchema } from "../dto/update-provider-profile.dto";

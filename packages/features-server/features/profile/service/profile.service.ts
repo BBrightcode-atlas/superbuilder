@@ -1,7 +1,7 @@
 import { Injectable, Inject, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { eq, count, ilike, or, desc, and, isNull, isNotNull, asc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DRIZZLE, profiles, terms, profileWithdrawalReasons, subscriptions } from '@superbuilder/drizzle';
+import { DRIZZLE, profiles, terms, profileWithdrawalReasons, subscriptions } from '@superbuilder/features-db';
 import type { UpdateProfileInput, CreateTermInput, UpdateTermInput, WithdrawInput } from '../dto';
 import { createLogger } from '../../../core/logger';
 

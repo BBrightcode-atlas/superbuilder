@@ -6,12 +6,12 @@ import {
 } from "@nestjs/common";
 import { eq, asc, and, count, ilike, or, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE } from "@superbuilder/drizzle";
+import { DRIZZLE } from "@superbuilder/features-db";
 import {
   bookingSessionProducts,
   bookingProviderProducts,
   type BookingSessionProduct,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type { z } from "zod";
 import type { createSessionProductSchema } from "../dto/create-session-product.dto";
 import type { updateSessionProductSchema } from "../dto/update-session-product.dto";

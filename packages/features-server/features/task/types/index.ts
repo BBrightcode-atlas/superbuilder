@@ -1,4 +1,4 @@
-import type { Profile } from "@superbuilder/drizzle";
+import type { Profile } from "@superbuilder/features-db";
 import type {
   TaskTask,
   TaskProject,
@@ -6,7 +6,7 @@ import type {
   TaskLabel,
   TaskComment,
   TaskActivity,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 
 export interface TaskWithRelations extends TaskTask {
   assignee: Profile | null;

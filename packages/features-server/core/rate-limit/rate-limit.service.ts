@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { and, eq, gt, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DRIZZLE, rateLimits } from "@superbuilder/drizzle";
+import { DRIZZLE, rateLimits } from "@superbuilder/features-db";
 import { TRPCError } from "@trpc/server";
 
 export interface RateLimitConfig {

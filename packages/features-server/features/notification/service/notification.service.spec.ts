@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { NotificationService } from './notification.service';
-import { DRIZZLE } from '@superbuilder/drizzle';
+import { DRIZZLE } from '@superbuilder/features-db';
 
 // Mock Drizzle ORM functions
 jest.mock('drizzle-orm', () => ({
@@ -14,7 +14,7 @@ jest.mock('drizzle-orm', () => ({
 }));
 
 // Mock schema tables
-jest.mock('@superbuilder/drizzle', () => ({
+jest.mock('@superbuilder/features-db', () => ({
   DRIZZLE: 'DRIZZLE_TOKEN',
   notifications: {
     id: { name: 'id' },

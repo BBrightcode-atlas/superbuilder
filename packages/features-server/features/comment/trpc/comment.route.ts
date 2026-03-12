@@ -3,11 +3,11 @@
  */
 
 import { NotFoundException, BadRequestException } from "@nestjs/common";
-import { profiles } from "@superbuilder/drizzle";
+import { profiles } from "@superbuilder/features-db";
 import { publicProcedure, protectedProcedure, router } from "../../../core/trpc";
 import { and, asc, count, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
-import { comments, commentTargetType } from "@superbuilder/drizzle";
+import { comments, commentTargetType } from "@superbuilder/features-db";
 
 // Comment target type values from schema enum
 const commentTargetTypes = commentTargetType.enumValues;

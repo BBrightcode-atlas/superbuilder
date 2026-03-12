@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, and, or, like, type SQL } from 'drizzle-orm';
-import { permissions } from '@superbuilder/drizzle';
-import type { Permission } from '@superbuilder/drizzle';
+import { permissions } from '@superbuilder/features-db';
+import type { Permission } from '@superbuilder/features-db';
 import type { GetPermissionsQuery } from '../dto';
 import { PermissionCategory } from '../types';
 

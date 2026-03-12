@@ -6,12 +6,12 @@ import {
   storyStudioGraphEdges,
   storyStudioDialogues,
   storyStudioCharacters,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import type {
   DrizzleDB,
   NewStoryStudioGraphNode,
   NewStoryStudioGraphEdge,
-} from "@superbuilder/drizzle";
+} from "@superbuilder/features-db";
 import { createLogger } from "../../../core/logger";
 
 const logger = createLogger("story-studio");

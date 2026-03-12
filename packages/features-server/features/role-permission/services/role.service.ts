@@ -1,8 +1,8 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectDrizzle, type DrizzleDB } from '@superbuilder/drizzle';
+import { InjectDrizzle, type DrizzleDB } from '@superbuilder/features-db';
 import { eq, and, or, like, sql, type SQL } from 'drizzle-orm';
-import { roles, rolePermissions, permissions, userRoles } from '@superbuilder/drizzle';
-import type { Role, Permission } from '@superbuilder/drizzle';
+import { roles, rolePermissions, permissions, userRoles } from '@superbuilder/features-db';
+import type { Role, Permission } from '@superbuilder/features-db';
 import type {
   CreateRoleInput,
   UpdateRoleInput,
