@@ -26,6 +26,8 @@ export const atlasProjects = sqliteTable(
 		vercelProjectId: text("vercel_project_id"),
 		vercelUrl: text("vercel_url"),
 		vercelDeploymentId: text("vercel_deployment_id"),
+		ownerEmail: text("owner_email"),
+		ownerPassword: text("owner_password"),
 		status: text("status").$type<"created" | "deployed" | "error">().notNull().default("created"),
 		createdAt: integer("created_at")
 			.notNull()

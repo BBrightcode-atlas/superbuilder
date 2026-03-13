@@ -138,6 +138,11 @@ function ComposerPage() {
     () => crypto.randomUUID() + crypto.randomUUID(),
   );
 
+  // Owner password — random per compose session
+  const [ownerPassword] = useState(
+    () => crypto.randomUUID().slice(0, 12),
+  );
+
   const updateStep = (index: number, status: PipelineStepStatus, message?: string) => {
     setPipeline((prev) => ({
       ...prev,
@@ -280,12 +285,9 @@ function ComposerPage() {
         write: (input) => terminalWrite.mutateAsync(input),
       });
 
-      updateStep(2, "done", "Agent가 features를 설치 중입니다. 완료 후 다음 단계로 진행하세요.");
+      updateStep(2, "running", "Agent가 features를 설치 중입니다. 완료되면 아래 버튼을 클릭하세요.");
       setAgentPhase("launched");
-
-      // Proceed to Neon setup
-      setNeonPhase("setup");
-      updateStep(3, "pending", "Neon 연결을 설정하세요");
+      // Neon 단계로 자동 전환하지 않음 — 사용자가 Agent 완료를 확인한 후 수동 진행
     } catch (error) {
       updateStep(
         2,
@@ -302,6 +304,12 @@ function ComposerPage() {
     updateStep(2, "skipped", "나중에 /install-features 명령어로 설치");
 
     // Proceed to Neon setup
+    setNeonPhase("setup");
+    updateStep(3, "pending", "Neon 연결을 설정하세요");
+  };
+
+  const handleAgentComplete = () => {
+    updateStep(2, "done", "Feature 설치 완료 확인됨");
     setNeonPhase("setup");
     updateStep(3, "pending", "Neon 연결을 설정하세요");
   };
@@ -354,8 +362,9 @@ function ComposerPage() {
               projectPath: pipeline.result.projectDir,
               email: session.user.email,
               name: session.user.name || session.user.email.split("@")[0],
-              password: "changeme123!", // default password — user should change after first login
+              password: ownerPassword,
               projectSlug: serviceName,
+              atlasProjectId: pipeline.result.projectId,
             });
             updateStep(3, "done", `Neon ${neonProject.name} — DB 마이그레이션 + Owner 시딩 완료`);
           } catch {
@@ -610,6 +619,20 @@ function ComposerPage() {
                 나중에 설치
               </Button>
             </div>
+          </div>
+        ) : null}
+
+        {agentPhase === "launched" && neonPhase === "idle" ? (
+          <div className="space-y-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4">
+            <p className="text-sm font-medium">
+              CLI Agent가 features를 설치 중입니다.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              터미널에서 설치가 완료되고 <code>git push</code>까지 성공한 것을 확인한 후 아래 버튼을 클릭하세요.
+            </p>
+            <Button onClick={handleAgentComplete}>
+              설치 완료 확인 → Neon 설정으로 진행
+            </Button>
           </div>
         ) : null}
 

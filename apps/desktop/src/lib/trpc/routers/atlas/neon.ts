@@ -269,6 +269,7 @@ export const createAtlasNeonRouter = () =>
 					name: z.string(),
 					password: z.string(),
 					projectSlug: z.string(),
+					atlasProjectId: z.string().optional(),
 				}),
 			)
 			.mutation(async ({ input }) => {
@@ -374,8 +375,21 @@ try {
 
 					await unlink(seedPath).catch(() => {});
 
-					const result = JSON.parse(stdout.trim());
-					return result as { success: boolean; userId: string; orgId: string };
+					const result = JSON.parse(stdout.trim()) as { success: boolean; userId: string; orgId: string };
+
+					// Save owner credentials to local DB
+					if (result.success && input.atlasProjectId) {
+						await localDb
+							.update(atlasProjects)
+							.set({
+								ownerEmail: input.email,
+								ownerPassword: input.password,
+								updatedAt: Date.now(),
+							})
+							.where(eq(atlasProjects.id, input.atlasProjectId));
+					}
+
+					return result;
 				} catch (error) {
 					await unlink(seedPath).catch(() => {});
 					const msg = error instanceof Error ? error.message : String(error);

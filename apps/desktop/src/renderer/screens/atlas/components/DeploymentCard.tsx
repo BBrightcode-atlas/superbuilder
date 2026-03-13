@@ -15,6 +15,8 @@ import {
 	LuGitBranch,
 	LuExternalLink,
 	LuTrash2,
+	LuEye,
+	LuEyeOff,
 } from "react-icons/lu";
 import type { SelectAtlasProject } from "@superset/local-db";
 
@@ -42,6 +44,7 @@ export function DeploymentCard({
 	const features = project.features as string[];
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [confirmText, setConfirmText] = useState("");
+	const [showPassword, setShowPassword] = useState(false);
 
 	const hasNeon = !!project.neonProjectId;
 	const hasVercel = !!project.vercelProjectId;
@@ -118,6 +121,34 @@ export function DeploymentCard({
 						<LuExternalLink className="size-3" />
 						Vercel: {project.vercelUrl}
 					</a>
+				) : null}
+
+				{project.ownerEmail ? (
+					<div className="space-y-1 rounded bg-muted/50 p-2">
+						<p className="text-xs text-muted-foreground">
+							Owner: {project.ownerEmail}
+						</p>
+						{project.ownerPassword ? (
+							<div className="flex items-center gap-1.5">
+								<span className="text-xs text-muted-foreground">Password:</span>
+								<code className="text-xs font-mono">
+									{showPassword ? project.ownerPassword : "••••••••••••"}
+								</code>
+								<Button
+									variant="ghost"
+									size="icon"
+									className="h-5 w-5"
+									onClick={() => setShowPassword(!showPassword)}
+								>
+									{showPassword ? (
+										<LuEyeOff className="size-3" />
+									) : (
+										<LuEye className="size-3" />
+									)}
+								</Button>
+							</div>
+						) : null}
+					</div>
 				) : null}
 
 				<div className="flex justify-end gap-1 pt-1">
