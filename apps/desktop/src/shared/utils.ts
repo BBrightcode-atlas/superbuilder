@@ -1,8 +1,4 @@
-import { author as _author, name } from "~/package.json";
-
-const author = _author.name ?? _author;
-const authorInKebabCase = author.replace(/\s+/g, "-");
-const appId = `com.${authorInKebabCase}.${name}`.toLowerCase();
+const appId = "com.bbrightcode.superbuilder.desktop";
 
 /**
  * @param {string} id

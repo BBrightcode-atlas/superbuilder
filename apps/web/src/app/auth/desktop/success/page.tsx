@@ -2,6 +2,7 @@ import { auth } from "@superset/auth/server";
 import { db } from "@superset/db/client";
 import { sessions } from "@superset/db/schema/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { DesktopRedirect } from "./components/DesktopRedirect";
 
@@ -16,7 +17,7 @@ export default async function DesktopSuccessPage({
 }) {
 	const {
 		desktop_state: state,
-		desktop_protocol = "superset",
+		desktop_protocol = "superbuilder",
 		desktop_local_callback: localCallbackBase,
 	} = await searchParams;
 
@@ -59,7 +60,7 @@ export default async function DesktopSuccessPage({
 
 	// Desktop and web need independent sessions with separate activeOrganizationId
 	const headersObj = await headers();
-	const userAgent = headersObj.get("user-agent") || "Superset Desktop App";
+	const userAgent = headersObj.get("user-agent") || "SuperBuilder Desktop App";
 	const ipAddress =
 		headersObj.get("x-forwarded-for")?.split(",")[0] ||
 		headersObj.get("x-real-ip") ||
@@ -83,6 +84,10 @@ export default async function DesktopSuccessPage({
 	const localCallbackUrl = localCallbackBase
 		? `${localCallbackBase}?token=${encodeURIComponent(token)}&expiresAt=${encodeURIComponent(expiresAt.toISOString())}&state=${encodeURIComponent(state)}`
 		: undefined;
+
+	if (localCallbackUrl) {
+		redirect(localCallbackUrl);
+	}
 
 	return (
 		<div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">

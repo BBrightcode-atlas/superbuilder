@@ -2,6 +2,10 @@ import { auth } from "@superset/auth/server";
 import { NextResponse } from "next/server";
 
 import { env } from "@/env";
+import {
+	getAuthSchemaReadiness,
+	isMissingRelationError,
+} from "@/lib/auth-schema";
 
 export async function GET(request: Request) {
 	const url = new URL(request.url);
@@ -16,6 +20,19 @@ export async function GET(request: Request) {
 
 	if (provider !== "google" && provider !== "github") {
 		return new Response("Invalid provider", { status: 400 });
+	}
+
+	const readiness = await getAuthSchemaReadiness();
+	if (!readiness.ready) {
+		return NextResponse.json(
+			{
+				error: "better_auth_schema_missing",
+				message:
+					"Better Auth schema is incomplete for this database. Apply the existing auth tables before starting desktop sign-in.",
+				missingTables: readiness.missingTables,
+			},
+			{ status: 503 },
+		);
 	}
 
 	const successUrl = new URL(`${env.NEXT_PUBLIC_WEB_URL}/auth/desktop/success`);
@@ -41,13 +58,32 @@ export async function GET(request: Request) {
 		}
 	}
 
-	const result = await auth.api.signInSocial({
-		body: {
-			provider,
-			callbackURL: successUrl.toString(),
-		},
-		asResponse: true,
-	});
+	let result: Response;
+
+	try {
+		result = await auth.api.signInSocial({
+			body: {
+				provider,
+				callbackURL: successUrl.toString(),
+			},
+			asResponse: true,
+		});
+	} catch (error) {
+		if (isMissingRelationError(error)) {
+			const latestReadiness = await getAuthSchemaReadiness();
+			return NextResponse.json(
+				{
+					error: "better_auth_schema_missing",
+					message:
+						"Better Auth schema is incomplete for this database. Apply the existing auth tables before starting desktop sign-in.",
+					missingTables: latestReadiness.missingTables,
+				},
+				{ status: 503 },
+			);
+		}
+
+		throw error;
+	}
 
 	const cookies = result.headers.getSetCookie();
 	const body = (await result.json()) as { url?: string; redirect?: boolean };

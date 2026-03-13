@@ -19,6 +19,7 @@ import {
 
 // override: true ensures .env values take precedence over inherited env vars
 config({ path: resolve(__dirname, "../../.env"), override: true, quiet: true });
+config({ path: resolve(__dirname, "../../.env.local"), override: true, quiet: true });
 
 const DEV_SERVER_PORT = Number(process.env.DESKTOP_VITE_PORT);
 
@@ -94,6 +95,17 @@ export default defineConfig({
 			"process.env.NEXT_PUBLIC_OUTLIT_KEY": defineEnv(
 				process.env.NEXT_PUBLIC_OUTLIT_KEY,
 			),
+			// Atlas integration tokens
+			"process.env.ATLAS_PATH": defineEnv(process.env.ATLAS_PATH),
+			"process.env.FEATURES_SERVER_URL": defineEnv(
+				process.env.FEATURES_SERVER_URL,
+				"http://localhost:3002",
+			),
+			"process.env.SUPABASE_ACCESS_TOKEN": defineEnv(
+				process.env.SUPABASE_ACCESS_TOKEN,
+			),
+			"process.env.VERCEL_TOKEN": defineEnv(process.env.VERCEL_TOKEN),
+			"process.env.NEON_API_KEY": defineEnv(process.env.NEON_API_KEY),
 		},
 
 		build: {
@@ -158,6 +170,22 @@ export default defineConfig({
 	},
 
 	renderer: {
+		resolve: {
+			alias: {
+				react: resolve(__dirname, "node_modules/react"),
+				"react-dom": resolve(__dirname, "node_modules/react-dom"),
+				"react/jsx-runtime": resolve(
+					__dirname,
+					"node_modules/react/jsx-runtime.js",
+				),
+				"react/jsx-dev-runtime": resolve(
+					__dirname,
+					"node_modules/react/jsx-dev-runtime.js",
+				),
+			},
+			dedupe: ["react", "react-dom"],
+		},
+
 		define: {
 			"process.env.NODE_ENV": defineEnv(process.env.NODE_ENV),
 			"process.env.SKIP_ENV_VALIDATION": defineEnv(

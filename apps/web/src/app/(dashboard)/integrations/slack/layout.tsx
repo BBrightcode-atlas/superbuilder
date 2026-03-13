@@ -6,12 +6,6 @@ import { PostHog } from "posthog-node";
 
 import { env } from "@/env";
 
-const posthog = new PostHog(env.NEXT_PUBLIC_POSTHOG_KEY, {
-	host: env.NEXT_PUBLIC_POSTHOG_HOST,
-	flushAt: 1,
-	flushInterval: 0,
-});
-
 export default async function SlackIntegrationLayout({
 	children,
 }: {
@@ -25,10 +19,14 @@ export default async function SlackIntegrationLayout({
 		notFound();
 	}
 
-	const hasAccess = await posthog.getFeatureFlag(
-		FEATURE_FLAGS.SLACK_INTEGRATION_ACCESS,
-		session.user.id,
-	);
+	const hasAccess =
+		env.NEXT_PUBLIC_POSTHOG_KEY && env.NEXT_PUBLIC_POSTHOG_HOST
+			? await new PostHog(env.NEXT_PUBLIC_POSTHOG_KEY, {
+					host: env.NEXT_PUBLIC_POSTHOG_HOST,
+					flushAt: 1,
+					flushInterval: 0,
+				}).getFeatureFlag(FEATURE_FLAGS.SLACK_INTEGRATION_ACCESS, session.user.id)
+			: false;
 
 	if (!hasAccess) {
 		notFound();

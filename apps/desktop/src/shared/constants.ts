@@ -1,4 +1,3 @@
-import { PROTOCOL_SCHEMES } from "@superset/shared/constants";
 import { getWorkspaceName } from "./env.shared";
 
 export const PLATFORM = {
@@ -7,14 +6,19 @@ export const PLATFORM = {
 	IS_LINUX: process.platform === "linux",
 };
 
+export const APP_DISPLAY_NAME = "SuperBuilder";
+
 const workspace = getWorkspaceName();
 export const SUPERSET_DIR_NAME = workspace
-	? `.superset-${workspace}`
-	: ".superset";
+	? `.superbuilder-${workspace}`
+	: ".superbuilder";
 export const PROTOCOL_SCHEME = workspace
-	? `superset-${workspace}`
-	: PROTOCOL_SCHEMES.PROD;
-// Project-level directory name (always .superset, not conditional)
+	? `superbuilder-${workspace}`
+	: "superbuilder";
+export const APP_SESSION_PARTITION = workspace
+	? `persist:superbuilder-${workspace}`
+	: "persist:superbuilder";
+// Project-level directory name is left as .superset for repo config compatibility.
 export const PROJECT_SUPERSET_DIR_NAME = ".superset";
 export const WORKTREES_DIR_NAME = "worktrees";
 export const PROJECTS_DIR_NAME = "projects";

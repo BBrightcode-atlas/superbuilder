@@ -14,6 +14,15 @@ import {
 	githubRepositories,
 } from "./github";
 import {
+	featureRegistrations,
+	featureRequestApprovals,
+	featureRequestArtifacts,
+	featureRequestMessages,
+	featureRequestRuns,
+	featureRequests,
+	featureRequestWorktrees,
+} from "./feature-studio";
+import {
 	agentCommands,
 	chatSessions,
 	devicePresence,
@@ -49,6 +58,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 	v2Workspaces: many(v2Workspaces),
 	agentCommands: many(agentCommands),
 	chatSessions: many(chatSessions),
+	createdFeatureRequests: many(featureRequests),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -87,6 +97,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 	devicePresence: many(devicePresence),
 	agentCommands: many(agentCommands),
 	chatSessions: many(chatSessions),
+	featureRequests: many(featureRequests),
 }));
 
 export const membersRelations = relations(members, ({ one }) => ({
@@ -415,3 +426,102 @@ export const sessionHostsRelations = relations(sessionHosts, ({ one }) => ({
 		references: [organizations.id],
 	}),
 }));
+
+// Feature Studio relations
+export const featureRequestsRelations = relations(
+	featureRequests,
+	({ one, many }) => ({
+		organization: one(organizations, {
+			fields: [featureRequests.organizationId],
+			references: [organizations.id],
+		}),
+		createdBy: one(users, {
+			fields: [featureRequests.createdById],
+			references: [users.id],
+		}),
+		messages: many(featureRequestMessages),
+		artifacts: many(featureRequestArtifacts),
+		approvals: many(featureRequestApprovals),
+		runs: many(featureRequestRuns),
+		worktrees: many(featureRequestWorktrees),
+		registrations: many(featureRegistrations),
+	}),
+);
+
+export const featureRequestMessagesRelations = relations(
+	featureRequestMessages,
+	({ one }) => ({
+		featureRequest: one(featureRequests, {
+			fields: [featureRequestMessages.featureRequestId],
+			references: [featureRequests.id],
+		}),
+	}),
+);
+
+export const featureRequestArtifactsRelations = relations(
+	featureRequestArtifacts,
+	({ one }) => ({
+		featureRequest: one(featureRequests, {
+			fields: [featureRequestArtifacts.featureRequestId],
+			references: [featureRequests.id],
+		}),
+		createdBy: one(users, {
+			fields: [featureRequestArtifacts.createdById],
+			references: [users.id],
+		}),
+	}),
+);
+
+export const featureRequestApprovalsRelations = relations(
+	featureRequestApprovals,
+	({ one }) => ({
+		featureRequest: one(featureRequests, {
+			fields: [featureRequestApprovals.featureRequestId],
+			references: [featureRequests.id],
+		}),
+		requestedFrom: one(users, {
+			fields: [featureRequestApprovals.requestedFromId],
+			references: [users.id],
+			relationName: "requestedFrom",
+		}),
+		decidedBy: one(users, {
+			fields: [featureRequestApprovals.decidedById],
+			references: [users.id],
+			relationName: "decidedBy",
+		}),
+	}),
+);
+
+export const featureRequestRunsRelations = relations(
+	featureRequestRuns,
+	({ one }) => ({
+		featureRequest: one(featureRequests, {
+			fields: [featureRequestRuns.featureRequestId],
+			references: [featureRequests.id],
+		}),
+	}),
+);
+
+export const featureRequestWorktreesRelations = relations(
+	featureRequestWorktrees,
+	({ one }) => ({
+		featureRequest: one(featureRequests, {
+			fields: [featureRequestWorktrees.featureRequestId],
+			references: [featureRequests.id],
+		}),
+	}),
+);
+
+export const featureRegistrationsRelations = relations(
+	featureRegistrations,
+	({ one }) => ({
+		featureRequest: one(featureRequests, {
+			fields: [featureRegistrations.featureRequestId],
+			references: [featureRequests.id],
+		}),
+		registeredBy: one(users, {
+			fields: [featureRegistrations.registeredById],
+			references: [users.id],
+		}),
+	}),
+);

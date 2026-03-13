@@ -373,3 +373,5 @@ export const browserHistory = sqliteTable(
 
 export type InsertBrowserHistory = typeof browserHistory.$inferInsert;
 export type SelectBrowserHistory = typeof browserHistory.$inferSelect;
+
+export * from "./atlas";
