@@ -81,6 +81,16 @@ function ComposerPage() {
   >("idle");
   const [agentLaunching, setAgentLaunching] = useState(false);
 
+  // BETTER_AUTH_SECRET — generated once per compose session
+  const [betterAuthSecret] = useState(
+    () => crypto.randomUUID() + crypto.randomUUID(),
+  );
+
+  // Owner password — random per compose session
+  const [ownerPassword] = useState(
+    () => crypto.randomUUID().slice(0, 12),
+  );
+
   const { data: registryData, isLoading: registryLoading } =
     electronTrpc.atlas.registry.getRegistry.useQuery();
 
@@ -132,16 +142,6 @@ function ComposerPage() {
   const serviceName = slug
     ? `sb-gen-${slug}-${shortHash}`
     : `sb-gen-${shortHash}`;
-
-  // BETTER_AUTH_SECRET — generated once per compose session
-  const [betterAuthSecret] = useState(
-    () => crypto.randomUUID() + crypto.randomUUID(),
-  );
-
-  // Owner password — random per compose session
-  const [ownerPassword] = useState(
-    () => crypto.randomUUID().slice(0, 12),
-  );
 
   const updateStep = (index: number, status: PipelineStepStatus, message?: string) => {
     setPipeline((prev) => ({
