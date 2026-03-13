@@ -23,31 +23,18 @@ export function OAuthButtons({ disabled }: OAuthButtonsProps) {
 
   const { execute: signInWithGoogle } = useSignInWithOAuth({
     provider: "google",
-    options: {
-      redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-      queryParams: { access_type: "offline", prompt: "consent" },
-    },
-  });
-
-  const { execute: signInWithKakao } = useSignInWithOAuth({
-    provider: "kakao",
-    options: {
-      redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-    },
   });
 
   if (providers.length === 0) return null;
 
   function handleOAuthClick(provider: OAuthProvider) {
-    const config = OAUTH_PROVIDER_CONFIG[provider];
-
-    if (config.supabaseNative) {
-      if (provider === "google") signInWithGoogle();
-      if (provider === "kakao") signInWithKakao();
+    if (provider === "google") {
+      signInWithGoogle();
     } else {
+      // Better Auth social sign-in for other providers
       const apiUrl = import.meta.env.VITE_API_URL;
-      const redirectTo = encodeURIComponent(window.location.origin);
-      window.location.href = `${apiUrl}/api/auth/${provider}/authorize?redirect_to=${redirectTo}`;
+      const callbackURL = encodeURIComponent(window.location.origin);
+      window.location.href = `${apiUrl}/api/auth/sign-in/social?provider=${provider}&callbackURL=${callbackURL}`;
     }
   }
 

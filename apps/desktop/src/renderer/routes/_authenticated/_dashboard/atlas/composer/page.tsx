@@ -16,6 +16,7 @@ import {
   type PipelineStepStatus,
 } from "renderer/screens/atlas/components/PipelineProgress";
 import { useAtlasComposerStore } from "renderer/stores/atlas-state";
+import { authClient } from "renderer/lib/auth-client";
 import { useState } from "react";
 
 export const Route = createFileRoute(
@@ -38,6 +39,7 @@ interface PipelineState {
     gitInitialized: boolean;
     gitHubOwner?: string;
     gitHubRepo?: string;
+    neonConnectionUri?: string;
   } | null;
 }
 
@@ -77,6 +79,7 @@ function ComposerPage() {
   const [vercelPhase, setVercelPhase] = useState<
     "idle" | "setup" | "creating" | "done" | "skipped"
   >("idle");
+  const [agentLaunching, setAgentLaunching] = useState(false);
 
   const { data: registryData, isLoading: registryLoading } =
     electronTrpc.atlas.registry.getRegistry.useQuery();
@@ -97,8 +100,18 @@ function ComposerPage() {
     electronTrpc.atlas.neon.createProject.useMutation();
   const neonWriteEnvMutation =
     electronTrpc.atlas.neon.writeEnvFile.useMutation();
+  const neonRunMigrationMutation =
+    electronTrpc.atlas.neon.runMigration.useMutation();
   const vercelCreateMutation =
     electronTrpc.atlas.vercel.createProject.useMutation();
+  const vercelSetEnvVarsMutation =
+    electronTrpc.atlas.vercel.setEnvVars.useMutation();
+  const vercelConnectGitMutation =
+    electronTrpc.atlas.vercel.connectGitRepo.useMutation();
+  const neonSeedOwnerMutation =
+    electronTrpc.atlas.neon.seedOwner.useMutation();
+
+  const { data: session } = authClient.useSession();
 
   if (registryLoading || !registryData) {
     return (
@@ -119,6 +132,11 @@ function ComposerPage() {
   const serviceName = slug
     ? `sb-gen-${slug}-${shortHash}`
     : `sb-gen-${shortHash}`;
+
+  // BETTER_AUTH_SECRET — generated once per compose session
+  const [betterAuthSecret] = useState(
+    () => crypto.randomUUID() + crypto.randomUUID(),
+  );
 
   const updateStep = (index: number, status: PipelineStepStatus, message?: string) => {
     setPipeline((prev) => ({
@@ -210,8 +228,6 @@ function ComposerPage() {
     }
   };
 
-  const [agentLaunching, setAgentLaunching] = useState(false);
-
   const handleLaunchAgent = async () => {
     if (!pipeline.result) return;
 
@@ -237,10 +253,8 @@ function ComposerPage() {
         agentType: "claude",
         source: "open-in-workspace",
         terminal: {
-          command: "claude --dangerously-skip-permissions",
+          command: `claude -p --dangerously-skip-permissions --model sonnet "Read .claude/commands/install-features.md and execute every step. IMPORTANT: Do NOT use subagents or the Agent tool. Do all work directly with Bash, Read, Write, Edit, Grep, Glob tools. For each feature: 1) cp -r source dirs, 2) fix imports with sed, 3) inject into marker files, 4) git add -A && git commit. After ALL features: bun install, fix errors, git push origin main. Be concise and fast."`,
           name: "install-features",
-          taskPromptContent: "/install-features",
-          taskPromptFileName: "install-features.md",
           autoExecute: true,
         },
       };
@@ -259,8 +273,7 @@ function ComposerPage() {
         workspaceId: wsResult.workspace.id,
       };
 
-      await launchAgentSession({
-        request: finalRequest,
+      await launchAgentSession(finalRequest, {
         source: "open-in-workspace",
         createOrAttach: (input) =>
           terminalCreateOrAttach.mutateAsync(input),
@@ -316,8 +329,44 @@ function ComposerPage() {
         projectPath: pipeline.result.projectDir,
         connectionUri: neonProject.connectionUri,
         neonProjectId: neonProject.id,
+        betterAuthSecret,
       });
-      updateStep(3, "done", `Neon 프로젝트 ${neonProject.name} 생성 완료`);
+
+      // Store connectionUri for Vercel env vars
+      setPipeline((prev) => ({
+        ...prev,
+        result: prev.result
+          ? { ...prev.result, neonConnectionUri: neonProject.connectionUri }
+          : prev.result,
+      }));
+
+      updateStep(3, "running", "DB 마이그레이션 실행 중 (drizzle-kit push)...");
+      const migrationResult = await neonRunMigrationMutation.mutateAsync({
+        projectPath: pipeline.result.projectDir,
+      });
+
+      if (migrationResult.success) {
+        // Seed owner user after successful migration
+        if (session?.user?.email) {
+          updateStep(3, "running", "Owner 사용자 시딩 중...");
+          try {
+            await neonSeedOwnerMutation.mutateAsync({
+              projectPath: pipeline.result.projectDir,
+              email: session.user.email,
+              name: session.user.name || session.user.email.split("@")[0],
+              password: "changeme123!", // default password — user should change after first login
+              projectSlug: serviceName,
+            });
+            updateStep(3, "done", `Neon ${neonProject.name} — DB 마이그레이션 + Owner 시딩 완료`);
+          } catch {
+            updateStep(3, "done", `Neon ${neonProject.name} — DB 마이그레이션 완료 (Owner 시딩 실패, 수동 가입 필요)`);
+          }
+        } else {
+          updateStep(3, "done", `Neon ${neonProject.name} 생성 + DB 마이그레이션 완료`);
+        }
+      } else {
+        updateStep(3, "done", `Neon ${neonProject.name} 생성 완료 (마이그레이션 경고: ${migrationResult.stderr.slice(0, 100)})`);
+      }
 
       setNeonPhase("done");
       setVercelPhase("setup");
@@ -348,25 +397,137 @@ function ComposerPage() {
     if (!pipeline.result) return;
 
     setVercelPhase("creating");
-    updateStep(4, "running", "Vercel 프로젝트 생성 중...");
+    updateStep(4, "running", "Vercel API 프로젝트 생성 중...");
+
+    type EnvVar = { key: string; value: string; target: Array<"production" | "preview" | "development">; type: "encrypted" | "plain" | "sensitive" };
 
     try {
-      const vcProject = await vercelCreateMutation.mutateAsync({
+      // ── Step 1: Create API project (atlas-server) ──
+      const apiProject = await vercelCreateMutation.mutateAsync({
+        name: `${serviceName}-api`,
+        teamId,
+        framework: null,
+        atlasProjectId: pipeline.result.projectId,
+        rootDirectory: "apps/atlas-server",
+        skipLocalDbUpdate: true,
+      });
+
+      // ── Step 2: Set API env vars ──
+      updateStep(4, "running", "API 환경변수 설정 중...");
+      const apiEnvVars: EnvVar[] = [];
+
+      if (pipeline.result.neonConnectionUri) {
+        apiEnvVars.push({
+          key: "DATABASE_URL",
+          value: pipeline.result.neonConnectionUri,
+          target: ["production", "preview", "development"],
+          type: "encrypted",
+        });
+      }
+
+      apiEnvVars.push({
+        key: "BETTER_AUTH_SECRET",
+        value: betterAuthSecret,
+        target: ["production", "preview", "development"],
+        type: "encrypted",
+      });
+
+      apiEnvVars.push({
+        key: "BETTER_AUTH_URL",
+        value: apiProject.url,
+        target: ["production"],
+        type: "plain",
+      });
+
+      apiEnvVars.push({
+        key: "API_URL",
+        value: apiProject.url,
+        target: ["production", "preview"],
+        type: "plain",
+      });
+
+      await vercelSetEnvVarsMutation.mutateAsync({
+        projectId: apiProject.id,
+        teamId,
+        envVars: apiEnvVars,
+      });
+
+      // ── Step 3: Create Frontend project (app) ──
+      updateStep(4, "running", "Vercel 프론트엔드 프로젝트 생성 중...");
+      const appProject = await vercelCreateMutation.mutateAsync({
         name: serviceName,
         teamId,
         framework: "vite",
         atlasProjectId: pipeline.result.projectId,
-        gitOwner: pipeline.result.gitHubOwner,
-        gitRepo: pipeline.result.gitHubRepo,
+        rootDirectory: "apps/app",
       });
 
-      const hasGit = pipeline.result.gitHubOwner && pipeline.result.gitHubRepo;
+      // ── Step 4: Set Frontend env vars ──
+      updateStep(4, "running", "프론트엔드 환경변수 설정 중...");
+      const appEnvVars: EnvVar[] = [
+        {
+          key: "VITE_API_URL",
+          value: apiProject.url,
+          target: ["production", "preview", "development"],
+          type: "plain",
+        },
+      ];
+
+      await vercelSetEnvVarsMutation.mutateAsync({
+        projectId: appProject.id,
+        teamId,
+        envVars: appEnvVars,
+      });
+
+      // ── Step 5: Update API CORS to allow frontend URL ──
+      await vercelSetEnvVarsMutation.mutateAsync({
+        projectId: apiProject.id,
+        teamId,
+        envVars: [{
+          key: "CORS_ORIGINS",
+          value: `${appProject.url},${apiProject.url}`,
+          target: ["production", "preview"],
+          type: "plain",
+        }],
+      });
+
+      // ── Step 6: Connect git to BOTH projects ──
+      let gitLinked = false;
+      let finalUrl = appProject.url;
+
+      if (pipeline.result.gitHubOwner && pipeline.result.gitHubRepo) {
+        updateStep(4, "running", "GitHub 저장소 연결 중 (배포 시작)...");
+        try {
+          // Connect git to API project
+          await vercelConnectGitMutation.mutateAsync({
+            projectId: apiProject.id,
+            owner: pipeline.result.gitHubOwner,
+            repo: pipeline.result.gitHubRepo,
+            teamId,
+          });
+
+          // Connect git to Frontend project
+          const connectResult = await vercelConnectGitMutation.mutateAsync({
+            projectId: appProject.id,
+            owner: pipeline.result.gitHubOwner,
+            repo: pipeline.result.gitHubRepo,
+            teamId,
+            atlasProjectId: pipeline.result.projectId,
+          });
+
+          gitLinked = true;
+          finalUrl = connectResult.url || finalUrl;
+        } catch {
+          // connectGitRepo 실패 — GitHub Integration 미설치 가능성
+        }
+      }
+
       updateStep(
         4,
         "done",
-        hasGit
-          ? `${vcProject.url} — GitHub 연동 완료, 자동 배포 시작`
-          : `${vcProject.url} 프로젝트 생성 완료 (Git 연동 후 자동 배포)`,
+        gitLinked
+          ? `App: ${finalUrl} | API: ${apiProject.url} — 배포 시작`
+          : `App: ${appProject.url} | API: ${apiProject.url} (GitHub 연동 필요)`,
       );
       setVercelPhase("done");
     } catch (error) {

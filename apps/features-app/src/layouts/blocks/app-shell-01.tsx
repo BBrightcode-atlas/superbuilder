@@ -4,7 +4,8 @@
  * packages/ui의 공유 SidebarLayout 사용
  */
 import { useCallback } from "react";
-import { AuthGuard, authenticatedAtom, getSupabaseAtom, profileAtom } from "@superbuilder/features-client/core/auth";
+import { AuthGuard, authenticatedAtom, profileAtom } from "@superbuilder/features-client/core/auth";
+import { authClient } from "@/lib/auth-client";
 import LogoSvg from "@superbuilder/feature-ui/assets/svg/logo";
 import {
   Sidebar,
@@ -71,7 +72,6 @@ export function AppShell01() {
 
 function AppSidebar() {
   const profile = useAtomValue(profileAtom);
-  const supabase = useAtomValue(getSupabaseAtom);
   const navigate = useNavigate();
   const { setOpen: setSettingsOpen } = useSettingsModal();
   const { reopen: reopenOnboarding } = useOnboarding();
@@ -79,7 +79,7 @@ function AppSidebar() {
   const { data: subscription } = useQuery(trpc.payment.getMySubscription.queryOptions());
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authClient.signOut();
     navigate({ to: "/sign-in", replace: true });
   };
 

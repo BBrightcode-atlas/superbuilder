@@ -10,9 +10,9 @@ import { useCallback, useState } from "react";
 import {
   AuthGuard,
   authenticatedAtom,
-  getSupabaseAtom,
   profileAtom,
 } from "@superbuilder/features-client/core/auth";
+import { authClient } from "@/lib/auth-client";
 import LogoSvg from "@superbuilder/feature-ui/assets/svg/logo";
 import { cn } from "@superbuilder/feature-ui/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@superbuilder/feature-ui/shadcn/avatar";
@@ -89,12 +89,11 @@ function AgentHeader({
   onTabChange: (tab: TabId) => void;
 }) {
   const profile = useAtomValue(profileAtom);
-  const supabase = useAtomValue(getSupabaseAtom);
   const navigate = useNavigate();
   const { setOpen: setSettingsOpen } = useSettingsModal();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authClient.signOut();
     navigate({ to: "/sign-in", replace: true });
   };
 

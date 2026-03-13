@@ -85,7 +85,7 @@ function generateCommonSteps(sourceRepo: string): string {
 
 #### Step 4: Schema 복사
 \`\`\`
-{sourceRepo}/packages/drizzle/src/schema/features/{name}/
+{sourceRepo}/packages/features-db/src/schema/features/{name}/
 → ./packages/drizzle/src/schema/features/{name}/
 \`\`\`
 
@@ -117,7 +117,7 @@ import { {ModuleName} } from "@repo/features/{name}";
 // [/ATLAS:MODULES]
 \`\`\`
 
-**tRPC Router** (\`apps/atlas-server/src/trpc/router.ts\`):
+**tRPC Router (런타임)** (\`apps/atlas-server/src/trpc/router.ts\`):
 \`\`\`typescript
 // [ATLAS:IMPORTS]
 import { {routerName} } from "@repo/features/{name}";
@@ -125,6 +125,17 @@ import { {routerName} } from "@repo/features/{name}";
 
 // [ATLAS:ROUTERS]
 {name}: {routerName},
+// [/ATLAS:ROUTERS]
+\`\`\`
+
+**tRPC Router (타입)** (\`packages/features/app-router.ts\`):
+\`\`\`typescript
+// [ATLAS:IMPORTS]
+import { {routerName} } from "./{name}";
+// [/ATLAS:IMPORTS]
+
+// [ATLAS:ROUTERS]
+{routerKey}: {routerName},
 // [/ATLAS:ROUTERS]
 \`\`\`
 
@@ -145,6 +156,22 @@ import { create{Name}Routes } from "@features/{name}";
 "{table_name}",
 // [/ATLAS:TABLES]
 \`\`\`
+
+**Schema Registry** (\`packages/drizzle/src/schema-registry.ts\`):
+\`\`\`typescript
+// [ATLAS:SCHEMA_IMPORTS]
+import * as {camelName} from "./schema/features/{name}";
+// [/ATLAS:SCHEMA_IMPORTS]
+
+// 아래 spread에 추가:
+// [ATLAS:SCHEMA_SPREAD]
+...{camelName},
+// [/ATLAS:SCHEMA_SPREAD]
+\`\`\`
+
+**Sidebar Layout** (\`apps/app/src/layouts/blocks/app-shell-01.tsx\`):
+설치한 feature에 대한 사이드바 메뉴 항목을 추가하세요.
+각 feature의 라우트 경로와 아이콘을 사용합니다.
 
 #### Step 7: superbuilder.json 업데이트
 installed 섹션에 추가:
@@ -187,12 +214,21 @@ function generateFeatureDetail(name: string, entry: FeatureEntry): string {
 }
 
 function generateCompletionSteps(): string {
-	return `## 완료 후
+	return `## 각 Feature 설치 후 (매번 반복)
+
+각 feature를 설치한 후 바로 commit하세요:
+\`\`\`bash
+git add -A && git commit -m "feat: install {name} feature"
+\`\`\`
+
+## 모든 Feature 설치 완료 후
 
 1. \`bun install\` 실행
-2. \`bun run typecheck\` 로 빌드 검증
-3. 에러 있으면 수정
-4. \`git add -A && git commit -m "feat: install features"\`
+2. 타입 에러 수정 (있으면)
+3. \`git add -A && git commit -m "fix: resolve type errors"\` (수정한 경우)
+4. **\`git push origin main\`** — GitHub에 Push (Vercel 자동 배포 트리거)
+
+**중요**: 반드시 \`git push origin main\`까지 완료해야 합니다. Vercel이 GitHub에서 코드를 가져와 배포합니다.
 `;
 }
 

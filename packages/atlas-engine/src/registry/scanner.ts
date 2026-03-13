@@ -65,9 +65,9 @@ const CORE_FEATURES = ["profile", "role-permission"];
  * `naver-auth` 등 OAuth provider는 별도 feature로 registry에 등록한다.
  */
 
-/** Feature Atlas packages/features/ 하위 디렉토리 스캔 */
+/** superbuilder packages/features-server/features/ 하위 디렉토리 스캔 */
 export function scanFeatureDirectory(atlasPath: string): string[] {
-  const featuresDir = join(atlasPath, "packages/features");
+  const featuresDir = join(atlasPath, "packages/features-server/features");
   if (!existsSync(featuresDir)) return [];
 
   return readdirSync(featuresDir, { withFileTypes: true })
@@ -144,7 +144,7 @@ export function buildRegistryFromScan(atlasPath: string): FeatureRegistry {
       join(atlasPath, "packages/features-db/src/schema/features", schemaDirName)
     );
     const hasClientApp = existsSync(
-      join(atlasPath, "apps/app/src/features", name)
+      join(atlasPath, "apps/features-app/src/features", name)
     );
     const hasClientAdmin = existsSync(
       join(atlasPath, "apps/feature-admin/src/features", name)
@@ -165,17 +165,17 @@ export function buildRegistryFromScan(atlasPath: string): FeatureRegistry {
 
       router: routerMapping,
       server: {
-        module: `packages/features/${name}/${name}.module.ts`,
-        router: `packages/features/${name}/${name}.router.ts`,
-        controller: `packages/features/${name}/controller/`,
+        module: `packages/features-server/features/${name}/${name}.module.ts`,
+        router: `packages/features-server/features/${name}/${name}.router.ts`,
+        controller: `packages/features-server/features/${name}/controller/`,
       },
       client: {
-        ...(hasClientApp ? { app: `apps/app/src/features/${name}/` } : {}),
+        ...(hasClientApp ? { app: `apps/features-app/src/features/${name}/` } : {}),
         ...(hasClientAdmin ? { admin: `apps/feature-admin/src/features/${name}/` } : {}),
       },
       schema: {
         tables: hasSchema ? scanSchemaTables(atlasPath, name) : [],
-        path: hasSchema ? `packages/features-db/src/schema/features/${schemaDirName}/` : "",
+        path: hasSchema ? `packages/drizzle/src/schema/features/${schemaDirName}/` : "",
       },
 
       ...(type === "widget" && hasWidget

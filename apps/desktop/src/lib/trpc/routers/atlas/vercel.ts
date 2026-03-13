@@ -99,10 +99,12 @@ export const createAtlasVercelRouter = () =>
 				z.object({
 					name: z.string().min(1),
 					teamId: z.string().optional(),
-					framework: z.string().default("vite"),
+					framework: z.string().nullable().default("vite"),
 					atlasProjectId: z.string().min(1),
 					gitOwner: z.string().optional(),
 					gitRepo: z.string().optional(),
+					rootDirectory: z.string().optional(),
+					skipLocalDbUpdate: z.boolean().optional(),
 				}),
 			)
 			.mutation(async ({ input }) => {
@@ -115,6 +117,10 @@ export const createAtlasVercelRouter = () =>
 					framework: input.framework,
 				};
 
+				if (input.rootDirectory) {
+					body.rootDirectory = input.rootDirectory;
+				}
+
 				// Git 연동: 생성 시 gitRepository 포함하면 자동 연결
 				if (input.gitOwner && input.gitRepo) {
 					body.gitRepository = {
@@ -123,35 +129,139 @@ export const createAtlasVercelRouter = () =>
 					};
 				}
 
-				const project = await vercelFetch(
-					`/v10/projects${queryParams}`,
-					{
-						method: "POST",
-						body: JSON.stringify(body),
-					},
-				);
+				let project: Record<string, unknown>;
+				let gitLinked = false;
+
+				try {
+					project = await vercelFetch(
+						`/v10/projects${queryParams}`,
+						{
+							method: "POST",
+							body: JSON.stringify(body),
+						},
+					);
+					gitLinked = !!(input.gitOwner && input.gitRepo);
+				} catch (err) {
+					// Fallback: GitHub integration이 없으면 git 연동 없이 프로젝트만 생성
+					const errMsg = err instanceof Error ? err.message : "";
+					if (
+						input.gitOwner &&
+						input.gitRepo &&
+						errMsg.includes("install the GitHub integration")
+					) {
+						const fallbackBody: Record<string, unknown> = {
+							name: input.name,
+							framework: input.framework,
+						};
+						if (input.rootDirectory) {
+							fallbackBody.rootDirectory = input.rootDirectory;
+						}
+						project = await vercelFetch(
+							`/v10/projects${queryParams}`,
+							{
+								method: "POST",
+								body: JSON.stringify(fallbackBody),
+							},
+						);
+						gitLinked = false;
+					} else {
+						throw err;
+					}
+				}
 
 				// 실제 alias 기반 URL 사용 (Vercel이 이름 충돌 시 suffix 추가)
-				const aliases: string[] = project.alias ?? [];
+				const aliases = (project.alias ?? []) as string[];
 				const actualUrl = aliases.length > 0
 					? `https://${aliases[0]}`
-					: `https://${project.name}.vercel.app`;
+					: `https://${(project as { name: string }).name}.vercel.app`;
 
-				// Update atlas_projects with Vercel info
-				await localDb
-					.update(atlasProjects)
-					.set({
-						vercelProjectId: project.id,
-						vercelUrl: actualUrl,
-						updatedAt: Date.now(),
-					})
-					.where(eq(atlasProjects.id, input.atlasProjectId));
+				// Update atlas_projects with Vercel info (skip for secondary projects like API)
+				if (!input.skipLocalDbUpdate) {
+					await localDb
+						.update(atlasProjects)
+						.set({
+							vercelProjectId: project.id as string,
+							vercelUrl: actualUrl,
+							updatedAt: Date.now(),
+						})
+						.where(eq(atlasProjects.id, input.atlasProjectId));
+				}
 
 				return {
-					id: project.id,
-					name: project.name,
+					id: project.id as string,
+					name: (project as { name: string }).name,
 					url: actualUrl,
+					gitLinked,
 				};
+			}),
+
+		setEnvVars: publicProcedure
+			.input(
+				z.object({
+					projectId: z.string().min(1),
+					teamId: z.string().optional(),
+					envVars: z.array(
+						z.object({
+							key: z.string(),
+							value: z.string(),
+							target: z
+								.array(z.enum(["production", "preview", "development"]))
+								.default(["production", "preview", "development"]),
+							type: z.enum(["encrypted", "plain", "sensitive"]).default("encrypted"),
+						}),
+					),
+				}),
+			)
+			.mutation(async ({ input }) => {
+				const queryParams = input.teamId
+					? `?teamId=${input.teamId}`
+					: "";
+
+				// Vercel API: POST /v10/projects/{projectId}/env
+				const results = [];
+				for (const envVar of input.envVars) {
+					try {
+						await vercelFetch(
+							`/v10/projects/${input.projectId}/env${queryParams}`,
+							{
+								method: "POST",
+								body: JSON.stringify({
+									key: envVar.key,
+									value: envVar.value,
+									target: envVar.target,
+									type: envVar.type,
+								}),
+							},
+						);
+						results.push({ key: envVar.key, success: true });
+					} catch (err) {
+						const errMsg = err instanceof Error ? err.message : String(err);
+						// If already exists, try to update
+						if (errMsg.includes("already exists")) {
+							try {
+								await vercelFetch(
+									`/v9/projects/${input.projectId}/env${queryParams}`,
+									{
+										method: "PATCH",
+										body: JSON.stringify({
+											key: envVar.key,
+											value: envVar.value,
+											target: envVar.target,
+											type: envVar.type,
+										}),
+									},
+								);
+								results.push({ key: envVar.key, success: true });
+							} catch {
+								results.push({ key: envVar.key, success: false, error: errMsg });
+							}
+						} else {
+							results.push({ key: envVar.key, success: false, error: errMsg });
+						}
+					}
+				}
+
+				return { results };
 			}),
 
 		connectGitRepo: publicProcedure

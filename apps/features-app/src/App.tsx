@@ -1,8 +1,7 @@
 import {
-  supabaseAtom,
   useAuthStateSync,
   useProfileSync,
-  setSupabaseForRefresh,
+  setAuthApiUrl,
   refreshSessionToken,
   isUnauthorizedError,
 } from "@superbuilder/features-client/core/auth";
@@ -19,17 +18,18 @@ import {
 } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { Provider as JotaiProvider } from "jotai";
-import { useHydrateAtoms } from "jotai/utils";
 import { Toaster } from "sonner";
 import { i18n } from "./lib/feature-i18n";
-import { getSupabase } from "./lib/supabase";
 import { TRPCProvider, createTRPCQueryClient, API_URL } from "./lib/trpc";
 import { createAppRouter } from "./router";
 
+// Auth client 초기화 (side-effect import — initAuthClient 호출)
+import "./lib/auth-client";
+
 configureFileUpload({ apiUrl: API_URL });
 
-// Supabase 클라이언트를 세션 갱신 유틸에 등록
-setSupabaseForRefresh(getSupabase());
+// Better Auth 세션 갱신 유틸에 API URL 등록
+setAuthApiUrl(API_URL);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,11 +89,6 @@ const router = createAppRouter(queryClient);
 const POSTHOG_API_KEY = import.meta.env.VITE_POSTHOG_API_KEY ?? "";
 const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST ?? "https://us.i.posthog.com";
 
-function HydrateAtoms({ children }: { children: React.ReactNode }) {
-  useHydrateAtoms([[supabaseAtom, getSupabase()]]);
-  return children;
-}
-
 function AuthSync({ children }: { children: React.ReactNode }) {
   useAuthStateSync();
   useProfileSync();
@@ -110,16 +105,14 @@ export function App() {
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <TRPCProvider trpcClient={trpcClient as any} queryClient={queryClient}>
             <JotaiProvider>
-              <HydrateAtoms>
-                <I18nextProvider i18n={i18n}>
-                  <ThemeProvider>
-                    <AuthSync>
-                      <RouterProvider router={router} />
-                      <Toaster position="top-right" richColors />
-                    </AuthSync>
-                  </ThemeProvider>
-                </I18nextProvider>
-              </HydrateAtoms>
+              <I18nextProvider i18n={i18n}>
+                <ThemeProvider>
+                  <AuthSync>
+                    <RouterProvider router={router} />
+                    <Toaster position="top-right" richColors />
+                  </AuthSync>
+                </ThemeProvider>
+              </I18nextProvider>
             </JotaiProvider>
           </TRPCProvider>
         </QueryClientProvider>

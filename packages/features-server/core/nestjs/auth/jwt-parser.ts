@@ -2,7 +2,7 @@ import type { User } from "../../trpc/trpc";
 
 /**
  * Authorization 헤더에서 JWT를 추출하고 파싱하여 User 객체를 반환.
- * 서명 검증 없이 페이로드만 디코딩 (Supabase JWT 기준).
+ * 서명 검증 없이 페이로드만 디코딩 (Better Auth JWT 호환).
  */
 export function parseJwtFromHeader(
   authHeader: string | undefined,

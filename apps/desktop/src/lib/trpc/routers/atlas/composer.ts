@@ -1,18 +1,26 @@
 import { z } from "zod";
 import { join } from "node:path";
-import { execFile as execFileCb } from "node:child_process";
+import { execFile as execFileCb, spawn } from "node:child_process";
 import { promisify } from "node:util";
+import { readFile } from "node:fs/promises";
 import { publicProcedure, router } from "../..";
 import { scaffold, loadRegistry, resolveFeatures } from "@superbuilder/atlas-engine";
 import { localDb } from "main/lib/local-db";
 import { atlasProjects } from "@superset/local-db";
 import { eq } from "drizzle-orm";
+import { getProcessEnvWithShellPath } from "../workspaces/utils/shell-env";
 
 const execFileAsync = promisify(execFileCb);
 
 function getSuperbuilderPath(): string {
 	const envPath = process.env.SUPERBUILDER_PATH;
 	if (!envPath) throw new Error("SUPERBUILDER_PATH not set");
+	return envPath;
+}
+
+function getAtlasPath(): string {
+	const envPath = process.env.ATLAS_PATH;
+	if (!envPath) throw new Error("ATLAS_PATH not set");
 	return envPath;
 }
 
@@ -42,7 +50,8 @@ export const createAtlasComposerRouter = () =>
 			)
 			.mutation(async ({ input }) => {
 				const sourceRepoPath = getSuperbuilderPath();
-				const registry = loadRegistry(sourceRepoPath);
+				const atlasPath = getAtlasPath();
+				const registry = loadRegistry(atlasPath);
 				const resolved = resolveFeatures(registry, input.selected);
 
 				const projectPath = join(input.targetPath, input.projectName);
@@ -86,14 +95,48 @@ export const createAtlasComposerRouter = () =>
 			.input(
 				z.object({
 					projectDir: z.string().min(1),
+					agent: z.enum(["claude", "codex"]).default("claude"),
 				}),
 			)
 			.mutation(async ({ input }) => {
-				// This will be wired to Desktop's agent launcher in Task 10
+				const workflowPath = join(input.projectDir, ".claude", "commands", "install-features.md");
+				const workflowContent = await readFile(workflowPath, "utf-8");
+
+				const prompt = [
+					"You are installing features into a scaffolded project.",
+					"Follow the install-features workflow below EXACTLY.",
+					"Do NOT skip any step. Do NOT ask questions — execute autonomously.",
+					"",
+					workflowContent,
+				].join("\n");
+
+				const shellEnv = await getProcessEnvWithShellPath();
+				// Remove CLAUDECODE to avoid nested session detection error
+				const { CLAUDECODE: _, ...env } = shellEnv;
+
+				const agentCmd = input.agent === "codex"
+					? "codex"
+					: "claude";
+				const agentArgs = input.agent === "codex"
+					? ["--dangerously-bypass-approvals-and-sandbox", "--", prompt]
+					: ["--dangerously-skip-permissions", "-p", prompt];
+
+				const child = spawn(agentCmd, agentArgs, {
+					cwd: input.projectDir,
+					env,
+					stdio: "ignore",
+					detached: true,
+				});
+
+				child.unref();
+
+				const pid = child.pid;
+
 				return {
 					launched: true,
 					projectDir: input.projectDir,
-					command: "/install-features",
+					command: `${agentCmd} /install-features`,
+					pid: pid ?? null,
 				};
 			}),
 

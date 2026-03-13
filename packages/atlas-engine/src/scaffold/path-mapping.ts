@@ -17,7 +17,7 @@ export const DEFAULT_PATH_MAPPING: PathMapping = {
 		to: "apps/feature-admin/src/features",
 	},
 	schema: {
-		from: "packages/drizzle/src/schema/features",
+		from: "packages/features-db/src/schema/features",
 		to: "packages/drizzle/src/schema/features",
 	},
 	widgets: {

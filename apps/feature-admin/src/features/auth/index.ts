@@ -12,7 +12,7 @@ export {
 
 // Hooks (Feature-specific hooks)
 export {
-  useSupabaseAuthAction,
+  useAuthAction,
   useSignInWithEmailAndPassword,
   useSignUpWithEmailAndPassword,
   useSignInWithOAuth,
@@ -39,7 +39,6 @@ export {
   AdminGuard,
   type AdminRole,
   // Store
-  supabaseAtom,
   sessionAtom,
   profileAtom,
   authenticatedAtom,

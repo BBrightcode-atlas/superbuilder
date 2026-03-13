@@ -38,7 +38,7 @@ describe("resolveSourcePath", () => {
 			"/home/user/superbuilder",
 		);
 		expect(result).toBe(
-			"/home/user/superbuilder/packages/drizzle/src/schema/features/blog",
+			"/home/user/superbuilder/packages/features-db/src/schema/features/blog",
 		);
 	});
 

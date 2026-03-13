@@ -8,6 +8,7 @@ export {
 export type { PathSlot } from "./path-mapping";
 export { buildProjectSpec, writeProjectSpec } from "./spec-writer";
 export { cloneTemplate, initGitRepo } from "./template-clone";
+export { sanitizeTemplate } from "./template-sanitizer";
 export type { CloneOptions } from "./template-clone";
 export {
 	generateWorkflowMarkdown,

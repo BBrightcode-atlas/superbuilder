@@ -1,15 +1,14 @@
 import { useTranslation } from "@superbuilder/features-client/core/i18n";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { useSupabaseAuthAction } from "./use-supabase-auth-action";
+import { authClient, useAuthAction } from "./use-auth-action";
 
 export function useSignUpWithEmailAndPassword() {
   const navigate = useNavigate();
   const { t } = useTranslation("auth");
 
-  return useSupabaseAuthAction(
+  return useAuthAction(
     (
-      supabase,
       email: string,
       password: string,
       options: {
@@ -17,14 +16,10 @@ export function useSignUpWithEmailAndPassword() {
         lastName: string;
       },
     ) => {
-      return supabase.auth.signUp({
+      return authClient.signUp.email({
         email,
         password,
-        options: {
-          data: {
-            full_name: `${options.firstName} ${options.lastName}`,
-          },
-        },
+        name: `${options.firstName} ${options.lastName}`,
       });
     },
     {

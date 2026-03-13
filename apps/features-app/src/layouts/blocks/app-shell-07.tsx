@@ -9,9 +9,9 @@ import { useCallback } from "react";
 import {
   AuthGuard,
   authenticatedAtom,
-  getSupabaseAtom,
   profileAtom,
 } from "@superbuilder/features-client/core/auth";
+import { authClient } from "@/lib/auth-client";
 import { useAtomValue } from "jotai";
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
@@ -159,11 +159,10 @@ const SidebarGroupedMenuItems = ({
 
 function HeaderProfileDropdown() {
   const profile = useAtomValue(profileAtom);
-  const supabase = useAtomValue(getSupabaseAtom);
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authClient.signOut();
     navigate({ to: "/sign-in", replace: true });
   };
 
@@ -205,11 +204,10 @@ function HeaderProfileDropdown() {
 
 function AppSidebarFooter() {
   const profile = useAtomValue(profileAtom);
-  const supabase = useAtomValue(getSupabaseAtom);
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authClient.signOut();
     navigate({ to: "/sign-in", replace: true });
   };
 

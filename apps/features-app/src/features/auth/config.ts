@@ -8,7 +8,6 @@ export interface OAuthProviderConfig {
   labelEn: string;
   bgColor: string;
   textColor: string;
-  supabaseNative: boolean;
 }
 
 export const OAUTH_PROVIDER_CONFIG: Record<OAuthProvider, OAuthProviderConfig> = {
@@ -17,21 +16,18 @@ export const OAUTH_PROVIDER_CONFIG: Record<OAuthProvider, OAuthProviderConfig> =
     labelEn: "Continue with Google",
     bgColor: "bg-white border border-input",
     textColor: "text-foreground",
-    supabaseNative: true,
   },
   kakao: {
     label: "카카오로 계속",
     labelEn: "Continue with Kakao",
     bgColor: "bg-[#FEE500]",
     textColor: "text-[#191919]",
-    supabaseNative: true,
   },
   naver: {
     label: "네이버로 계속",
     labelEn: "Continue with Naver",
     bgColor: "bg-[#03C75A]",
     textColor: "text-white",
-    supabaseNative: false,
   },
 };
 

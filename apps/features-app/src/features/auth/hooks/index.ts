@@ -1,5 +1,5 @@
 // Feature-specific hooks
-export { useSupabaseAuthAction } from "./use-supabase-auth-action";
+export { useAuthAction } from "./use-auth-action";
 export { useSignInWithEmailAndPassword } from "./use-sign-in-with-email-and-password";
 export { useSignUpWithEmailAndPassword } from "./use-sign-up-with-email-and-password";
 export { useSignInWithOAuth } from "./use-sign-in-with-oauth";
