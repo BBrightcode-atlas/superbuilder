@@ -63,6 +63,46 @@ describe("insertAtMarker", () => {
 		expect(result).toBe(original);
 	});
 
+	it("preserves indentation of closing marker", () => {
+		const filePath = join(TEST_DIR, "indented.ts");
+		writeFileSync(
+			filePath,
+			[
+				"@Module({",
+				"  imports: [",
+				"    // [ATLAS:MODULES]",
+				"    // [/ATLAS:MODULES]",
+				"  ],",
+				"})",
+			].join("\n"),
+		);
+
+		insertAtMarker(filePath, "MODULES", "BlogModule,");
+
+		const result = readFileSync(filePath, "utf-8");
+		expect(result).toContain("    BlogModule,");
+	});
+
+	it("handles markers with content between them", () => {
+		const filePath = join(TEST_DIR, "between.ts");
+		writeFileSync(
+			filePath,
+			[
+				"// [ATLAS:IMPORTS]",
+				'import { A } from "a";',
+				'import { B } from "b";',
+				"// [/ATLAS:IMPORTS]",
+			].join("\n"),
+		);
+
+		insertAtMarker(filePath, "IMPORTS", 'import { C } from "c";');
+
+		const result = readFileSync(filePath, "utf-8");
+		const lines = result.split("\n");
+		expect(lines).toHaveLength(5);
+		expect(lines[3]).toContain('import { C } from "c"');
+	});
+
 	it("preserves existing content", () => {
 		const filePath = join(TEST_DIR, "existing.ts");
 		writeFileSync(
