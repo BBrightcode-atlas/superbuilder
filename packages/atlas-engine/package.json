@@ -12,7 +12,8 @@
 		"./boilerplate": "./src/boilerplate/index.ts",
 		"./scaffold": "./src/scaffold/index.ts",
 		"./connection": "./src/connection/index.ts",
-		"./transform": "./src/transform/index.ts"
+		"./transform": "./src/transform/index.ts",
+		"./pipeline": "./src/pipeline/index.ts"
 	},
 	"scripts": {
 		"test": "bun test",
