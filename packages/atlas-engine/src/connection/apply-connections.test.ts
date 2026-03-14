@@ -222,6 +222,43 @@ describe("applyConnections", () => {
 		expect(adminRouter).toContain("...createBlogAdminRoutes(),");
 	});
 
+	it("handles widget feature with widget export", () => {
+		const manifest = makeManifest({
+			id: "comment",
+			type: "widget",
+			provides: {
+				server: {
+					module: "CommentModule",
+					router: "commentRouter",
+					routerKey: "comment",
+				},
+				widget: { component: "CommentSection", props: ["targetId"] },
+			},
+		});
+
+		applyConnections(TEST_DIR, manifest);
+
+		const widgetPkg = JSON.parse(
+			readFileSync(
+				join(TEST_DIR, "packages", "widgets", "package.json"),
+				"utf-8",
+			),
+		);
+		expect(widgetPkg.exports["./comment"]).toBe("./src/comment/index.ts");
+		expect(widgetPkg.exports["."]).toBe("./src/index.ts");
+	});
+
+	it("handles manifest with no provides gracefully", () => {
+		const manifest = makeManifest({ provides: {} });
+		applyConnections(TEST_DIR, manifest);
+
+		const appModule = readFileSync(
+			join(TEST_DIR, "apps", "atlas-server", "src", "app.module.ts"),
+			"utf-8",
+		);
+		expect(appModule).not.toContain("import {");
+	});
+
 	it("inserts schema exports", () => {
 		const manifest = makeManifest({
 			provides: {

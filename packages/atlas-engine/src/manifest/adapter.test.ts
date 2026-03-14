@@ -193,7 +193,13 @@ describe("manifestsToRegistry", () => {
 				id: "blog",
 				type: "page",
 				group: "content",
-				provides: { server: { module: "BlogModule", router: "blogRouter", routerKey: "blog" } },
+				provides: {
+					server: {
+						module: "BlogModule",
+						router: "blogRouter",
+						routerKey: "blog",
+					},
+				},
 			}),
 			makeManifest({
 				id: "comment",
