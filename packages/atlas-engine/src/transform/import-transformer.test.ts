@@ -106,6 +106,20 @@ import { BlogWidget } from "@repo/widgets/blog";`);
 		expect(result).toBe(source);
 	});
 
+	it("handles re-export with type keyword", () => {
+		const source = `export type { BlogPost } from "@superbuilder/feature-blog/common";`;
+		const result = transformImports(source);
+		expect(result).toBe(
+			`export type { BlogPost } from "@repo/features/blog";`,
+		);
+	});
+
+	it("transforms require-style dynamic import paths", () => {
+		const source = `const mod = await import("@superbuilder/core-logger");`;
+		const result = transformImports(source);
+		expect(result).toBe(`const mod = await import("@repo/core/logger");`);
+	});
+
 	it("preserves non-superbuilder imports unchanged", () => {
 		const source = `import React from "react";
 import { useQuery } from "@tanstack/react-query";
