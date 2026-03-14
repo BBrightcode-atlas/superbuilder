@@ -1,28 +1,13 @@
-import { z } from "zod";
-import { join } from "node:path";
-import { execFile as execFileCb, spawn } from "node:child_process";
-import { promisify } from "node:util";
+import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import { publicProcedure, router } from "../..";
-import { scaffold, loadRegistry, resolveFeatures } from "@superbuilder/atlas-engine";
-import { localDb } from "main/lib/local-db";
+import { join } from "node:path";
+import { composePipeline, pushToGitHub } from "@superbuilder/atlas-engine";
 import { atlasProjects } from "@superset/local-db";
 import { eq } from "drizzle-orm";
+import { localDb } from "main/lib/local-db";
+import { z } from "zod";
+import { publicProcedure, router } from "../..";
 import { getProcessEnvWithShellPath } from "../workspaces/utils/shell-env";
-
-const execFileAsync = promisify(execFileCb);
-
-function getSuperbuilderPath(): string {
-	const envPath = process.env.SUPERBUILDER_PATH;
-	if (!envPath) throw new Error("SUPERBUILDER_PATH not set");
-	return envPath;
-}
-
-function getAtlasPath(): string {
-	const envPath = process.env.ATLAS_PATH;
-	if (!envPath) throw new Error("ATLAS_PATH not set");
-	return envPath;
-}
 
 export const createAtlasComposerRouter = () =>
 	router({
@@ -49,24 +34,16 @@ export const createAtlasComposerRouter = () =>
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const sourceRepoPath = getSuperbuilderPath();
-				const atlasPath = getAtlasPath();
-				const registry = loadRegistry(atlasPath);
-				const resolved = resolveFeatures(registry, input.selected);
-
-				const projectPath = join(input.targetPath, input.projectName);
-
-				const result = await scaffold({
+				const result = await composePipeline({
+					selected: input.selected,
 					projectName: input.projectName,
-					targetDir: projectPath,
-					config: input.config ?? {
-						database: { provider: "neon" },
-						auth: { provider: "better-auth", features: ["email"] },
-						deploy: { provider: "vercel" },
+					targetPath: input.targetPath,
+					options: {
+						neon: false, // Desktop uses separate UI steps
+						github: false,
+						vercel: false,
+						install: false,
 					},
-					resolved,
-					registry,
-					sourceRepoPath,
 				});
 
 				// Save to local-db
@@ -74,8 +51,8 @@ export const createAtlasComposerRouter = () =>
 					.insert(atlasProjects)
 					.values({
 						name: input.projectName,
-						localPath: projectPath,
-						features: resolved.resolved,
+						localPath: result.projectDir,
+						features: result.resolved.resolved,
 						gitInitialized: true,
 						status: "created",
 					})
@@ -85,7 +62,7 @@ export const createAtlasComposerRouter = () =>
 					projectDir: result.projectDir,
 					projectName: input.projectName,
 					projectId: project.id,
-					features: resolved.resolved,
+					features: result.resolved.resolved,
 					gitInitialized: true,
 				};
 			}),
@@ -99,7 +76,12 @@ export const createAtlasComposerRouter = () =>
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const workflowPath = join(input.projectDir, ".claude", "commands", "install-features.md");
+				const workflowPath = join(
+					input.projectDir,
+					".claude",
+					"commands",
+					"install-features.md",
+				);
 				const workflowContent = await readFile(workflowPath, "utf-8");
 
 				const prompt = [
@@ -114,12 +96,11 @@ export const createAtlasComposerRouter = () =>
 				// Remove CLAUDECODE to avoid nested session detection error
 				const { CLAUDECODE: _, ...env } = shellEnv;
 
-				const agentCmd = input.agent === "codex"
-					? "codex"
-					: "claude";
-				const agentArgs = input.agent === "codex"
-					? ["--dangerously-bypass-approvals-and-sandbox", "--", prompt]
-					: ["--dangerously-skip-permissions", "-p", prompt];
+				const agentCmd = input.agent === "codex" ? "codex" : "claude";
+				const agentArgs =
+					input.agent === "codex"
+						? ["--dangerously-bypass-approvals-and-sandbox", "--", prompt]
+						: ["--dangerously-skip-permissions", "-p", prompt];
 
 				const child = spawn(agentCmd, agentArgs, {
 					cwd: input.projectDir,
@@ -150,31 +131,24 @@ export const createAtlasComposerRouter = () =>
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const orgName = "BBrightcode-atlas";
-				const fullName = `${orgName}/${input.repoName}`;
-				await execFileAsync(
-					"gh",
-					["repo", "create", fullName, input.isPrivate ? "--private" : "--public", "--source", input.projectPath, "--push"],
-					{ cwd: input.projectPath },
-				);
-
-				const { stdout } = await execFileAsync("gh", ["repo", "view", "--json", "url,owner,name"], {
-					cwd: input.projectPath,
+				const result = await pushToGitHub({
+					projectDir: input.projectPath,
+					repoName: input.repoName,
+					private: input.isPrivate,
 				});
-				const info = JSON.parse(stdout);
 
 				await localDb
 					.update(atlasProjects)
 					.set({
-						gitRemoteUrl: info.url,
+						gitRemoteUrl: result.repoUrl,
 						updatedAt: Date.now(),
 					})
 					.where(eq(atlasProjects.id, input.atlasProjectId));
 
 				return {
-					repoUrl: info.url,
-					owner: info.owner.login,
-					repo: info.name,
+					repoUrl: result.repoUrl,
+					owner: result.owner,
+					repo: result.repo,
 				};
 			}),
 	});
