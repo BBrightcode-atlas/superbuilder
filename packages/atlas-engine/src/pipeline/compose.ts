@@ -56,7 +56,11 @@ export async function composePipeline(
 		repo: opts.boilerplateRepo,
 	});
 	const resolved = resolveFeatures(manifest, input.features);
-	cb?.onStep?.("scaffold", "done", `${resolved.resolved.length}개 피처 해석 완료`);
+	cb?.onStep?.(
+		"scaffold",
+		"done",
+		`${resolved.resolved.length}개 피처 해석 완료`,
+	);
 
 	// ── Step 2: scaffold (FATAL) ─────────────────────────────────
 	cb?.onStep?.("scaffold", "start", "프로젝트 스캐폴딩 중...");
@@ -66,7 +70,11 @@ export async function composePipeline(
 		featuresToKeep: resolved.resolved,
 		boilerplateRepo: opts.boilerplateRepo,
 	});
-	cb?.onStep?.("scaffold", "done", `${scaffoldResult.keptFeatures.length}개 피처 유지, ${scaffoldResult.removedFeatures.length}개 제거`);
+	cb?.onStep?.(
+		"scaffold",
+		"done",
+		`${scaffoldResult.keptFeatures.length}개 피처 유지, ${scaffoldResult.removedFeatures.length}개 제거`,
+	);
 
 	// ── Step 3: neon (NON-FATAL, opt-in) ─────────────────────────
 	let neonResult: NeonResult | undefined;
@@ -78,7 +86,11 @@ export async function composePipeline(
 				orgId: opts.neonOrgId,
 				apiKey: opts.neonApiKey,
 			});
-			cb?.onStep?.("neon", "done", `Neon DB 생성 완료: ${neonResult.projectId}`);
+			cb?.onStep?.(
+				"neon",
+				"done",
+				`Neon DB 생성 완료: ${neonResult.projectId}`,
+			);
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
 			cb?.onStep?.("neon", "error", msg);
@@ -99,7 +111,11 @@ export async function composePipeline(
 				org: opts.githubOrg,
 				private: opts.private,
 			});
-			cb?.onStep?.("github", "done", `GitHub 레포 생성 완료: ${githubResult.repoUrl}`);
+			cb?.onStep?.(
+				"github",
+				"done",
+				`GitHub 레포 생성 완료: ${githubResult.repoUrl}`,
+			);
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
 			cb?.onStep?.("github", "error", msg);
@@ -125,7 +141,11 @@ export async function composePipeline(
 				token: opts.vercelToken,
 				teamId: opts.vercelTeamId,
 			});
-			cb?.onStep?.("vercel", "done", `Vercel 배포 완료: ${vercelResult.deploymentUrl}`);
+			cb?.onStep?.(
+				"vercel",
+				"done",
+				`Vercel 배포 완료: ${vercelResult.deploymentUrl}`,
+			);
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
 			cb?.onStep?.("vercel", "error", msg);
@@ -163,7 +183,9 @@ export async function composePipeline(
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
 			cb?.onStep?.("install", "error", msg);
-			cb?.onLog?.("설치 실패 — bun install && bunx drizzle-kit push 를 수동 실행하세요");
+			cb?.onLog?.(
+				"설치 실패 — bun install && bunx drizzle-kit push 를 수동 실행하세요",
+			);
 		}
 	} else {
 		cb?.onStep?.("install", "skip");
@@ -183,7 +205,9 @@ export async function composePipeline(
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
 			cb?.onStep?.("seed", "error", msg);
-			cb?.onLog?.("시딩 실패 — 서버 실행 후 /api/auth/sign-up으로 수동 등록하세요");
+			cb?.onLog?.(
+				"시딩 실패 — 서버 실행 후 /api/auth/sign-up으로 수동 등록하세요",
+			);
 		}
 	} else {
 		cb?.onStep?.("seed", "skip");
