@@ -12,19 +12,19 @@ interface MarkerTarget {
 
 const MARKER_MAP: Record<string, MarkerTarget> = {
 	nestModuleImport: {
-		file: "apps/atlas-server/src/app.module.ts",
+		file: "apps/server/src/app.module.ts",
 		marker: "IMPORTS",
 	},
 	nestModuleRef: {
-		file: "apps/atlas-server/src/app.module.ts",
+		file: "apps/server/src/app.module.ts",
 		marker: "MODULES",
 	},
 	trpcRouterImport: {
-		file: "apps/atlas-server/src/trpc/router.ts",
+		file: "apps/server/src/trpc/router.ts",
 		marker: "IMPORTS",
 	},
 	trpcRouterKey: {
-		file: "apps/atlas-server/src/trpc/router.ts",
+		file: "apps/server/src/trpc/router.ts",
 		marker: "ROUTERS",
 	},
 	trpcTypeImport: {

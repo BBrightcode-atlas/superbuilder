@@ -23,8 +23,8 @@ function makeManifest(
 }
 
 function setupTemplateFiles() {
-	// apps/atlas-server/src/app.module.ts
-	const appModuleDir = join(TEST_DIR, "apps", "atlas-server", "src");
+	// apps/server/src/app.module.ts
+	const appModuleDir = join(TEST_DIR, "apps", "server", "src");
 	mkdirSync(appModuleDir, { recursive: true });
 	writeFileSync(
 		join(appModuleDir, "app.module.ts"),
@@ -40,8 +40,8 @@ function setupTemplateFiles() {
 		].join("\n"),
 	);
 
-	// apps/atlas-server/src/trpc/router.ts
-	const trpcDir = join(TEST_DIR, "apps", "atlas-server", "src", "trpc");
+	// apps/server/src/trpc/router.ts
+	const trpcDir = join(TEST_DIR, "apps", "server", "src", "trpc");
 	mkdirSync(trpcDir, { recursive: true });
 	writeFileSync(
 		join(trpcDir, "router.ts"),
@@ -144,7 +144,7 @@ describe("applyConnections", () => {
 		applyConnections(TEST_DIR, manifest);
 
 		const appModule = readFileSync(
-			join(TEST_DIR, "apps", "atlas-server", "src", "app.module.ts"),
+			join(TEST_DIR, "apps", "server", "src", "app.module.ts"),
 			"utf-8",
 		);
 		expect(appModule).toContain(
@@ -167,7 +167,7 @@ describe("applyConnections", () => {
 		applyConnections(TEST_DIR, manifest);
 
 		const trpcRouter = readFileSync(
-			join(TEST_DIR, "apps", "atlas-server", "src", "trpc", "router.ts"),
+			join(TEST_DIR, "apps", "server", "src", "trpc", "router.ts"),
 			"utf-8",
 		);
 		expect(trpcRouter).toContain(
@@ -255,7 +255,7 @@ describe("applyConnections", () => {
 		applyConnections(TEST_DIR, manifest);
 
 		const appModule = readFileSync(
-			join(TEST_DIR, "apps", "atlas-server", "src", "app.module.ts"),
+			join(TEST_DIR, "apps", "server", "src", "app.module.ts"),
 			"utf-8",
 		);
 		expect(appModule).not.toContain("import {");
@@ -287,7 +287,7 @@ describe("applyConnections", () => {
 		applyConnections(TEST_DIR, auth);
 
 		const appModule = readFileSync(
-			join(TEST_DIR, "apps", "atlas-server", "src", "app.module.ts"),
+			join(TEST_DIR, "apps", "server", "src", "app.module.ts"),
 			"utf-8",
 		);
 		expect(appModule).toContain("BlogModule,");
