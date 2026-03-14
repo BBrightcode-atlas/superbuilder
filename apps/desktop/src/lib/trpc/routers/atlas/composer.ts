@@ -35,7 +35,7 @@ export const createAtlasComposerRouter = () =>
 			)
 			.mutation(async ({ input }) => {
 				const result = await composePipeline({
-					selected: input.selected,
+					features: input.selected,
 					projectName: input.projectName,
 					targetPath: input.targetPath,
 					options: {
