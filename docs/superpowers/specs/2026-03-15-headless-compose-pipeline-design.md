@@ -61,7 +61,8 @@ CLI agent ──┘       │
                     ├── 4. pushToGitHub()            — repo 생성 + push
                     ├── 5. deployToVercel()           — Vercel 연결 + 배포
                     ├── 6. writeEnvFile()            — .env 생성
-                    └── 7. installFeatures()         — bun install + DB push (opt-in)
+                    ├── 7. installFeatures()         — bun install + DB push (opt-in)
+                    └── 8. seedInitialData()         — system org + owner 사용자 시딩 (opt-in)
 ```
 
 ### 호출자별 차이
@@ -105,6 +106,10 @@ interface ComposeOptions {
   install?: boolean;
   /** Boilerplate repo override */
   boilerplateRepo?: string;
+  /** 소유자 이메일 (seed 단계에서 사용) */
+  ownerEmail?: string;
+  /** 소유자 비밀번호 (미지정 시 랜덤 생성) */
+  ownerPassword?: string;
 }
 ```
 
@@ -140,6 +145,12 @@ interface ComposeResult {
   };
   /** 설치 완료 여부 */
   installed: boolean;
+  /** 초기 시딩 결과 */
+  seed?: {
+    systemOrgId: string;
+    ownerEmail: string;
+    ownerPasswordGenerated: boolean;
+  };
 }
 ```
 
@@ -162,7 +173,8 @@ type ComposeStep =
   | "github"
   | "vercel"
   | "env"
-  | "install";
+  | "install"
+  | "seed";
 ```
 
 ---
@@ -260,6 +272,19 @@ async function composePipeline(
     callbacks?.onStep?.("install", "skip");
   }
 
+  // Step 8: 초기 데이터 시딩 — system org + owner 사용자 (opt-in)
+  if (opts.install && opts.neon) {
+    callbacks?.onStep?.("seed", "start");
+    await seedInitialData({
+      projectDir,
+      ownerEmail: opts.ownerEmail,
+      ownerPassword: opts.ownerPassword,
+    });
+    callbacks?.onStep?.("seed", "done");
+  } else {
+    callbacks?.onStep?.("seed", "skip");
+  }
+
   return {
     projectDir,
     projectName: input.projectName,
@@ -294,10 +319,53 @@ async function installFeatures(input: InstallInput): Promise<void> {
     await execFile("bunx", ["drizzle-kit", "push"], { cwd: projectDir });
   }
 
-  // 3. 기타 post-scaffold 설정
-  // - AUTH_SECRET 생성
-  // - 초기 데이터 시딩 (있는 경우)
+  // 3. AUTH_SECRET 생성
+  // - openssl rand -base64 32 로 생성하여 .env에 추가
 }
+```
+
+### seedInitialData() 상세
+
+프로젝트의 초기 운영에 필요한 데이터를 시딩한다. DB 마이그레이션 완료 후 실행.
+
+**배경**: boilerplate는 better-auth의 `organization()` + `admin()` plugin을 사용한다. 관리자 접근은 `SYSTEM_ORG_ID` 환경변수로 지정된 organization의 `owner`/`admin` role 멤버만 허용된다. 하지만 현재 이 system org와 첫 번째 owner 사용자를 생성하는 코드가 없다. 설계 문서(`infra-migration-design.md`)에는 "seed script + afterSignUp hook"으로 명시되어 있으나 미구현 상태.
+
+```typescript
+interface SeedInput {
+  projectDir: string;
+  /** 소유자 이메일 (대화형에서 질문, 비대화형에서 인자 전달) */
+  ownerEmail?: string;
+  /** 소유자 비밀번호 */
+  ownerPassword?: string;
+}
+
+async function seedInitialData(input: SeedInput): Promise<void> {
+  const { projectDir } = input;
+
+  // 1. System organization 생성
+  //    better-auth의 organization API를 통해 생성
+  //    생성된 org ID를 .env의 SYSTEM_ORG_ID에 기록
+
+  // 2. Owner 사용자 등록
+  //    better-auth의 signUp API로 사용자 생성
+  //    email: ownerEmail (기본값: 환경변수 또는 프롬프트)
+  //    password: ownerPassword (기본값: 랜덤 생성 후 출력)
+
+  // 3. Owner를 system org에 owner role로 추가
+  //    better-auth의 organization.addMember API 사용
+
+  // 4. 기본 데이터 시딩 (선택)
+  //    - system roles/permissions (seed-roles-permissions.ts 활용)
+  //    - 기본 요금제 (seed/plans.ts)
+
+  // 5. 결과 출력
+  //    - System Org ID
+  //    - Owner email / password (생성된 경우)
+  //    - Admin 대시보드 접속 URL
+}
+```
+
+> **보안**: owner 비밀번호가 자동 생성된 경우 CLI 출력에만 표시하고 파일에 저장하지 않는다.
 ```
 
 ---
@@ -358,6 +426,9 @@ Agent: 사용 가능한 Features:
 저장 경로 (기본: ~/Projects):
 > (엔터)
 
+소유자 이메일 (admin 접근용):
+> admin@mycompany.com
+
 🚀 프로젝트 생성 중...
   ✅ 의존성 해결 (6개 feature)
   ✅ Scaffold 완료 (34개 feature 제거)
@@ -366,8 +437,13 @@ Agent: 사용 가능한 Features:
   ✅ Vercel 배포
   ✅ .env 생성
   ✅ Feature 설치 완료
+  ✅ 초기 시딩 완료
+     System Org: org_xxxxxxxxxxxx
+     Owner: admin@mycompany.com
+     Password: ●●●●●●●● (생성됨 — 위에 출력됨, 안전하게 보관하세요)
 
 프로젝트 준비 완료: ~/Projects/my-saas-app
+Admin: https://my-saas-app.vercel.app/admin
 ```
 
 #### (b) 비대화형 모드 — 인자 전달
@@ -463,7 +539,8 @@ packages/atlas-engine/src/
 │   ├── github.ts                # pushToGitHub()
 │   ├── vercel.ts                # deployToVercel()
 │   ├── env.ts                   # writeEnvFile()
-│   └── install.ts               # installFeatures()
+│   ├── install.ts               # installFeatures()
+│   └── seed.ts                  # seedInitialData() — system org + owner 사용자
 
 .agents/commands/
 └── compose.md                   # CLI agent 스킬
@@ -503,6 +580,7 @@ packages/atlas-engine/package.json                    # "./pipeline" subpath 추
 | vercel | 경고 출력 + 계속 진행 (github 없으면 자동 skip) |
 | env | 경고 출력 + 계속 진행 |
 | install | 에러 출력 + 수동 안내 ("bun install && bunx drizzle-kit push 실행하세요") |
+| seed | 에러 출력 + 수동 안내 ("서버 실행 후 첫 가입자가 /api/auth/sign-up으로 등록하세요") |
 
 Neon/GitHub/Vercel은 **비필수 단계**로, 실패해도 프로젝트 scaffold 자체는 완료된 상태를 보장한다.
 
