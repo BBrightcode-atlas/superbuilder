@@ -170,7 +170,9 @@ describe("applyConnections", () => {
 			join(TEST_DIR, "apps", "atlas-server", "src", "trpc", "router.ts"),
 			"utf-8",
 		);
-		expect(trpcRouter).toContain('import { blogRouter } from "./blog"');
+		expect(trpcRouter).toContain(
+			'import { blogRouter } from "@repo/features/blog"',
+		);
 		expect(trpcRouter).toContain("blog: blogRouter,");
 
 		const appRouter = readFileSync(

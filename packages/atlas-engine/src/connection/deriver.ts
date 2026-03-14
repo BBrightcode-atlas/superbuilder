@@ -11,7 +11,7 @@ export function deriveConnections(
 		const { module, router, routerKey } = provides.server;
 		conn.nestModuleImport = `import { ${module} } from "@repo/features/${featureId}";`;
 		conn.nestModuleRef = `${module},`;
-		conn.trpcRouterImport = `import { ${router} } from "./${featureId}";`;
+		conn.trpcRouterImport = `import { ${router} } from "@repo/features/${featureId}";`;
 		conn.trpcRouterKey = `${routerKey}: ${router},`;
 		conn.trpcTypeImport = `import type { ${router} } from "./${featureId}";`;
 		conn.trpcTypeKey = `${routerKey}: typeof ${router};`;

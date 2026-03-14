@@ -25,7 +25,7 @@ describe("deriveConnections", () => {
 		};
 		const result = deriveConnections("blog", provides);
 		expect(result.trpcRouterImport).toBe(
-			'import { blogRouter } from "./blog";',
+			'import { blogRouter } from "@repo/features/blog";',
 		);
 		expect(result.trpcRouterKey).toBe("blog: blogRouter,");
 		expect(result.trpcTypeImport).toBe(
@@ -116,7 +116,7 @@ describe("deriveConnections", () => {
 		};
 		const result = deriveConnections("role-permission", provides);
 		expect(result.nestModuleImport).toContain("@repo/features/role-permission");
-		expect(result.trpcRouterImport).toContain("./role-permission");
+		expect(result.trpcRouterImport).toContain("@repo/features/role-permission");
 	});
 
 	it("handles full provides with all sections", () => {
