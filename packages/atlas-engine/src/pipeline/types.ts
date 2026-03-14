@@ -20,7 +20,11 @@ export type ComposeStep =
 // ─────────────────────────────────────────────────────────────
 
 export interface ComposeCallbacks {
-	onStep?: (step: ComposeStep) => void;
+	onStep?: (
+		step: ComposeStep,
+		status: "start" | "done" | "skip" | "error",
+		message?: string,
+	) => void;
 	onLog?: (message: string) => void;
 }
 
@@ -45,7 +49,7 @@ export interface ComposeOptions {
 }
 
 export interface ComposeInput {
-	selected: string[];
+	features: string[];
 	projectName: string;
 	targetPath: string;
 	options?: ComposeOptions;
