@@ -1,3 +1,4 @@
+export { composePipeline } from "./compose";
 export { writeEnvFile } from "./env";
 export { pushToGitHub } from "./github";
 export { installFeatures } from "./install";
