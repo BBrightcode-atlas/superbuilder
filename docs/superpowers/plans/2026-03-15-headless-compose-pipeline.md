@@ -15,7 +15,7 @@
 | **작업 레포** | superbuilder |
 | **작업 디렉토리** | packages/atlas-engine |
 | **브랜치** | develop |
-| **완료 기준** | composePipeline() 함수 동작, compose.md 스킬 작성, Desktop composer.ts thin wrapper로 리팩토링 |
+| **완료 기준** | composePipeline() 함수 동작, compose.md 스킬 작성, Desktop composer.ts thin wrapper로 리팩토링, `/spec-verify` 통과 |
 
 ---
 
@@ -405,27 +405,46 @@ seed 스크립트: 296-337행 → 그대로 복사
 
 ---
 
-## Chunk 5: 검증 (Task 15)
+## Chunk 5: 스펙 대비 검증 + 빌드 검증 (Task 15-16)
 
-### Task 15: typecheck + lint 검증
+### Task 15: `/spec-verify` 실행 — 스펙 대비 구현 완전성 검증
 
-- [ ] 15-1. `packages/atlas-engine` typecheck 실행:
+**필수**: 이 단계는 통과할 때까지 반복한다 (최대 5회).
+
+- [ ] 15-1. `/spec-verify docs/superpowers/specs/2026-03-15-headless-compose-pipeline-design.md` 실행
+  - Phase 1: 스펙에서 함수/인터페이스/필드/에러 처리/콜백 호출 추출
+  - Phase 2: 실제 코드에서 각 항목 존재 여부 검증
+  - Phase 3: 결과 테이블 출력 (PASS/FAIL)
+  - Phase 4: FAIL 항목 자동 수정
+  - Phase 5: typecheck + test + lint 실행
+
+- [ ] 15-2. FAIL 항목이 있으면:
+  - 스펙을 참조하여 누락 코드 구현
+  - 수정 후 15-1 재실행
+  - 모든 항목 PASS할 때까지 반복
+
+- [ ] 15-3. 수정사항 커밋: `fix(atlas-engine): implement missing spec requirements`
+
+### Task 16: 최종 빌드 검증
+
+- [ ] 16-1. `packages/atlas-engine` typecheck:
   ```bash
   cd packages/atlas-engine && bun run typecheck
   ```
-  - 모든 pipeline 모듈이 타입 에러 없이 컴파일되는지 확인
-- [ ] 15-2. `apps/desktop` typecheck 실행:
+- [ ] 16-2. `apps/desktop` typecheck (composer.ts 리팩토링 검증):
   ```bash
-  cd apps/desktop && bun run typecheck
+  bun run typecheck --filter=@superset/desktop
   ```
-  - composer.ts 리팩토링 후 Desktop 빌드가 깨지지 않는지 확인
-- [ ] 15-3. 프로젝트 루트에서 lint 실행:
+- [ ] 16-3. 프로젝트 루트 lint:
   ```bash
   bun run lint:fix
   ```
-  - Biome 포매팅 + 린트 통과 확인
-- [ ] 15-4. 에러가 있으면 수정 후 커밋
-- [ ] 15-5. 최종 Commit: `chore: fix typecheck and lint errors in pipeline module`
+- [ ] 16-4. atlas-engine 테스트:
+  ```bash
+  bun test packages/atlas-engine/
+  ```
+- [ ] 16-5. 에러 있으면 수정 → 16-1부터 재실행
+- [ ] 16-6. 최종 커밋: `chore: verify pipeline module build and tests`
 
 ---
 
