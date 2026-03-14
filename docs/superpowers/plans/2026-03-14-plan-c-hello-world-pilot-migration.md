@@ -14,6 +14,33 @@
 
 ---
 
+## 🤖 에이전트 실행 가이드
+
+| 항목 | 값 |
+|------|-----|
+| **작업 레포** | `superbuilder-features` (Task 1-11, 13) + `superbuilder` (Task 12) |
+| **작업 디렉토리** | Task 1-11, 13: `/Users/bright/Projects/superbuilder-features/features/hello-world`, Task 12: `/Users/bright/Projects/superbuilder` |
+| **브랜치** | `superbuilder-features`: `main`, `superbuilder`: `develop` |
+| **사전 조건** | **Plan A 완료 필수** — `superbuilder-features` 레포가 존재하고 core contract 스텁 + dev-kit이 설치되어 있어야 함. Plan B는 불필요 (hello-world 코드 작성은 엔진과 독립) |
+| **병렬 실행** | Plan B와 **병렬 가능** (서로 다른 레포, 다른 관심사). Plan A 완료 후에만 실행 가능 |
+| **완료 기준** | `features/hello-world/` 패키지가 typecheck + test 통과, `bun install` 성공, submodule 포인터 업데이트됨 |
+| **참조할 boilerplate 원본 위치** | `/Users/bright/Projects/superbuilder-app-boilerplate` (읽기 전용 참조, 수정하지 않음) |
+
+### boilerplate → feature 패키지 매핑 (참조용)
+
+```
+boilerplate 원본                                          → feature 패키지 대상
+─────────────────────────────────────────────────────────────────────────────────
+packages/features/hello-world/                            → src/server/
+apps/app/src/features/hello-world/                        → src/client/
+apps/system-admin/src/features/hello-world/               → src/admin/
+(신규)                                                     → src/common/types.ts
+(신규)                                                     → feature.json
+(신규)                                                     → dev/server.ts, dev/app.tsx
+```
+
+---
+
 ## File Structure
 
 All files are created inside the `superbuilder-features` repo (cloned at `/Users/bright/Projects/superbuilder-features` or accessed via submodule at `/Users/bright/Projects/superbuilder/features`).

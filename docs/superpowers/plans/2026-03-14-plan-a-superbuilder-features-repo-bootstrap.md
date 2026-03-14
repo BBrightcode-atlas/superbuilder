@@ -12,6 +12,20 @@
 
 ---
 
+## 🤖 에이전트 실행 가이드
+
+| 항목 | 값 |
+|------|-----|
+| **작업 레포** | `superbuilder-features` (새로 생성) + `superbuilder` (submodule 연결) |
+| **작업 디렉토리** | Task 1-10: `/Users/bright/Projects/superbuilder-features` (새로 생성), Task 11-12: `/Users/bright/Projects/superbuilder` |
+| **브랜치** | `superbuilder-features`: `main`, `superbuilder`: `develop` |
+| **사전 조건** | 없음 (이 Plan이 첫 번째) |
+| **병렬 실행** | Plan B와 **병렬 가능** (서로 다른 레포). Plan C는 이 Plan 완료 후 실행 |
+| **완료 기준** | `superbuilder-features` 레포가 GitHub에 push되고, `superbuilder/features`에 submodule로 연결됨 |
+| **GitHub org** | `bbright-code` (예: `git@github.com:bbright-code/superbuilder-features.git`) |
+
+---
+
 ## File Structure
 
 ### superbuilder-features repo (new)
