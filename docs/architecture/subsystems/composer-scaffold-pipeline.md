@@ -186,7 +186,7 @@ removeFeatures(input)
   │     manifest.features[name].paths 순회:
   │     ├── rm -rf packages/features/{name}/        (server)
   │     ├── rm -rf apps/app/src/features/{name}/    (client)
-  │     ├── rm -rf apps/system-admin/src/features/{name}/ (admin)
+  │     ├── rm -rf apps/admin/src/features/{name}/ (admin)
   │     └── rm -rf packages/drizzle/src/schema/features/{name}/ (schema)
   │
   ├── 4. 마커 connection 정리

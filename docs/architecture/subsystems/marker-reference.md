@@ -135,7 +135,7 @@ const routes = [
 
 ### 클라이언트 — 관리자 라우터
 
-#### `apps/system-admin/src/router.tsx`
+#### `apps/admin/src/router.tsx`
 
 | 마커 | 용도 | 삽입 예시 |
 |------|------|----------|
@@ -243,7 +243,7 @@ export const featureLocales = {
 
 ### 관리자 — 사이드바 메뉴
 
-#### `apps/system-admin/src/feature-config.ts`
+#### `apps/admin/src/feature-config.ts`
 
 | 마커 | 용도 | 삽입 예시 |
 |------|------|----------|
@@ -274,8 +274,8 @@ export const featureMenus = [
 | `trpcTypeKey` | `packages/features/app-router.ts` | `ROUTERS` |
 | `clientRoutesImport` | `apps/app/src/router.tsx` | `IMPORTS` |
 | `clientRoutesSpread` | `apps/app/src/router.tsx` | `ROUTES` |
-| `adminRoutesImport` | `apps/system-admin/src/router.tsx` | `IMPORTS` |
-| `adminRoutesSpread` | `apps/system-admin/src/router.tsx` | `ADMIN_ROUTES` |
+| `adminRoutesImport` | `apps/admin/src/router.tsx` | `IMPORTS` |
+| `adminRoutesSpread` | `apps/admin/src/router.tsx` | `ADMIN_ROUTES` |
 | `schemaExport` | `packages/drizzle/src/schema/index.ts` | `SCHEMA_EXPORTS` |
 
 `widgetExport`는 별도로 `registerWidgetExport()`를 통해 `packages/widgets/package.json`의 `exports` 필드에 subpath를 등록한다.

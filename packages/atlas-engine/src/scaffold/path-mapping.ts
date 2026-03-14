@@ -29,7 +29,7 @@ export const FEATURE_JSON_PATH_MAPPING: PathMapping = {
 	},
 	admin: {
 		from: "src/admin",
-		to: "apps/system-admin/src/features",
+		to: "apps/admin/src/features",
 	},
 	schema: {
 		from: "src/schema",

@@ -64,7 +64,7 @@ export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
 	await transformDirectory(join(input.targetDir, "packages/features"));
 	await transformDirectory(join(input.targetDir, "apps/app/src/features"));
 	await transformDirectory(
-		join(input.targetDir, "apps/system-admin/src/features"),
+		join(input.targetDir, "apps/admin/src/features"),
 	);
 	await transformDirectory(
 		join(input.targetDir, "packages/drizzle/src/schema/features"),

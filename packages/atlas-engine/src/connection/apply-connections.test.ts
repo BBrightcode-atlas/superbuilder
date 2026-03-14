@@ -85,8 +85,8 @@ function setupTemplateFiles() {
 		].join("\n"),
 	);
 
-	// apps/system-admin/src/router.tsx
-	const adminDir = join(TEST_DIR, "apps", "system-admin", "src");
+	// apps/admin/src/router.tsx
+	const adminDir = join(TEST_DIR, "apps", "admin", "src");
 	mkdirSync(adminDir, { recursive: true });
 	writeFileSync(
 		join(adminDir, "router.tsx"),
@@ -215,7 +215,7 @@ describe("applyConnections", () => {
 		applyConnections(TEST_DIR, manifest);
 
 		const adminRouter = readFileSync(
-			join(TEST_DIR, "apps", "system-admin", "src", "router.tsx"),
+			join(TEST_DIR, "apps", "admin", "src", "router.tsx"),
 			"utf-8",
 		);
 		expect(adminRouter).toContain(

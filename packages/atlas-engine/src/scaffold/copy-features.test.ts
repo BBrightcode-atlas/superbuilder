@@ -79,7 +79,7 @@ describe("copyFeaturesToTemplate", () => {
 		).toBe(true);
 	});
 
-	it("copies admin slot to apps/system-admin/src/features/{id}/", async () => {
+	it("copies admin slot to apps/admin/src/features/{id}/", async () => {
 		createFeatureSource("blog", ["admin"]);
 		const manifest = makeManifest("blog", {
 			admin: { routes: "createBlogAdminRoutes" },
@@ -93,7 +93,7 @@ describe("copyFeaturesToTemplate", () => {
 		});
 
 		expect(
-			existsSync(join(TPL_DIR, "apps/system-admin/src/features/blog/index.ts")),
+			existsSync(join(TPL_DIR, "apps/admin/src/features/blog/index.ts")),
 		).toBe(true);
 	});
 

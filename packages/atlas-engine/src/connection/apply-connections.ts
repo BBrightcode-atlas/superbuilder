@@ -44,11 +44,11 @@ const MARKER_MAP: Record<string, MarkerTarget> = {
 		marker: "ROUTES",
 	},
 	adminRoutesImport: {
-		file: "apps/system-admin/src/router.tsx",
+		file: "apps/admin/src/router.tsx",
 		marker: "IMPORTS",
 	},
 	adminRoutesSpread: {
-		file: "apps/system-admin/src/router.tsx",
+		file: "apps/admin/src/router.tsx",
 		marker: "ADMIN_ROUTES",
 	},
 	schemaExport: {

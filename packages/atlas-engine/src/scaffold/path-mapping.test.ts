@@ -59,7 +59,7 @@ describe("resolveFeatureJsonTargetPath", () => {
 
 	it("resolves target path for admin slot", () => {
 		const result = resolveFeatureJsonTargetPath("/project", "blog", "admin");
-		expect(result).toBe("/project/apps/system-admin/src/features/blog");
+		expect(result).toBe("/project/apps/admin/src/features/blog");
 	});
 
 	it("resolves target path for widgets slot", () => {
