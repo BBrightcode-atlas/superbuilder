@@ -1,3 +1,4 @@
+export { copyFeaturesToTemplate } from "./copy-features";
 export { generateRemovalWorkflow, removeFeatures } from "./feature-remover";
 export type { PathMapping, PathSlot } from "./path-mapping";
 export {
@@ -8,9 +9,11 @@ export {
 export type { RegisterInput, RegisterResult } from "./register";
 export { registerToBoilerplate } from "./register";
 export { scaffold } from "./scaffold";
+export { transformDirectory } from "./transform-files";
 export type {
 	RemoveInput,
 	RemoveResult,
 	ScaffoldInput,
 	ScaffoldResult,
 } from "./types";
+export { updateFeatureExports } from "./update-package-exports";
