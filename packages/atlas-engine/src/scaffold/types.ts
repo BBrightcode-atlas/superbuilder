@@ -1,89 +1,41 @@
-import type { FeatureRegistry } from "../registry/types";
-import type { ResolvedFeatures } from "../resolver/types";
+import type { BoilerplateManifest } from "../manifest/types";
 
-/** Database provider */
-export type DatabaseProvider = "neon";
-
-/** Auth provider */
-export type AuthProvider = "better-auth";
-
-/** Deploy provider */
-export type DeployProvider = "vercel" | "none";
-
-/** Project infrastructure config */
-export interface ProjectConfig {
-	database: {
-		provider: DatabaseProvider;
-		projectId?: string | null;
-		connectionString?: string | null;
-	};
-	auth: {
-		provider: AuthProvider;
-		features: string[];
-	};
-	deploy: {
-		provider: DeployProvider;
-		teamId?: string | null;
-		projectId?: string | null;
-		domain?: string | null;
-	};
-}
-
-/** Path mapping between superbuilder and target project */
-export interface PathMapping {
-	server: { from: string; to: string };
-	client: { from: string; to: string };
-	admin: { from: string; to: string };
-	schema: { from: string; to: string };
-	widgets: { from: string; to: string };
-}
-
-/** Source metadata */
-export interface SourceInfo {
-	type: "superbuilder";
-	repo: string;
-	branch: string;
-	templateRepo: string;
-	templateVersion: string;
-	createdAt: string;
-}
-
-/** Feature install status */
-export interface InstalledFeature {
-	version: string;
-	installedAt: string;
-	status: "installed" | "failed" | "pending";
-}
-
-/** superbuilder.json — the project spec */
-export interface ProjectSpec {
-	name: string;
-	version: string;
-	description: string;
-	source: SourceInfo;
-	config: ProjectConfig;
-	features: {
-		selected: string[];
-		resolved: string[];
-		autoIncluded: string[];
-	};
-	installed: Record<string, InstalledFeature>;
-	pathMapping: PathMapping;
-}
-
-/** Scaffold engine input */
+/** Scaffold 입력 */
 export interface ScaffoldInput {
+	/** 프로젝트 이름 */
 	projectName: string;
+	/** 생성할 디렉토리 경로 */
 	targetDir: string;
-	description?: string;
-	config: ProjectConfig;
-	resolved: ResolvedFeatures;
-	registry: FeatureRegistry;
-	sourceRepoPath: string;
+	/** 유지할 피처 목록 (나머지 제거) */
+	featuresToKeep: string[];
+	/** Boilerplate repo override (default: superbuilder-app-boilerplate) */
+	boilerplateRepo?: string;
 }
 
-/** Scaffold engine output */
+/** Scaffold 결과 */
 export interface ScaffoldResult {
 	projectDir: string;
-	spec: ProjectSpec;
+	manifest: BoilerplateManifest;
+	removedFeatures: string[];
+	keptFeatures: string[];
+}
+
+/** Feature 제거 입력 */
+export interface RemoveInput {
+	/** 프로젝트 경로 */
+	projectPath: string;
+	/** 제거할 피처 목록 */
+	featuresToRemove: string[];
+	/** 현재 manifest */
+	manifest: BoilerplateManifest;
+}
+
+/** Feature 제거 결과 */
+export interface RemoveResult {
+	/** 실제 제거된 피처 (의존 피처 포함) */
+	removed: string[];
+	/** 유지된 피처 */
+	kept: string[];
+	/** 업데이트된 manifest */
+	manifest: BoilerplateManifest;
 }

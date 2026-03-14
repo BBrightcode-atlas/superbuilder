@@ -9,6 +9,7 @@ import {
 	destroyRuntime,
 	generateAndSetTitle,
 	getRuntimeMcpOverview,
+	type LifecycleEvent,
 	onUserPromptSubmit,
 	type RuntimeSession,
 	reloadHookConfig,
@@ -59,7 +60,7 @@ function resolveOmModelFromAuth(): string | undefined {
 export interface ChatMastraServiceOptions {
 	headers: () => Record<string, string> | Promise<Record<string, string>>;
 	apiUrl: string;
-	getExtraTools?: () => Promise<Record<string, unknown>>;
+	onLifecycleEvent?: (event: LifecycleEvent) => void;
 }
 
 export class ChatMastraService {
@@ -109,14 +110,10 @@ export class ChatMastraService {
 
 		const creationPromise = (async () => {
 			try {
-				const supersetTools = await getSupersetMcpTools(
+				const extraTools = await getSupersetMcpTools(
 					() => Promise.resolve(this.opts.headers()),
 					this.opts.apiUrl,
 				);
-				const injectedTools = this.opts.getExtraTools
-					? await this.opts.getExtraTools()
-					: {};
-				const extraTools = { ...supersetTools, ...injectedTools };
 
 				const omModel = resolveOmModelFromAuth();
 
@@ -148,7 +145,7 @@ export class ChatMastraService {
 				};
 				syncRuntimeHookSessionId(runtime);
 				await runSessionStartHook(runtime).catch(() => {});
-				subscribeToSessionEvents(runtime);
+				subscribeToSessionEvents(runtime, this.opts.onLifecycleEvent);
 				this.runtimes.set(sessionId, runtime);
 				return runtime;
 			} finally {

@@ -1,102 +1,73 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-	DEFAULT_PATH_MAPPING,
-	resolveSourcePath,
-	resolveTargetPath,
+	FEATURE_JSON_PATH_MAPPING,
+	resolveFeatureJsonSourcePath,
+	resolveFeatureJsonTargetPath,
 } from "./path-mapping";
 
-describe("resolveSourcePath", () => {
-	test("resolves server feature path", () => {
-		const result = resolveSourcePath(
-			DEFAULT_PATH_MAPPING,
-			"server",
-			"blog",
-			"/home/user/superbuilder",
-		);
-		expect(result).toBe(
-			"/home/user/superbuilder/packages/features-server/features/blog",
-		);
+describe("FEATURE_JSON_PATH_MAPPING", () => {
+	it("has all required slots", () => {
+		expect(FEATURE_JSON_PATH_MAPPING.server).toBeDefined();
+		expect(FEATURE_JSON_PATH_MAPPING.client).toBeDefined();
+		expect(FEATURE_JSON_PATH_MAPPING.admin).toBeDefined();
+		expect(FEATURE_JSON_PATH_MAPPING.schema).toBeDefined();
+		expect(FEATURE_JSON_PATH_MAPPING.widgets).toBeDefined();
 	});
 
-	test("resolves client feature path", () => {
-		const result = resolveSourcePath(
-			DEFAULT_PATH_MAPPING,
-			"client",
-			"blog",
-			"/home/user/superbuilder",
-		);
-		expect(result).toBe(
-			"/home/user/superbuilder/apps/features-app/src/features/blog",
-		);
+	it("maps server to packages/features", () => {
+		expect(FEATURE_JSON_PATH_MAPPING.server.from).toBe("src/server");
+		expect(FEATURE_JSON_PATH_MAPPING.server.to).toBe("packages/features");
 	});
 
-	test("resolves schema feature path", () => {
-		const result = resolveSourcePath(
-			DEFAULT_PATH_MAPPING,
-			"schema",
-			"blog",
-			"/home/user/superbuilder",
-		);
-		expect(result).toBe(
-			"/home/user/superbuilder/packages/features-db/src/schema/features/blog",
-		);
-	});
-
-	test("resolves widgets path", () => {
-		const result = resolveSourcePath(
-			DEFAULT_PATH_MAPPING,
-			"widgets",
-			"reaction",
-			"/home/user/superbuilder",
-		);
-		expect(result).toBe(
-			"/home/user/superbuilder/packages/widgets/src/reaction",
-		);
+	it("maps widget from src/widget to packages/widgets/src", () => {
+		expect(FEATURE_JSON_PATH_MAPPING.widgets.from).toBe("src/widget");
+		expect(FEATURE_JSON_PATH_MAPPING.widgets.to).toBe("packages/widgets/src");
 	});
 });
 
-describe("resolveTargetPath", () => {
-	test("resolves server target path", () => {
-		const result = resolveTargetPath(
-			DEFAULT_PATH_MAPPING,
-			"server",
-			"blog",
-			"/tmp/my-project",
-		);
-		expect(result).toBe("/tmp/my-project/packages/features/blog");
+describe("resolveFeatureJsonSourcePath", () => {
+	it("resolves source path for server slot", () => {
+		const result = resolveFeatureJsonSourcePath("/features", "blog", "server");
+		expect(result).toBe("/features/blog/src/server");
 	});
 
-	test("resolves client target path", () => {
-		const result = resolveTargetPath(
-			DEFAULT_PATH_MAPPING,
-			"client",
-			"blog",
-			"/tmp/my-project",
+	it("resolves source path for widget slot", () => {
+		const result = resolveFeatureJsonSourcePath(
+			"/features",
+			"comment",
+			"widgets",
 		);
-		expect(result).toBe("/tmp/my-project/apps/app/src/features/blog");
+		expect(result).toBe("/features/comment/src/widget");
 	});
 
-	test("resolves admin target path", () => {
-		const result = resolveTargetPath(
-			DEFAULT_PATH_MAPPING,
-			"admin",
-			"blog",
-			"/tmp/my-project",
-		);
-		expect(result).toBe(
-			"/tmp/my-project/apps/feature-admin/src/features/blog",
-		);
+	it("resolves source path for schema slot", () => {
+		const result = resolveFeatureJsonSourcePath("/features", "blog", "schema");
+		expect(result).toBe("/features/blog/src/schema");
+	});
+});
+
+describe("resolveFeatureJsonTargetPath", () => {
+	it("resolves target path for server slot", () => {
+		const result = resolveFeatureJsonTargetPath("/project", "blog", "server");
+		expect(result).toBe("/project/packages/features/blog");
 	});
 
-	test("resolves schema target path", () => {
-		const result = resolveTargetPath(
-			DEFAULT_PATH_MAPPING,
-			"schema",
-			"blog",
-			"/tmp/my-project",
+	it("resolves target path for client slot", () => {
+		const result = resolveFeatureJsonTargetPath("/project", "blog", "client");
+		expect(result).toBe("/project/apps/app/src/features/blog");
+	});
+
+	it("resolves target path for admin slot", () => {
+		const result = resolveFeatureJsonTargetPath("/project", "blog", "admin");
+		expect(result).toBe("/project/apps/system-admin/src/features/blog");
+	});
+
+	it("resolves target path for widgets slot", () => {
+		const result = resolveFeatureJsonTargetPath(
+			"/project",
+			"comment",
+			"widgets",
 		);
-		expect(result).toBe(
-			"/tmp/my-project/packages/drizzle/src/schema/features/blog",
-		);
+		expect(result).toBe("/project/packages/widgets/src/comment");
 	});
 });
