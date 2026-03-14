@@ -68,12 +68,12 @@ export async function composePipeline(
 		projectName: input.projectName,
 		targetDir: projectDir,
 		featuresToKeep: resolved.resolved,
-		boilerplateRepo: opts.boilerplateRepo,
+		templateRepo: opts.boilerplateRepo,
 	});
 	cb?.onStep?.(
 		"scaffold",
 		"done",
-		`${scaffoldResult.keptFeatures.length}개 피처 유지, ${scaffoldResult.removedFeatures.length}개 제거`,
+		`${scaffoldResult.installedFeatures.length}개 피처 설치 완료`,
 	);
 
 	// ── Step 3: neon (NON-FATAL, opt-in) ─────────────────────────
@@ -220,8 +220,8 @@ export async function composePipeline(
 		projectDir,
 		projectName: input.projectName,
 		resolved,
-		removedFeatures: scaffoldResult.removedFeatures,
-		keptFeatures: scaffoldResult.keptFeatures,
+		removedFeatures: [],
+		keptFeatures: scaffoldResult.installedFeatures,
 		neon: neonResult,
 		github: githubResult,
 		vercel: vercelResult,

@@ -1,33 +1,41 @@
 import { execFile as execFileCb } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { loadManifest } from "../manifest/local";
-import { removeFeatures } from "./feature-remover";
+import { applyConnections } from "../connection/apply-connections";
+import { scanFeatureManifests } from "../manifest/scanner";
+import { copyFeaturesToTemplate } from "./copy-features";
+import { transformDirectory } from "./transform-files";
 import type { ScaffoldInput, ScaffoldResult } from "./types";
+import { updateFeatureExports } from "./update-package-exports";
 
 const execFile = promisify(execFileCb);
-
-const DEFAULT_BOILERPLATE = "BBrightcode-atlas/superbuilder-app-boilerplate";
+const DEFAULT_TEMPLATE = "BBrightcode-atlas/superbuilder-app-boilerplate";
+const DEFAULT_FEATURES_REPO = "BBrightcode-atlas/superbuilder-features";
 
 /**
- * Boilerplate 기반 프로젝트 생성
+ * Feature-JSON 기반 프로젝트 생성
  *
- * 1. Boilerplate repo clone (shallow)
- * 2. manifest 로드
- * 3. 유지할 피처 + core + 의존성 계산
- * 4. 불필요 피처 제거
- * 5. .claude/settings.json 생성
- * 6. git init
+ * 1. Empty template repo clone (shallow)
+ * 2. Features source 해석 (local / env / remote)
+ * 3. Feature manifests 스캔
+ * 4. 선택된 feature 코드 복사
+ * 5. Import 변환 (@superbuilder/* → @repo/*)
+ * 6. Connection 적용 ([ATLAS:*] markers)
+ * 7. Package exports 업데이트
+ * 8. .claude/settings.json 생성
+ * 9. git init + commit
  */
 export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
-	const repo = input.boilerplateRepo ?? DEFAULT_BOILERPLATE;
+	const templateRepo = input.templateRepo ?? DEFAULT_TEMPLATE;
 
-	// 1. Clone
+	// 1. Clone empty template
 	await execFile("gh", [
 		"repo",
 		"clone",
-		repo,
+		templateRepo,
 		input.targetDir,
 		"--",
 		"--depth=1",
@@ -35,53 +43,50 @@ export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
 	await rm(join(input.targetDir, ".git"), { recursive: true, force: true });
 	await updatePackageName(input.targetDir, input.projectName);
 
-	// 2. Load manifest
-	const loaded = await loadManifest(input.targetDir);
-	if (!loaded) {
-		throw new Error(
-			"Boilerplate에 superbuilder.json이 없습니다. " +
-				"boilerplate repo에 manifest를 먼저 생성하세요.",
-		);
-	}
-	const manifest = loaded;
+	// 2. Resolve features source
+	const featuresDir = await resolveFeaturesSource(input);
 
-	// 3. 유지할 피처 계산 (선택 + core + 의존성)
-	const allFeatures = Object.keys(manifest.features);
-	const keepSet = new Set(input.featuresToKeep);
+	// 3. Scan feature manifests
+	const allManifests = scanFeatureManifests(featuresDir);
+	const selectedManifests = allManifests.filter((m) =>
+		input.featuresToKeep.includes(m.id),
+	);
 
-	for (const [name, entry] of Object.entries(manifest.features)) {
-		if (entry.group === "core") keepSet.add(name);
-	}
+	// 4. Copy feature code
+	await copyFeaturesToTemplate({
+		templateDir: input.targetDir,
+		featuresSourceDir: featuresDir,
+		featureIds: input.featuresToKeep,
+		manifests: selectedManifests,
+	});
 
-	// 의존성 재귀 추가
-	const addDeps = (name: string) => {
-		if (!manifest.features[name]) return;
-		for (const dep of manifest.features[name].dependencies) {
-			if (!keepSet.has(dep)) {
-				keepSet.add(dep);
-				addDeps(dep);
-			}
-		}
-	};
-	for (const name of [...keepSet]) addDeps(name);
+	// 5. Transform imports (@superbuilder/* → @repo/*)
+	await transformDirectory(join(input.targetDir, "packages/features"));
+	await transformDirectory(join(input.targetDir, "apps/app/src/features"));
+	await transformDirectory(
+		join(input.targetDir, "apps/system-admin/src/features"),
+	);
+	await transformDirectory(
+		join(input.targetDir, "packages/drizzle/src/schema/features"),
+	);
+	await transformDirectory(join(input.targetDir, "packages/widgets/src"));
 
-	const featuresToRemove = allFeatures.filter((f) => !keepSet.has(f));
-
-	// 4. 불필요 피처 제거
-	let removedFeatures: string[] = [];
-	if (featuresToRemove.length > 0) {
-		const result = await removeFeatures({
-			projectPath: input.targetDir,
-			featuresToRemove,
-			manifest,
-		});
-		removedFeatures = result.removed;
+	// 6. Apply connections (insert at [ATLAS:*] markers)
+	for (const manifest of selectedManifests) {
+		applyConnections(input.targetDir, manifest);
 	}
 
-	// 5. .claude/settings.json
+	// 7. Update package exports
+	await updateFeatureExports(
+		input.targetDir,
+		input.featuresToKeep,
+		selectedManifests,
+	);
+
+	// 8. Write .claude/settings.json
 	await writeClaudeSettings(input.targetDir);
 
-	// 6. git init
+	// 9. Git init + commit
 	await execFile("git", ["init", "--initial-branch=main"], {
 		cwd: input.targetDir,
 	});
@@ -92,14 +97,32 @@ export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
 		{ cwd: input.targetDir },
 	);
 
-	const updatedManifest = await loadManifest(input.targetDir);
-
 	return {
 		projectDir: input.targetDir,
-		manifest: updatedManifest ?? manifest,
-		removedFeatures,
-		keptFeatures: [...keepSet],
+		installedFeatures: input.featuresToKeep,
+		manifests: selectedManifests,
 	};
+}
+
+async function resolveFeaturesSource(input: ScaffoldInput): Promise<string> {
+	// 1. Direct path
+	if (input.featuresSourceDir && existsSync(input.featuresSourceDir)) {
+		return input.featuresSourceDir;
+	}
+
+	// 2. Environment variable
+	const envPath = process.env.SUPERBUILDER_FEATURES_PATH;
+	if (envPath) {
+		const featuresPath = join(envPath, "features");
+		if (existsSync(featuresPath)) return featuresPath;
+		if (existsSync(envPath)) return envPath;
+	}
+
+	// 3. Clone remote repo
+	const repo = input.featuresRepo ?? DEFAULT_FEATURES_REPO;
+	const tmpDir = join(tmpdir(), `superbuilder-features-${Date.now()}`);
+	await execFile("gh", ["repo", "clone", repo, tmpDir, "--", "--depth=1"]);
+	return join(tmpDir, "features");
 }
 
 async function updatePackageName(dir: string, name: string): Promise<void> {
