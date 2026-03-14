@@ -5,15 +5,14 @@ import type { ResolvedFeatures } from "../manifest/types";
 // ─────────────────────────────────────────────────────────────
 
 export type ComposeStep =
+	| "resolve"
 	| "scaffold"
 	| "neon"
-	| "env"
-	| "install"
-	| "migrate"
-	| "seed"
 	| "github"
 	| "vercel"
-	| "done";
+	| "env"
+	| "install"
+	| "seed";
 
 // ─────────────────────────────────────────────────────────────
 // Callbacks

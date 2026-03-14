@@ -51,13 +51,13 @@ export async function composePipeline(
 	const projectDir = join(input.targetPath, input.projectName);
 
 	// ── Step 1: resolve (FATAL) ──────────────────────────────────
-	cb?.onStep?.("scaffold", "start", "피처 의존성 해석 중...");
+	cb?.onStep?.("resolve", "start", "피처 의존성 해석 중...");
 	const manifest = await fetchRemoteManifest({
 		repo: opts.boilerplateRepo,
 	});
 	const resolved = resolveFeatures(manifest, input.features);
 	cb?.onStep?.(
-		"scaffold",
+		"resolve",
 		"done",
 		`${resolved.resolved.length}개 피처 해석 완료`,
 	);
@@ -214,7 +214,7 @@ export async function composePipeline(
 	}
 
 	// ── Done ─────────────────────────────────────────────────────
-	cb?.onStep?.("done", "done", "파이프라인 완료");
+	cb?.onLog?.("파이프라인 완료");
 
 	return {
 		projectDir,
