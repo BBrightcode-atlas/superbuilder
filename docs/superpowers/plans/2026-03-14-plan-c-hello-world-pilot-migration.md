@@ -528,6 +528,8 @@ git commit -m "feat(hello-world): add client hooks with @superbuilder/core-trpc 
 
 No import changes needed — uses only local hook import.
 
+> **Note**: boilerplate 원본은 한국어 + 이모지(`✨ Hello World Feature`)를 사용하지만, feature 패키지는 다국어/다문화 환경에서 재사용되므로 의도적으로 영문으로 간소화했습니다.
+
 ```tsx
 /**
  * Hello World Card Component
@@ -588,6 +590,10 @@ export function createHelloWorldRoutes<T extends AnyRoute>(parentRoute: T) {
  * Hello World Feature - Client Entry Point
  *
  * package.json "./client": "./src/client/index.ts"
+ *
+ * NOTE: 공유 타입은 "./common" entrypoint (package.json "./common")을 통해
+ * 접근합니다. client barrel에서 types를 re-export하지 않는 것은 의도된 설계입니다.
+ * 이유: entrypoint별 관심사 분리 (client = UI/라우트, common = 공유 타입)
  */
 
 export * from "./routes";
@@ -615,6 +621,8 @@ git commit -m "feat(hello-world): add client pages, routes, and barrel export"
 - [ ] **Step 1: Create `features/hello-world/src/admin/pages/hello-world-admin.tsx`**
 
 **Key change**: The boilerplate admin page imports `API_URL` from `@/lib/trpc` and makes raw fetch calls. In the feature package, we use a local constant for the API URL pattern, making it configurable via the dev harness.
+
+> **Note**: boilerplate 원본의 하단 "tRPC React Query Info" 안내 블록은 의도적으로 생략했습니다. 해당 블록은 boilerplate 사용법 안내이며 feature 패키지에서는 불필요합니다.
 
 ```tsx
 /**
@@ -832,6 +840,8 @@ export function createHelloWorldAdminRoutes<T extends AnyRoute>(parentRoute: T) 
  * Hello World Feature - Admin Entry Point
  *
  * package.json "./admin": "./src/admin/index.ts"
+ *
+ * NOTE: 공유 타입은 "./common" entrypoint를 통해 접근 (client barrel과 동일 설계)
  */
 
 export * from "./routes";
@@ -891,11 +901,35 @@ async function bootstrap() {
 bootstrap();
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **Step 2: Create `features/hello-world/dev/app.tsx`**
+
+스펙 Section 6에서 정의한 클라이언트 dev harness — `DevShell`을 통해 feature의 클라이언트 라우트를 독립 실행합니다.
+
+```tsx
+/**
+ * Hello World Feature - Dev Client App
+ *
+ * Runs the feature client standalone with DevShell.
+ * Usage: bun run dev/app.tsx
+ */
+import { createRoot } from "react-dom/client";
+import { createHelloWorldRoutes } from "../src/client";
+import { DevShell } from "@superbuilder/dev-kit/ui";
+
+createRoot(document.getElementById("root")!).render(
+	<DevShell
+		apiUrl="http://localhost:4000"
+		routes={(root) => createHelloWorldRoutes(root)}
+		mockUser={{ id: "dev-user", name: "Developer", role: "admin" }}
+	/>,
+);
+```
+
+- [ ] **Step 3: Commit**
 
 ```bash
 git add features/hello-world/dev/
-git commit -m "feat(hello-world): add dev harness for standalone execution"
+git commit -m "feat(hello-world): add dev harness (server + client) for standalone execution"
 ```
 
 ---
