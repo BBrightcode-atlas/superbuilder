@@ -11,7 +11,8 @@
 		"./resolver": "./src/resolver/index.ts",
 		"./boilerplate": "./src/boilerplate/index.ts",
 		"./scaffold": "./src/scaffold/index.ts",
-		"./connection": "./src/connection/index.ts"
+		"./connection": "./src/connection/index.ts",
+		"./transform": "./src/transform/index.ts"
 	},
 	"scripts": {
 		"test": "bun test",
