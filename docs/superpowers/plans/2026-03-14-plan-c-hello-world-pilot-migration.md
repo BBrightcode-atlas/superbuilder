@@ -219,7 +219,7 @@ import { Injectable } from "@nestjs/common";
 @Injectable()
 export class HelloWorldService {
 	async sayHello(): Promise<string> {
-		return "Hello World from Server!";
+		return "Hello World from Server! 🚀";
 	}
 
 	async getGreeting(name: string): Promise<string> {
@@ -234,11 +234,13 @@ export class HelloWorldService {
 export { HelloWorldService } from "./hello-world.service";
 ```
 
-- [ ] **Step 3: Create `features/hello-world/src/common/types.ts`**
+- [ ] **Step 3: Create `features/hello-world/src/common/types.ts`** (신규 작성 — 기존 boilerplate에 없던 공유 타입 파일)
 
 ```typescript
 /**
  * Hello World Feature - Shared Types
+ * NOTE: 기존 boilerplate에서 마이그레이션한 것이 아니라,
+ *       feature-json 패키지 구조에 맞춰 새로 작성하는 파일입니다.
  */
 
 export interface HelloResponse {
@@ -289,16 +291,16 @@ export class HelloWorldController {
 	constructor(private readonly helloWorldService: HelloWorldService) {}
 
 	@Get()
-	@ApiOperation({ summary: "Hello message" })
-	@ApiResponse({ status: 200, description: "Returns hello message" })
+	@ApiOperation({ summary: "Hello 메시지 조회" })
+	@ApiResponse({ status: 200, description: "Hello 메시지 반환" })
 	sayHello() {
 		return this.helloWorldService.sayHello();
 	}
 
 	@Get("greet")
-	@ApiOperation({ summary: "Greet by name" })
-	@ApiQuery({ name: "name", required: false, description: "Name to greet", example: "World" })
-	@ApiResponse({ status: 200, description: "Returns greeting message" })
+	@ApiOperation({ summary: "이름으로 인사" })
+	@ApiQuery({ name: "name", required: false, description: "인사할 이름", example: "World" })
+	@ApiResponse({ status: 200, description: "인사 메시지 반환" })
 	greet(@Query("name") name: string = "World") {
 		return this.helloWorldService.getGreeting(name);
 	}
@@ -649,6 +651,13 @@ interface ApiState {
 	error: string | null;
 }
 
+/**
+ * NOTE: 이 Admin 페이지는 REST API와 tRPC를 동시에 raw fetch로 테스트하는
+ * 특수 목적 컴포넌트입니다. 일반 feature UI와 달리 tRPC client 없이 동작해야
+ * 하므로 useEffect + useState 패턴을 의도적으로 사용합니다.
+ * 또한 feature 패키지 내부이므로 @repo/ui (shadcn) 접근이 불가하여
+ * HTML 엘리먼트를 직접 사용합니다.
+ */
 function useHelloWorldApi() {
 	const [state, setState] = useState<ApiState>({
 		rest: { hello: null, greet: null },

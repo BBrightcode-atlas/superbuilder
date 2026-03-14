@@ -421,7 +421,7 @@ describe("manifestsToRegistry", () => {
     const registry = manifestsToRegistry([blogManifest]);
     const blog = registry.features.blog;
 
-    expect(blog.client.app).toBeDefined();
+    expect(blog.client.app).toBe("apps/app/src/features/blog/");
   });
 
   it("maps admin provides to admin config", () => {
