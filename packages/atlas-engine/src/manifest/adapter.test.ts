@@ -175,6 +175,45 @@ describe("manifestsToRegistry", () => {
 		expect(registry.core).toEqual([]);
 	});
 
+	it("handles feature without admin menu (no admin property in entry)", () => {
+		const manifests = [
+			makeManifest({
+				provides: {
+					admin: { routes: "createBlogAdminRoutes" },
+				},
+			}),
+		];
+		const registry = manifestsToRegistry(manifests);
+		expect(registry.features.blog.admin).toBeUndefined();
+	});
+
+	it("handles multiple features with mixed types", () => {
+		const manifests = [
+			makeManifest({
+				id: "blog",
+				type: "page",
+				group: "content",
+				provides: { server: { module: "BlogModule", router: "blogRouter", routerKey: "blog" } },
+			}),
+			makeManifest({
+				id: "comment",
+				type: "widget",
+				group: "content",
+				provides: { widget: { component: "CommentSection" } },
+			}),
+			makeManifest({
+				id: "profile",
+				type: "page",
+				group: "core",
+			}),
+		];
+		const registry = manifestsToRegistry(manifests);
+		expect(Object.keys(registry.features)).toHaveLength(3);
+		expect(registry.features.blog.type).toBe("page");
+		expect(registry.features.comment.type).toBe("widget");
+		expect(registry.core).toEqual(["profile"]);
+	});
+
 	it("populates core array with core-group features", () => {
 		const manifests = [
 			makeManifest({ id: "auth", name: "Auth", group: "core" }),
