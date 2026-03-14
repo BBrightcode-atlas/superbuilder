@@ -1,0 +1,113 @@
+import { describe, it, expect } from "bun:test";
+import { deriveConnections } from "./deriver";
+import type { Provides } from "../manifest/types";
+
+describe("deriveConnections", () => {
+	it("returns empty object when provides is empty", () => {
+		const result = deriveConnections("blog", {});
+		expect(result).toEqual({});
+	});
+
+	it("derives NestJS module connections from server provides", () => {
+		const provides: Provides = {
+			server: { module: "BlogModule", router: "blogRouter", routerKey: "blog" },
+		};
+		const result = deriveConnections("blog", provides);
+		expect(result.nestModuleImport).toBe(
+			'import { BlogModule } from "@repo/features/blog";',
+		);
+		expect(result.nestModuleRef).toBe("BlogModule,");
+	});
+
+	it("derives tRPC router connections from server provides", () => {
+		const provides: Provides = {
+			server: { module: "BlogModule", router: "blogRouter", routerKey: "blog" },
+		};
+		const result = deriveConnections("blog", provides);
+		expect(result.trpcRouterImport).toBe(
+			'import { blogRouter } from "./blog";',
+		);
+		expect(result.trpcRouterKey).toBe("blog: blogRouter,");
+		expect(result.trpcTypeImport).toBe(
+			'import type { blogRouter } from "./blog";',
+		);
+		expect(result.trpcTypeKey).toBe("blog: typeof blogRouter;");
+	});
+
+	it("derives client route connections from client provides", () => {
+		const provides: Provides = {
+			client: { routes: "createBlogRoutes" },
+		};
+		const result = deriveConnections("blog", provides);
+		expect(result.clientRoutesImport).toBe(
+			'import { createBlogRoutes } from "@features/blog";',
+		);
+		expect(result.clientRoutesSpread).toBe("...createBlogRoutes(),");
+	});
+
+	it("derives admin connections from admin provides", () => {
+		const provides: Provides = {
+			admin: {
+				routes: "createBlogAdminRoutes",
+				menu: { label: "Blog", icon: "pencil", order: 10 },
+			},
+		};
+		const result = deriveConnections("blog", provides);
+		expect(result.adminRoutesImport).toBe(
+			'import { createBlogAdminRoutes } from "./features/blog";',
+		);
+		expect(result.adminRoutesSpread).toBe("...createBlogAdminRoutes(),");
+		expect(result.adminMenu).toBe(
+			JSON.stringify({ id: "blog", label: "Blog", icon: "pencil", order: 10, path: "/blog" }),
+		);
+	});
+
+	it("derives schema connections from schema provides", () => {
+		const provides: Provides = {
+			schema: { tables: ["posts", "post_tags"] },
+		};
+		const result = deriveConnections("blog", provides);
+		expect(result.schemaExport).toBe('export * from "./features/blog";');
+		expect(result.tablesFilter).toBe('"posts", "post_tags"');
+	});
+
+	it("derives widget export from widget provides", () => {
+		const provides: Provides = {
+			widget: { component: "CommentSection", props: ["targetId"] },
+		};
+		const result = deriveConnections("comment", provides);
+		expect(result.widgetExport).toEqual({
+			subpath: "./comment",
+			entry: "./src/comment/index.ts",
+		});
+	});
+
+	it("handles full provides with all sections", () => {
+		const provides: Provides = {
+			server: { module: "BlogModule", router: "blogRouter", routerKey: "blog" },
+			client: { routes: "createBlogRoutes" },
+			admin: {
+				routes: "createBlogAdminRoutes",
+				menu: { label: "Blog", icon: "pencil", order: 10 },
+			},
+			schema: { tables: ["posts"] },
+			widget: { component: "BlogWidget" },
+		};
+		const result = deriveConnections("blog", provides);
+
+		expect(result.nestModuleImport).toBeDefined();
+		expect(result.nestModuleRef).toBeDefined();
+		expect(result.trpcRouterImport).toBeDefined();
+		expect(result.trpcRouterKey).toBeDefined();
+		expect(result.trpcTypeImport).toBeDefined();
+		expect(result.trpcTypeKey).toBeDefined();
+		expect(result.clientRoutesImport).toBeDefined();
+		expect(result.clientRoutesSpread).toBeDefined();
+		expect(result.adminRoutesImport).toBeDefined();
+		expect(result.adminRoutesSpread).toBeDefined();
+		expect(result.adminMenu).toBeDefined();
+		expect(result.schemaExport).toBeDefined();
+		expect(result.tablesFilter).toBeDefined();
+		expect(result.widgetExport).toBeDefined();
+	});
+});
