@@ -71,7 +71,7 @@ bun run clean:workspaces   # Clean all workspace node_modules
 ## Agent Rules
 1. **Type safety** - avoid `any` unless necessary
 2. **Prefer `gh` CLI** - when performing git operations (PRs, issues, checkout, etc.), prefer the GitHub CLI (`gh`) over raw `git` commands where possible
-7. **GitHub repo 삭제 금지** — `superbuilder`, `superbuilder-features`, `superbuilder-app-boilerplate` repo는 절대 `gh repo delete`하지 않는다. 테스트용 임시 repo(`compose-e2e-*` 등)만 삭제 가능하다.
+7. **GitHub repo 삭제 금지** — `gh repo delete`는 **이 세션에서 직접 생성한 테스트용 임시 repo**(`compose-e2e-*` 등)만 삭제 가능하다. `superbuilder`, `superbuilder-features`, `superbuilder-app-boilerplate` 및 **그 외 모든 기존 repo는 절대 삭제하지 않는다.** 연관 없는 repo, 모르는 repo, 확인되지 않은 repo는 삭제 대상이 아니다.
 3. **Shared command source** - keep command definitions in `.agents/commands/` only. `.claude/commands` and `.cursor/commands` should be symlinks to `../.agents/commands`. (`packages/chat` discovers slash commands from `.claude/commands`.)
 4. **Workspace MCP config** - keep shared MCP servers in `.mcp.json`; `.cursor/mcp.json` should link to `../.mcp.json`. Codex uses `.codex/config.toml` (run with `CODEX_HOME=.codex codex ...`). OpenCode uses `opencode.json` and should mirror the same MCP set using OpenCode's `remote`/`local` schema.
 5. **Mastracode fork workflow** - for Superset's internal `mastracode` fork bundle and release process, follow `docs/mastracode-fork-workflow.md`.
