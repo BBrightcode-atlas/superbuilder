@@ -45,6 +45,10 @@ export interface ComposeOptions {
 	neonOrgId?: string;
 	vercelToken?: string;
 	vercelTeamId?: string;
+	/** Feature 소스 로컬 경로 (superbuilder-features/features/) */
+	featuresSourceDir?: string;
+	/** Feature 소스 repo (원격 fallback) */
+	featuresRepo?: string;
 }
 
 export interface ComposeInput {
@@ -85,8 +89,7 @@ export interface ComposeResult {
 	projectDir: string;
 	projectName: string;
 	resolved: ResolvedFeatures;
-	removedFeatures: string[];
-	keptFeatures: string[];
+	installedFeatures: string[];
 	neon?: NeonResult;
 	github?: GitHubResult;
 	vercel?: VercelResult;

@@ -69,6 +69,8 @@ export async function composePipeline(
 		targetDir: projectDir,
 		featuresToKeep: resolved.resolved,
 		templateRepo: opts.boilerplateRepo,
+		featuresSourceDir: opts.featuresSourceDir,
+		featuresRepo: opts.featuresRepo,
 	});
 	cb?.onStep?.(
 		"scaffold",
@@ -220,8 +222,7 @@ export async function composePipeline(
 		projectDir,
 		projectName: input.projectName,
 		resolved,
-		removedFeatures: [],
-		keptFeatures: scaffoldResult.installedFeatures,
+		installedFeatures: scaffoldResult.installedFeatures,
 		neon: neonResult,
 		github: githubResult,
 		vercel: vercelResult,
