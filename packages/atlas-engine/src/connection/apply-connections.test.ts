@@ -261,6 +261,39 @@ describe("applyConnections", () => {
 		expect(appModule).not.toContain("import {");
 	});
 
+	it("applies multiple features to same template files", () => {
+		const blog = makeManifest({
+			id: "blog",
+			provides: {
+				server: {
+					module: "BlogModule",
+					router: "blogRouter",
+					routerKey: "blog",
+				},
+			},
+		});
+		const auth = makeManifest({
+			id: "auth",
+			provides: {
+				server: {
+					module: "AuthModule",
+					router: "authRouter",
+					routerKey: "auth",
+				},
+			},
+		});
+
+		applyConnections(TEST_DIR, blog);
+		applyConnections(TEST_DIR, auth);
+
+		const appModule = readFileSync(
+			join(TEST_DIR, "apps", "atlas-server", "src", "app.module.ts"),
+			"utf-8",
+		);
+		expect(appModule).toContain("BlogModule,");
+		expect(appModule).toContain("AuthModule,");
+	});
+
 	it("inserts schema exports", () => {
 		const manifest = makeManifest({
 			provides: {

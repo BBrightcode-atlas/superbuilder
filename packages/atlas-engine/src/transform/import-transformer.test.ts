@@ -109,9 +109,7 @@ import { BlogWidget } from "@repo/widgets/blog";`);
 	it("handles re-export with type keyword", () => {
 		const source = `export type { BlogPost } from "@superbuilder/feature-blog/common";`;
 		const result = transformImports(source);
-		expect(result).toBe(
-			`export type { BlogPost } from "@repo/features/blog";`,
-		);
+		expect(result).toBe(`export type { BlogPost } from "@repo/features/blog";`);
 	});
 
 	it("transforms require-style dynamic import paths", () => {
