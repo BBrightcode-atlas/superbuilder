@@ -1,9 +1,12 @@
-import { z } from "zod";
-import { eq } from "drizzle-orm";
-import { publicProcedure, router } from "../..";
-import { localDb } from "main/lib/local-db";
 import { atlasIntegrations, atlasProjects } from "@superset/local-db";
-import { encrypt, decrypt } from "../auth/utils/crypto-storage";
+import { eq } from "drizzle-orm";
+import { localDb } from "main/lib/local-db";
+import { z } from "zod";
+import { publicProcedure, router } from "../..";
+import { decrypt, encrypt } from "../auth/utils/crypto-storage";
+
+// NOTE: 공통 로직은 @superbuilder/atlas-engine/pipeline의 deployToVercel()로 추출됨.
+// Desktop UI 전용 tRPC procedure들은 localDb 연동이 필요하므로 여기 유지.
 
 const VERCEL_API = "https://api.vercel.com";
 
@@ -49,9 +52,7 @@ export const createAtlasVercelRouter = () =>
 					});
 					if (!res.ok) throw new Error("Invalid token");
 				} catch {
-					throw new Error(
-						"토큰 검증 실패: Vercel에 연결할 수 없습니다",
-					);
+					throw new Error("토큰 검증 실패: Vercel에 연결할 수 없습니다");
 				}
 
 				const encrypted = encrypt(input.token);
@@ -108,9 +109,7 @@ export const createAtlasVercelRouter = () =>
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const queryParams = input.teamId
-					? `?teamId=${input.teamId}`
-					: "";
+				const queryParams = input.teamId ? `?teamId=${input.teamId}` : "";
 
 				const body: Record<string, unknown> = {
 					name: input.name,
@@ -133,13 +132,10 @@ export const createAtlasVercelRouter = () =>
 				let gitLinked = false;
 
 				try {
-					project = await vercelFetch(
-						`/v10/projects${queryParams}`,
-						{
-							method: "POST",
-							body: JSON.stringify(body),
-						},
-					);
+					project = await vercelFetch(`/v10/projects${queryParams}`, {
+						method: "POST",
+						body: JSON.stringify(body),
+					});
 					gitLinked = !!(input.gitOwner && input.gitRepo);
 				} catch (err) {
 					// Fallback: GitHub integration이 없으면 git 연동 없이 프로젝트만 생성
@@ -156,13 +152,10 @@ export const createAtlasVercelRouter = () =>
 						if (input.rootDirectory) {
 							fallbackBody.rootDirectory = input.rootDirectory;
 						}
-						project = await vercelFetch(
-							`/v10/projects${queryParams}`,
-							{
-								method: "POST",
-								body: JSON.stringify(fallbackBody),
-							},
-						);
+						project = await vercelFetch(`/v10/projects${queryParams}`, {
+							method: "POST",
+							body: JSON.stringify(fallbackBody),
+						});
 						gitLinked = false;
 					} else {
 						throw err;
@@ -171,9 +164,10 @@ export const createAtlasVercelRouter = () =>
 
 				// 실제 alias 기반 URL 사용 (Vercel이 이름 충돌 시 suffix 추가)
 				const aliases = (project.alias ?? []) as string[];
-				const actualUrl = aliases.length > 0
-					? `https://${aliases[0]}`
-					: `https://${(project as { name: string }).name}.vercel.app`;
+				const actualUrl =
+					aliases.length > 0
+						? `https://${aliases[0]}`
+						: `https://${(project as { name: string }).name}.vercel.app`;
 
 				// Update atlas_projects with Vercel info (skip for secondary projects like API)
 				if (!input.skipLocalDbUpdate) {
@@ -207,15 +201,15 @@ export const createAtlasVercelRouter = () =>
 							target: z
 								.array(z.enum(["production", "preview", "development"]))
 								.default(["production", "preview", "development"]),
-							type: z.enum(["encrypted", "plain", "sensitive"]).default("encrypted"),
+							type: z
+								.enum(["encrypted", "plain", "sensitive"])
+								.default("encrypted"),
 						}),
 					),
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const queryParams = input.teamId
-					? `?teamId=${input.teamId}`
-					: "";
+				const queryParams = input.teamId ? `?teamId=${input.teamId}` : "";
 
 				// Vercel API: POST /v10/projects/{projectId}/env
 				const results = [];
@@ -253,7 +247,11 @@ export const createAtlasVercelRouter = () =>
 								);
 								results.push({ key: envVar.key, success: true });
 							} catch {
-								results.push({ key: envVar.key, success: false, error: errMsg });
+								results.push({
+									key: envVar.key,
+									success: false,
+									error: errMsg,
+								});
 							}
 						} else {
 							results.push({ key: envVar.key, success: false, error: errMsg });
@@ -275,24 +273,19 @@ export const createAtlasVercelRouter = () =>
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const queryParams = input.teamId
-					? `?teamId=${input.teamId}`
-					: "";
+				const queryParams = input.teamId ? `?teamId=${input.teamId}` : "";
 
 				// PATCH project to link GitHub repo
-				await vercelFetch(
-					`/v9/projects/${input.projectId}${queryParams}`,
-					{
-						method: "PATCH",
-						body: JSON.stringify({
-							link: {
-								type: "github",
-								repo: `${input.owner}/${input.repo}`,
-								productionBranch: "main",
-							},
-						}),
-					},
-				);
+				await vercelFetch(`/v9/projects/${input.projectId}${queryParams}`, {
+					method: "PATCH",
+					body: JSON.stringify({
+						link: {
+							type: "github",
+							repo: `${input.owner}/${input.repo}`,
+							productionBranch: "main",
+						},
+					}),
+				});
 
 				// Git 연결 후 프로젝트 정보 다시 조회해서 실제 도메인 확인
 				const project = await vercelFetch(
@@ -301,9 +294,10 @@ export const createAtlasVercelRouter = () =>
 
 				// 실제 production alias 또는 프로젝트 도메인 추출
 				const aliases: string[] = project.alias ?? [];
-				const actualUrl = aliases.length > 0
-					? `https://${aliases[0]}`
-					: `https://${project.name}.vercel.app`;
+				const actualUrl =
+					aliases.length > 0
+						? `https://${aliases[0]}`
+						: `https://${project.name}.vercel.app`;
 
 				// DB 업데이트 (실제 URL로)
 				if (input.atlasProjectId) {
@@ -316,7 +310,11 @@ export const createAtlasVercelRouter = () =>
 						.where(eq(atlasProjects.id, input.atlasProjectId));
 				}
 
-				return { linked: true, repo: `${input.owner}/${input.repo}`, url: actualUrl };
+				return {
+					linked: true,
+					repo: `${input.owner}/${input.repo}`,
+					url: actualUrl,
+				};
 			}),
 
 		generateDomain: publicProcedure
@@ -328,9 +326,7 @@ export const createAtlasVercelRouter = () =>
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const queryParams = input.teamId
-					? `?teamId=${input.teamId}`
-					: "";
+				const queryParams = input.teamId ? `?teamId=${input.teamId}` : "";
 				await vercelFetch(
 					`/v10/projects/${input.projectId}/domains${queryParams}`,
 					{
@@ -369,25 +365,20 @@ export const createAtlasVercelRouter = () =>
 				}),
 			)
 			.mutation(async ({ input }) => {
-				const queryParams = input.teamId
-					? `?teamId=${input.teamId}`
-					: "";
+				const queryParams = input.teamId ? `?teamId=${input.teamId}` : "";
 
 				// Create deployment with project link
-				const deployment = await vercelFetch(
-					`/v13/deployments${queryParams}`,
-					{
-						method: "POST",
-						body: JSON.stringify({
-							name: input.projectName,
-							project: input.projectId,
-							target: "production",
-							projectSettings: {
-								framework: "vite",
-							},
-						}),
-					},
-				);
+				const deployment = await vercelFetch(`/v13/deployments${queryParams}`, {
+					method: "POST",
+					body: JSON.stringify({
+						name: input.projectName,
+						project: input.projectId,
+						target: "production",
+						projectSettings: {
+							framework: "vite",
+						},
+					}),
+				});
 
 				// Update atlas_projects with deployment info (keep status as-is until waitForReady confirms)
 				await localDb

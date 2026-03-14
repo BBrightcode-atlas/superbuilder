@@ -1,17 +1,21 @@
-import { z } from "zod";
-import { eq } from "drizzle-orm";
-import { writeFile, readFile, unlink } from "node:fs/promises";
-import { join } from "node:path";
 import { execFile as execFileCb } from "node:child_process";
+import { randomBytes, scryptSync } from "node:crypto";
+import { readFile, unlink, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { promisify } from "node:util";
-import { scryptSync, randomBytes } from "node:crypto";
-import { publicProcedure, router } from "../..";
-import { localDb } from "main/lib/local-db";
 import { atlasIntegrations, atlasProjects } from "@superset/local-db";
-import { encrypt, decrypt } from "../auth/utils/crypto-storage";
+import { eq } from "drizzle-orm";
+import { localDb } from "main/lib/local-db";
+import { z } from "zod";
+import { publicProcedure, router } from "../..";
+import { decrypt, encrypt } from "../auth/utils/crypto-storage";
 import { getProcessEnvWithShellPath } from "../workspaces/utils/shell-env";
 
 const execFileAsync = promisify(execFileCb);
+
+// NOTE: 공통 로직은 @superbuilder/atlas-engine/pipeline의 createNeonProject(), seedInitialData()로 추출됨.
+// Desktop UI 전용 tRPC procedure들은 localDb 연동이 필요하므로 여기 유지.
+// 향후 리팩토링 시 pipeline 함수를 내부적으로 호출하도록 변경 가능.
 
 const NEON_API = "https://console.neon.tech/api/v2";
 
@@ -56,9 +60,7 @@ export const createAtlasNeonRouter = () =>
 					});
 					if (!res.ok) throw new Error("Invalid token");
 				} catch {
-					throw new Error(
-						"토큰 검증 실패: Neon에 연결할 수 없습니다",
-					);
+					throw new Error("토큰 검증 실패: Neon에 연결할 수 없습니다");
 				}
 
 				const encrypted = encrypt(input.token);
@@ -142,8 +144,7 @@ export const createAtlasNeonRouter = () =>
 				});
 
 				const project = data.project;
-				const connectionUri =
-					data.connection_uris?.[0]?.connection_uri ?? "";
+				const connectionUri = data.connection_uris?.[0]?.connection_uri ?? "";
 
 				await localDb
 					.update(atlasProjects)
@@ -356,26 +357,26 @@ try {
 						});
 					}
 
-					const { stdout } = await execFileAsync(
-						"bun",
-						["run", seedPath],
-						{
-							cwd: input.projectPath,
-							env: {
-								...shellEnv,
-								DATABASE_URL: dbUrlMatch[1],
-								SEED_NAME: input.name,
-								SEED_EMAIL: input.email,
-								SEED_PASSWORD_HASH: passwordHash,
-								SEED_PROJECT_SLUG: input.projectSlug,
-							},
-							timeout: 30_000,
+					const { stdout } = await execFileAsync("bun", ["run", seedPath], {
+						cwd: input.projectPath,
+						env: {
+							...shellEnv,
+							DATABASE_URL: dbUrlMatch[1],
+							SEED_NAME: input.name,
+							SEED_EMAIL: input.email,
+							SEED_PASSWORD_HASH: passwordHash,
+							SEED_PROJECT_SLUG: input.projectSlug,
 						},
-					);
+						timeout: 30_000,
+					});
 
 					await unlink(seedPath).catch(() => {});
 
-					const result = JSON.parse(stdout.trim()) as { success: boolean; userId: string; orgId: string };
+					const result = JSON.parse(stdout.trim()) as {
+						success: boolean;
+						userId: string;
+						orgId: string;
+					};
 
 					// Save owner credentials to local DB
 					if (result.success && input.atlasProjectId) {
