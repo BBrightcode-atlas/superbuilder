@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdirSync, writeFileSync, readFileSync, rmSync } from "fs";
-import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { insertAtMarker } from "./applier";
 import { registerWidgetExport } from "./widget-export";
 
@@ -19,27 +19,29 @@ describe("insertAtMarker", () => {
 		const filePath = join(TEST_DIR, "app.module.ts");
 		writeFileSync(
 			filePath,
-			[
-				"// [ATLAS:IMPORTS]",
-				"// [/ATLAS:IMPORTS]",
-			].join("\n"),
+			["// [ATLAS:IMPORTS]", "// [/ATLAS:IMPORTS]"].join("\n"),
 		);
 
-		insertAtMarker(filePath, "IMPORTS", 'import { BlogModule } from "@repo/features/blog";');
+		insertAtMarker(
+			filePath,
+			"IMPORTS",
+			'import { BlogModule } from "@repo/features/blog";',
+		);
 
 		const result = readFileSync(filePath, "utf-8");
-		expect(result).toContain('import { BlogModule } from "@repo/features/blog";');
-		expect(result.indexOf("BlogModule")).toBeLessThan(result.indexOf("[/ATLAS:IMPORTS]"));
+		expect(result).toContain(
+			'import { BlogModule } from "@repo/features/blog";',
+		);
+		expect(result.indexOf("BlogModule")).toBeLessThan(
+			result.indexOf("[/ATLAS:IMPORTS]"),
+		);
 	});
 
 	it("inserts multiple lines", () => {
 		const filePath = join(TEST_DIR, "router.ts");
 		writeFileSync(
 			filePath,
-			[
-				"// [ATLAS:ROUTERS]",
-				"// [/ATLAS:ROUTERS]",
-			].join("\n"),
+			["// [ATLAS:ROUTERS]", "// [/ATLAS:ROUTERS]"].join("\n"),
 		);
 
 		insertAtMarker(filePath, "ROUTERS", "blog: blogRouter,");
@@ -72,7 +74,11 @@ describe("insertAtMarker", () => {
 			].join("\n"),
 		);
 
-		insertAtMarker(filePath, "IMPORTS", 'import { BlogModule } from "@repo/features/blog";');
+		insertAtMarker(
+			filePath,
+			"IMPORTS",
+			'import { BlogModule } from "@repo/features/blog";',
+		);
 
 		const result = readFileSync(filePath, "utf-8");
 		expect(result).toContain("AuthModule");

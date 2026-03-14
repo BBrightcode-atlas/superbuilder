@@ -1,5 +1,5 @@
-import { readdirSync, existsSync, readFileSync } from "fs";
-import { join } from "path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { FeatureManifest } from "./types";
 
 export function scanFeatureManifests(featuresDir: string): FeatureManifest[] {

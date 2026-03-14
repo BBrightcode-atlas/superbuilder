@@ -1,8 +1,4 @@
-import type {
-	FeatureManifest,
-	FeatureRegistry,
-	FeatureEntry,
-} from "./types";
+import type { FeatureEntry, FeatureManifest, FeatureRegistry } from "./types";
 
 const STANDARD_GROUPS: Record<string, { label: string; order: number }> = {
 	core: { label: "코어", order: 0 },

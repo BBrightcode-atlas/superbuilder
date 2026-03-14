@@ -1,12 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdirSync, writeFileSync, readFileSync, rmSync } from "fs";
-import { join } from "path";
-import { applyConnections } from "./apply-connections";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { FeatureManifest } from "../manifest/types";
+import { applyConnections } from "./apply-connections";
 
 const TEST_DIR = join(import.meta.dir, "__test_fixtures_apply__");
 
-function makeManifest(overrides: Partial<FeatureManifest> = {}): FeatureManifest {
+function makeManifest(
+	overrides: Partial<FeatureManifest> = {},
+): FeatureManifest {
 	return {
 		id: "blog",
 		name: "Blog",
@@ -103,10 +105,7 @@ function setupTemplateFiles() {
 	mkdirSync(schemaDir, { recursive: true });
 	writeFileSync(
 		join(schemaDir, "index.ts"),
-		[
-			"// [ATLAS:SCHEMA_EXPORTS]",
-			"// [/ATLAS:SCHEMA_EXPORTS]",
-		].join("\n"),
+		["// [ATLAS:SCHEMA_EXPORTS]", "// [/ATLAS:SCHEMA_EXPORTS]"].join("\n"),
 	);
 
 	// packages/widgets/package.json
@@ -114,7 +113,10 @@ function setupTemplateFiles() {
 	mkdirSync(widgetsDir, { recursive: true });
 	writeFileSync(
 		join(widgetsDir, "package.json"),
-		JSON.stringify({ name: "@repo/widgets", exports: { ".": "./src/index.ts" } }),
+		JSON.stringify({
+			name: "@repo/widgets",
+			exports: { ".": "./src/index.ts" },
+		}),
 	);
 }
 
@@ -131,7 +133,11 @@ describe("applyConnections", () => {
 	it("inserts NestJS module import and ref at markers", () => {
 		const manifest = makeManifest({
 			provides: {
-				server: { module: "BlogModule", router: "blogRouter", routerKey: "blog" },
+				server: {
+					module: "BlogModule",
+					router: "blogRouter",
+					routerKey: "blog",
+				},
 			},
 		});
 
@@ -141,14 +147,20 @@ describe("applyConnections", () => {
 			join(TEST_DIR, "apps", "atlas-server", "src", "app.module.ts"),
 			"utf-8",
 		);
-		expect(appModule).toContain('import { BlogModule } from "@repo/features/blog"');
+		expect(appModule).toContain(
+			'import { BlogModule } from "@repo/features/blog"',
+		);
 		expect(appModule).toContain("BlogModule,");
 	});
 
 	it("inserts tRPC router at both runtime and type files", () => {
 		const manifest = makeManifest({
 			provides: {
-				server: { module: "BlogModule", router: "blogRouter", routerKey: "blog" },
+				server: {
+					module: "BlogModule",
+					router: "blogRouter",
+					routerKey: "blog",
+				},
 			},
 		});
 
@@ -182,7 +194,9 @@ describe("applyConnections", () => {
 			join(TEST_DIR, "apps", "app", "src", "router.tsx"),
 			"utf-8",
 		);
-		expect(router).toContain('import { createBlogRoutes } from "@features/blog"');
+		expect(router).toContain(
+			'import { createBlogRoutes } from "@features/blog"',
+		);
 		expect(router).toContain("...createBlogRoutes(),");
 	});
 
@@ -202,7 +216,9 @@ describe("applyConnections", () => {
 			join(TEST_DIR, "apps", "system-admin", "src", "router.tsx"),
 			"utf-8",
 		);
-		expect(adminRouter).toContain('import { createBlogAdminRoutes } from "./features/blog"');
+		expect(adminRouter).toContain(
+			'import { createBlogAdminRoutes } from "./features/blog"',
+		);
 		expect(adminRouter).toContain("...createBlogAdminRoutes(),");
 	});
 

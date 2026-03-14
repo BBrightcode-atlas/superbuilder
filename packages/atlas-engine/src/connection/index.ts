@@ -1,5 +1,5 @@
-export { deriveConnections } from "./deriver";
 export { insertAtMarker } from "./applier";
-export { registerWidgetExport } from "./widget-export";
 export { applyConnections } from "./apply-connections";
+export { deriveConnections } from "./deriver";
 export type { DerivedConnections } from "./types";
+export { registerWidgetExport } from "./widget-export";

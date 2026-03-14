@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 /**
  * Insert content before the closing [/ATLAS:{marker}] tag in a file.

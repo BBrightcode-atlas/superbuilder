@@ -1,9 +1,9 @@
-import { join } from "path";
+import { join } from "node:path";
 import type { FeatureManifest } from "../manifest/types";
-import { deriveConnections } from "./deriver";
 import { insertAtMarker } from "./applier";
-import { registerWidgetExport } from "./widget-export";
+import { deriveConnections } from "./deriver";
 import type { DerivedConnections } from "./types";
+import { registerWidgetExport } from "./widget-export";
 
 interface MarkerTarget {
 	file: string;

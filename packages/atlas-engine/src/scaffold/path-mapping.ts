@@ -1,4 +1,4 @@
-import { join } from "path";
+import { join } from "node:path";
 
 /** Slot names for feature-json path mapping */
 export type PathSlot = "server" | "client" | "admin" | "schema" | "widgets";
@@ -49,7 +49,11 @@ export function resolveFeatureJsonSourcePath(
 	featureId: string,
 	slot: PathSlot,
 ): string {
-	return join(featuresRepoPath, featureId, FEATURE_JSON_PATH_MAPPING[slot].from);
+	return join(
+		featuresRepoPath,
+		featureId,
+		FEATURE_JSON_PATH_MAPPING[slot].from,
+	);
 }
 
 /**

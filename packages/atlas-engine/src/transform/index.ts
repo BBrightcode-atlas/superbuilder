@@ -1,2 +1,2 @@
-export { transformImports, transformImportPath } from "./import-transformer";
-export { STATIC_IMPORT_MAP, DYNAMIC_IMPORT_PATTERNS } from "./import-map";
+export { DYNAMIC_IMPORT_PATTERNS, STATIC_IMPORT_MAP } from "./import-map";
+export { transformImportPath, transformImports } from "./import-transformer";

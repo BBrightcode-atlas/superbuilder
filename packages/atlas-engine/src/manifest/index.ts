@@ -1,4 +1,3 @@
-export { scanFeatureManifests } from "./scanner";
 export { manifestsToRegistry } from "./adapter";
 export { loadManifest, saveManifest } from "./local";
 export type { FetchOptions } from "./remote";
@@ -7,6 +6,7 @@ export {
 	fetchRemoteCommit,
 	fetchRemoteManifest,
 } from "./remote";
+export { scanFeatureManifests } from "./scanner";
 export type {
 	AdminMenuConfig,
 	AdminProvides,

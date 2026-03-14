@@ -1,6 +1,6 @@
-import { describe, it, expect } from "bun:test";
-import { deriveConnections } from "./deriver";
+import { describe, expect, it } from "bun:test";
 import type { Provides } from "../manifest/types";
+import { deriveConnections } from "./deriver";
 
 describe("deriveConnections", () => {
 	it("returns empty object when provides is empty", () => {
@@ -58,7 +58,13 @@ describe("deriveConnections", () => {
 		);
 		expect(result.adminRoutesSpread).toBe("...createBlogAdminRoutes(),");
 		expect(result.adminMenu).toBe(
-			JSON.stringify({ id: "blog", label: "Blog", icon: "pencil", order: 10, path: "/blog" }),
+			JSON.stringify({
+				id: "blog",
+				label: "Blog",
+				icon: "pencil",
+				order: 10,
+				path: "/blog",
+			}),
 		);
 	});
 
@@ -80,6 +86,37 @@ describe("deriveConnections", () => {
 			subpath: "./comment",
 			entry: "./src/comment/index.ts",
 		});
+	});
+
+	it("derives admin connections without menu", () => {
+		const provides: Provides = {
+			admin: { routes: "createBlogAdminRoutes" },
+		};
+		const result = deriveConnections("blog", provides);
+		expect(result.adminRoutesImport).toBeDefined();
+		expect(result.adminRoutesSpread).toBeDefined();
+		expect(result.adminMenu).toBeUndefined();
+	});
+
+	it("handles single table in schema", () => {
+		const provides: Provides = {
+			schema: { tables: ["users"] },
+		};
+		const result = deriveConnections("profile", provides);
+		expect(result.tablesFilter).toBe('"users"');
+	});
+
+	it("handles kebab-case feature ids", () => {
+		const provides: Provides = {
+			server: {
+				module: "RolePermissionModule",
+				router: "rolePermissionRouter",
+				routerKey: "rolePermission",
+			},
+		};
+		const result = deriveConnections("role-permission", provides);
+		expect(result.nestModuleImport).toContain("@repo/features/role-permission");
+		expect(result.trpcRouterImport).toContain("./role-permission");
 	});
 
 	it("handles full provides with all sections", () => {

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdirSync, writeFileSync, rmSync } from "fs";
-import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { scanFeatureManifests } from "./scanner";
 import type { FeatureManifest } from "./types";
 
@@ -86,6 +86,40 @@ describe("scanFeatureManifests", () => {
 		const result = scanFeatureManifests(TEST_DIR);
 		expect(result).toHaveLength(1);
 		expect(result[0].id).toBe("blog");
+	});
+
+	it("skips regular files in features directory", () => {
+		writeManifest("blog");
+		writeFileSync(join(TEST_DIR, "README.md"), "# Features");
+		const result = scanFeatureManifests(TEST_DIR);
+		expect(result).toHaveLength(1);
+		expect(result[0].id).toBe("blog");
+	});
+
+	it("preserves all manifest fields when reading", () => {
+		writeManifest("payment", {
+			name: "결제",
+			type: "page",
+			group: "commerce",
+			icon: "CreditCard",
+			description: "결제 시스템",
+			dependencies: ["profile", "auth"],
+			optionalDependencies: ["coupon"],
+			provides: {
+				server: {
+					module: "PaymentModule",
+					router: "paymentRouter",
+					routerKey: "payment",
+				},
+				schema: { tables: ["payments", "invoices"] },
+			},
+		});
+		const result = scanFeatureManifests(TEST_DIR);
+		expect(result).toHaveLength(1);
+		expect(result[0].dependencies).toEqual(["profile", "auth"]);
+		expect(result[0].optionalDependencies).toEqual(["coupon"]);
+		expect(result[0].provides.server?.module).toBe("PaymentModule");
+		expect(result[0].provides.schema?.tables).toEqual(["payments", "invoices"]);
 	});
 
 	it("defaults optionalDependencies to empty array when not present", () => {
