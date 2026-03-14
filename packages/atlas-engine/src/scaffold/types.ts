@@ -1,4 +1,4 @@
-import type { BoilerplateManifest } from "../manifest/types";
+import type { BoilerplateManifest, FeatureManifest } from "../manifest/types";
 
 /** Scaffold 입력 */
 export interface ScaffoldInput {
@@ -8,16 +8,19 @@ export interface ScaffoldInput {
 	targetDir: string;
 	/** 유지할 피처 목록 (나머지 제거) */
 	featuresToKeep: string[];
-	/** Boilerplate repo override (default: superbuilder-app-boilerplate) */
-	boilerplateRepo?: string;
+	/** Template repo override (default: superbuilder-app-boilerplate) */
+	templateRepo?: string;
+	/** Local path to features/ directory */
+	featuresSourceDir?: string;
+	/** Remote features repo (fallback when no local path) */
+	featuresRepo?: string;
 }
 
 /** Scaffold 결과 */
 export interface ScaffoldResult {
 	projectDir: string;
-	manifest: BoilerplateManifest;
-	removedFeatures: string[];
-	keptFeatures: string[];
+	installedFeatures: string[];
+	manifests: FeatureManifest[];
 }
 
 /** Feature 제거 입력 */
