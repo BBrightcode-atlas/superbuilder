@@ -27,6 +27,7 @@ Bun + Turbo monorepo with:
   - `packages/durable-session` - Durable session management
   - `packages/email` - Email templates/sending
   - `packages/scripts` - CLI tooling
+  - `packages/atlas-engine` - Feature manifest 읽기, 의존성 해석, 프로젝트 scaffold
 - **Tooling**:
   - `tooling/typescript` - Shared TypeScript configs
 
@@ -74,6 +75,108 @@ bun run clean:workspaces   # Clean all workspace node_modules
 4. **Workspace MCP config** - keep shared MCP servers in `.mcp.json`; `.cursor/mcp.json` should link to `../.mcp.json`. Codex uses `.codex/config.toml` (run with `CODEX_HOME=.codex codex ...`). OpenCode uses `opencode.json` and should mirror the same MCP set using OpenCode's `remote`/`local` schema.
 5. **Mastracode fork workflow** - for Superset's internal `mastracode` fork bundle and release process, follow `docs/mastracode-fork-workflow.md`.
 6. **Desktop git env** - in `apps/desktop`, do not import `simple-git` directly for runtime use or call raw `execFile("git", ...)`. Use the helpers in `apps/desktop/src/lib/trpc/routers/workspaces/utils/git-client.ts` so git resolves with shell-derived env/PATH.
+
+## Boilerplate & Feature Rules
+
+**Feature 코드는 이 레포에 없다.** 모든 피처 코드는 별도의 boilerplate 레포(`BBrightcode-atlas/superbuilder-app-boilerplate`)에 존재한다. 이 레포(superbuilder)는 피처를 **생성, 관리, 조합**하는 도구이다.
+
+### Source of Truth
+- **`superbuilder.json`** (boilerplate repo, `develop` branch) = 피처 카탈로그의 유일한 source of truth
+- Superbuilder는 GitHub API (`gh api`)로 이 파일을 읽기만 한다
+- 피처 메타데이터를 superbuilder 코드에 하드코딩하지 않는다
+
+### atlas-engine (`packages/atlas-engine`)
+- **manifest/** — `superbuilder.json` 읽기 (`remote.ts`: gh api, `local.ts`: 파일)
+- **resolver/** — 의존성 해석 + 토폴로지 정렬
+- **scaffold/** — boilerplate clone → 피처 제거 → 새 프로젝트 생성
+- **scaffold/register.ts** — 피처 코드를 boilerplate에 등록 (PR 생성)
+
+### Feature Lifecycle
+1. **조회**: `fetchRemoteManifest()` → `manifest.features` (1분 캐시)
+2. **등록**: `registerToBoilerplate()` → boilerplate에 코드 복사 + marker 삽입 + manifest 업데이트 + PR
+3. **제거**: `removeFeatures()` → 디렉토리 삭제 + marker 제거 + manifest 업데이트 (역의존성 캐스케이드)
+4. **프로젝트 생성**: `scaffold()` → boilerplate clone → 불필요 피처 제거 → git init
+
+### Marker 블록 규칙
+```typescript
+// [ATLAS:IMPORTS]
+import { BlogModule } from "@repo/features/blog";
+// [/ATLAS:IMPORTS]
+```
+- 피처 등록 시: 닫는 태그 앞에 삽입 (중복 방지)
+- 피처 제거 시: 정확한 매칭으로 해당 줄 삭제
+
+### Desktop Atlas Routers (`apps/desktop/src/lib/trpc/routers/atlas/`)
+- `registry.ts` — manifest 조회 (캐시)
+- `resolver.ts` — 의존성 해석
+- `composer.ts` — 프로젝트 생성 (scaffold)
+- `feature-studio.ts` — Feature Studio 워크플로우 + boilerplate 등록
+
+### 상세 설계
+- 조회/등록 흐름: `docs/architecture/subsystems/feature-lifecycle.md`
+- 개발 파이프라인: `docs/architecture/subsystems/feature-development-pipeline.md`
+- 승인 워크플로우: `docs/architecture/subsystems/feature-approval-workflow.md`
+
+### 승인 체계 (3단계)
+1. **spec_plan 승인** — Spec/Plan 검토 → approved: agent 코드 개발 시작
+2. **human_qa 승인** — 구현 결과 검토 → approved: 등록 대기
+3. **registration 승인** — 최종 등록 검토 → approved: boilerplate PR 생성
+
+### 역할 분리
+- **서버 (packages/trpc)**: DB 상태 관리, CRUD, artifact 저장, 상태 전이 가드
+- **Desktop (atlas routers)**: 오케스트레이션 — spec/plan 생성, worktree, agent launch, 검증, PR 생성
+- **respondToApproval**: 승인 응답 + **다음 상태 자동 전이** (approved → nextStatus)
+
+### CLI 진입점
+파이프라인은 하나. CLI 사용 경로만 2가지:
+1. **Desktop UI** → Desktop tRPC router가 CLI agent launch
+2. **외부 CLI** → claude/codex에서 직접 서버 API 호출 (향후, 복잡 시 생략)
+
+현재 오케스트레이션은 Desktop feature-studio.ts에 있음. 외부 CLI 진입점이 필요하면 핸들러 함수들을 atlas-engine/pipeline으로 추출.
+
+### Feature 개발 흐름 (CLI Agent)
+1. Feature Studio에서 spec/plan 생성 → 승인
+2. Boilerplate repo의 **git worktree** 생성 (`~/.superbuilder/worktrees/{name}/`)
+3. CLI agent (claude/codex)가 **worktree를 cwd**로 피처 코드 작성
+4. Agent가 marker 블록 삽입 + superbuilder.json 업데이트 + commit/push
+5. 자동 검증 (typecheck + lint) → Human QA
+6. 승인 시 boilerplate에 PR 생성 → 머지 → 피처 등록 완료
+
+## 3-Repo 아키텍처
+
+3개 레포로 관심사를 분리한다. 상세는 `docs/architecture/three-repo-architecture.md` 참조.
+
+| 레포 | 역할 | 기본 브랜치 |
+|------|------|-----------|
+| `BBrightcode-atlas/superbuilder` | 빌더 도구 (Desktop, atlas-engine, Registry) | `develop` |
+| `BBrightcode-atlas/superbuilder-features` | Feature 코드 저장소 (feature 패키지, Core Contract, Dev Kit) | `main` |
+| `BBrightcode-atlas/superbuilder-app-boilerplate` | 앱 템플릿 (빈 셸 + `[ATLAS:*]` 마커) | `develop` |
+
+### 크로스 레포 작업 시 주의사항
+- Feature 코드는 superbuilder-features에만 존재한다. superbuilder 레포에 feature 코드를 넣지 않는다
+- `superbuilder.json` (boilerplate)은 레거시 source of truth. 신규 feature는 `feature.json` 기반으로 작성한다
+- Import 경로: feature 개발 시 `@superbuilder/*`, scaffold 후 `@repo/*`로 자동 변환
+- Submodule: `superbuilder/features/` → superbuilder-features (로컬 개발용)
+
+## atlas-engine 모듈 가이드
+
+`packages/atlas-engine/src/` 내 4개 모듈:
+
+### 모듈 구조
+- **manifest/** — feature.json 스캔 (`scanFeatureManifests`), FeatureRegistry 변환 (`manifestsToRegistry`), 원격 manifest 조회 (`fetchRemoteManifest`)
+- **connection/** — provides → 코드 스니펫 도출 (`deriveConnections`), 마커에 삽입 (`insertAtMarker`), 통합 실행 (`applyConnections`)
+- **transform/** — `@superbuilder/*` → `@repo/*` import 경로 변환 (`transformImports`)
+- **scaffold/** — boilerplate clone + feature 제거 (`scaffold`), boilerplate 등록 (`registerToBoilerplate`), 경로 매핑 (`resolveFeatureJsonSourcePath`, `resolveFeatureJsonTargetPath`)
+
+### 테스트
+- 프레임워크: `bun:test` (Bun 내장)
+- 실행: `bun test` (packages/atlas-engine에서)
+- 테스트 파일 (`*.test.ts`)은 tsconfig에서 제외되어 있다
+
+## 레퍼런스 문서
+- 3-Repo 아키텍처: `docs/architecture/three-repo-architecture.md`
+- [ATLAS:*] 마커 레퍼런스: `docs/architecture/subsystems/marker-reference.md`
+- feature.json 스키마: `docs/architecture/subsystems/feature-json-schema.md`
 
 ---
 
