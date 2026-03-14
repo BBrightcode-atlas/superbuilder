@@ -1,4 +1,3 @@
-import type { ResolvedFeatures } from "../manifest/types";
 
 // ─────────────────────────────────────────────────────────────
 // Pipeline Step tracking
@@ -88,7 +87,6 @@ export interface SeedResult {
 export interface ComposeResult {
 	projectDir: string;
 	projectName: string;
-	resolved: ResolvedFeatures;
 	installedFeatures: string[];
 	neon?: NeonResult;
 	github?: GitHubResult;

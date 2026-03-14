@@ -52,7 +52,7 @@ export const createAtlasComposerRouter = () =>
 					.values({
 						name: input.projectName,
 						localPath: result.projectDir,
-						features: result.resolved.resolved,
+						features: result.installedFeatures,
 						gitInitialized: true,
 						status: "created",
 					})
@@ -62,7 +62,7 @@ export const createAtlasComposerRouter = () =>
 					projectDir: result.projectDir,
 					projectName: input.projectName,
 					projectId: project.id,
-					features: result.resolved.resolved,
+					features: result.installedFeatures,
 					gitInitialized: true,
 				};
 			}),

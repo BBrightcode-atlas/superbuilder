@@ -1,6 +1,4 @@
 import { join } from "node:path";
-import { fetchRemoteManifest } from "../manifest/remote";
-import { resolveFeatures } from "../resolver/resolver";
 import { scaffold } from "../scaffold/scaffold";
 import { writeEnvFile } from "./env";
 import { pushToGitHub } from "./github";
@@ -50,28 +48,20 @@ export async function composePipeline(
 	const cb = callbacks ?? input.callbacks;
 	const projectDir = join(input.targetPath, input.projectName);
 
-	// ── Step 1: resolve (FATAL) ──────────────────────────────────
+	// ── Step 1+2: resolve + scaffold (FATAL) ─────────────────────
+	// scaffold()가 내부에서 features source resolve → manifest scan → copy → transform → connections 수행
+	// compose에서는 feature IDs를 전달하고 scaffold에 위임
 	cb?.onStep?.("resolve", "start", "피처 의존성 해석 중...");
-	const manifest = await fetchRemoteManifest({
-		repo: opts.boilerplateRepo,
-	});
-	const resolved = resolveFeatures(manifest, input.features);
-	cb?.onStep?.(
-		"resolve",
-		"done",
-		`${resolved.resolved.length}개 피처 해석 완료`,
-	);
-
-	// ── Step 2: scaffold (FATAL) ─────────────────────────────────
 	cb?.onStep?.("scaffold", "start", "프로젝트 스캐폴딩 중...");
 	const scaffoldResult = await scaffold({
 		projectName: input.projectName,
 		targetDir: projectDir,
-		featuresToKeep: resolved.resolved,
+		featuresToKeep: input.features,
 		templateRepo: opts.boilerplateRepo,
 		featuresSourceDir: opts.featuresSourceDir,
 		featuresRepo: opts.featuresRepo,
 	});
+	cb?.onStep?.("resolve", "done", `${input.features.length}개 피처 요청`);
 	cb?.onStep?.(
 		"scaffold",
 		"done",
@@ -221,7 +211,6 @@ export async function composePipeline(
 	return {
 		projectDir,
 		projectName: input.projectName,
-		resolved,
 		installedFeatures: scaffoldResult.installedFeatures,
 		neon: neonResult,
 		github: githubResult,
