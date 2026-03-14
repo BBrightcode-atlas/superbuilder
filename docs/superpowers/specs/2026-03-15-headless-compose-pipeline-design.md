@@ -108,7 +108,7 @@ interface ComposeOptions {
   boilerplateRepo?: string;
   /** 소유자 이메일 (seed 단계에서 사용) */
   ownerEmail?: string;
-  /** 소유자 비밀번호 (미지정 시 랜덤 생성) */
+  /** 소유자 비밀번호 (default: "changeme!!") */
   ownerPassword?: string;
 }
 ```
@@ -149,7 +149,7 @@ interface ComposeResult {
   seed?: {
     systemOrgId: string;
     ownerEmail: string;
-    ownerPasswordGenerated: boolean;
+    ownerPassword: string;
   };
 }
 ```
@@ -349,7 +349,7 @@ async function seedInitialData(input: SeedInput): Promise<void> {
   // 2. Owner 사용자 등록
   //    better-auth의 signUp API로 사용자 생성
   //    email: ownerEmail (기본값: 환경변수 또는 프롬프트)
-  //    password: ownerPassword (기본값: 랜덤 생성 후 출력)
+  //    password: ownerPassword (기본값: "changeme!!")
 
   // 3. Owner를 system org에 owner role로 추가
   //    better-auth의 organization.addMember API 사용
@@ -365,7 +365,7 @@ async function seedInitialData(input: SeedInput): Promise<void> {
 }
 ```
 
-> **보안**: owner 비밀번호가 자동 생성된 경우 CLI 출력에만 표시하고 파일에 저장하지 않는다.
+> **보안**: 초기 비밀번호는 `changeme!!`이다. 첫 로그인 후 반드시 변경해야 한다.
 ```
 
 ---
@@ -440,7 +440,7 @@ Agent: 사용 가능한 Features:
   ✅ 초기 시딩 완료
      System Org: org_xxxxxxxxxxxx
      Owner: admin@mycompany.com
-     Password: ●●●●●●●● (생성됨 — 위에 출력됨, 안전하게 보관하세요)
+     Password: changeme!! (초기 비밀번호 — 로그인 후 변경하세요)
 
 프로젝트 준비 완료: ~/Projects/my-saas-app
 Admin: https://my-saas-app.vercel.app/admin
