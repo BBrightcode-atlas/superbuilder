@@ -5,19 +5,34 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFileCb);
 
+/** Detect package manager from project's package.json */
+async function detectPM(
+	projectDir: string,
+): Promise<{ cmd: string; runner: string }> {
+	try {
+		const raw = await readFile(join(projectDir, "package.json"), "utf-8");
+		const pkg = JSON.parse(raw);
+		const pm = pkg.packageManager ?? "";
+		if (pm.startsWith("pnpm")) return { cmd: "pnpm", runner: "pnpx" };
+		if (pm.startsWith("yarn")) return { cmd: "yarn", runner: "yarn" };
+	} catch {}
+	return { cmd: "bun", runner: "bunx" };
+}
+
 export async function installFeatures(opts: {
 	projectDir: string;
 }): Promise<{ installed: boolean; migrated: boolean }> {
 	const { projectDir } = opts;
+	const pm = await detectPM(projectDir);
 
-	// Step 1: bun install (try --frozen-lockfile first, fallback to bun install)
+	// Step 1: Install dependencies
 	try {
-		await execFileAsync("bun", ["install", "--frozen-lockfile"], {
+		await execFileAsync(pm.cmd, ["install", "--frozen-lockfile"], {
 			cwd: projectDir,
 			timeout: 120_000,
 		});
 	} catch {
-		await execFileAsync("bun", ["install"], {
+		await execFileAsync(pm.cmd, ["install"], {
 			cwd: projectDir,
 			timeout: 120_000,
 		});
@@ -31,7 +46,7 @@ export async function installFeatures(opts: {
 		const dbUrlMatch = envContent.match(/^DATABASE_URL=(.+)$/m);
 		if (dbUrlMatch) {
 			const drizzleDir = join(projectDir, "packages/drizzle");
-			await execFileAsync("bunx", ["drizzle-kit", "push", "--force"], {
+			await execFileAsync(pm.runner, ["drizzle-kit", "push", "--force"], {
 				cwd: drizzleDir,
 				env: {
 					...process.env,

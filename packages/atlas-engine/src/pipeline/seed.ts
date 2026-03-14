@@ -81,25 +81,14 @@ try {
 }
 `;
 
-	const seedPath = join(opts.projectDir, "_seed-owner.mjs");
+	const seedPath = join(opts.projectDir, "packages/drizzle/_seed-owner.mjs");
 	await writeFile(seedPath, seedScript, "utf-8");
 
 	try {
-		// Ensure deps are installed (postgres package is needed)
-		try {
-			await execFileAsync("bun", ["install", "--frozen-lockfile"], {
-				cwd: opts.projectDir,
-				timeout: 120_000,
-			});
-		} catch {
-			await execFileAsync("bun", ["install"], {
-				cwd: opts.projectDir,
-				timeout: 120_000,
-			});
-		}
-
+		// Dependencies already installed by installFeatures() step
+		// Run seed script from packages/drizzle where postgres package is available
 		const { stdout } = await execFileAsync("bun", ["run", seedPath], {
-			cwd: opts.projectDir,
+			cwd: join(opts.projectDir, "packages/drizzle"),
 			env: {
 				...process.env,
 				DATABASE_URL: dbUrlMatch[1],
