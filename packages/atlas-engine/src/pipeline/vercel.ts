@@ -151,6 +151,27 @@ export async function deployToVercel(opts: {
 		}
 	}
 
+	// Step 4: Trigger deployment
+	try {
+		await vercelFetch(
+			`/v13/deployments${queryParams}`,
+			{
+				method: "POST",
+				body: JSON.stringify({
+					name: opts.projectName,
+					project: projectId,
+					target: "production",
+					gitSource: gitLinked
+						? { type: "github", org: gitOwner, repo: gitRepo, ref: "main" }
+						: undefined,
+				}),
+			},
+			token,
+		);
+	} catch {
+		// Deployment trigger may fail — git push will trigger auto-deploy later
+	}
+
 	// Determine deployment URL from project aliases
 	const aliases = (project.alias ?? []) as string[];
 	const deploymentUrl =
