@@ -122,6 +122,32 @@ describe("scanFeatureManifests", () => {
 		expect(result[0].provides.schema?.tables).toEqual(["payments", "invoices"]);
 	});
 
+	it("handles feature.json with extra unknown fields gracefully", () => {
+		const dir = join(TEST_DIR, "extended");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(
+			join(dir, "feature.json"),
+			JSON.stringify({
+				id: "extended",
+				name: "Extended",
+				version: "2.0.0",
+				type: "page",
+				group: "content",
+				icon: "star",
+				dependencies: [],
+				provides: {},
+				customField: "should be preserved",
+				extensionPoints: {},
+			}),
+		);
+		const result = scanFeatureManifests(TEST_DIR);
+		expect(result).toHaveLength(1);
+		expect(result[0].id).toBe("extended");
+		expect((result[0] as Record<string, unknown>).customField).toBe(
+			"should be preserved",
+		);
+	});
+
 	it("defaults optionalDependencies to empty array when not present", () => {
 		const dir = join(TEST_DIR, "no-optional");
 		mkdirSync(dir, { recursive: true });
