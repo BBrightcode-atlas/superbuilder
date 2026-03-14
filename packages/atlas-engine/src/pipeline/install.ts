@@ -46,18 +46,26 @@ export async function installFeatures(opts: {
 		const dbUrlMatch = envContent.match(/^DATABASE_URL=(.+)$/m);
 		if (dbUrlMatch) {
 			const drizzleDir = join(projectDir, "packages/drizzle");
-			await execFileAsync(pm.runner, ["drizzle-kit", "push", "--force"], {
-				cwd: drizzleDir,
-				env: {
-					...process.env,
-					DATABASE_URL: dbUrlMatch[1],
+			// Use bun to run drizzle-kit (handles TypeScript decorators)
+			// Run from packages/drizzle where drizzle.config.ts lives
+			await execFileAsync(
+				"bun",
+				["run", "drizzle-kit", "push", "--force"],
+				{
+					cwd: drizzleDir,
+					env: {
+						...process.env,
+						DATABASE_URL: dbUrlMatch[1],
+					},
+					timeout: 60_000,
 				},
-				timeout: 60_000,
-			});
+			);
 			migrated = true;
 		}
-	} catch {
-		// .env missing or migration failed — non-fatal for install step
+	} catch (e) {
+		// Log migration error but don't fail install
+		const msg = e instanceof Error ? e.message : String(e);
+		console.warn(`DB migration warning: ${msg.slice(0, 200)}`);
 	}
 
 	return { installed: true, migrated };
