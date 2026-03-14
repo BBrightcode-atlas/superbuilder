@@ -177,6 +177,7 @@ import { BlogModule } from "@repo/features/blog";
 - 3-Repo 아키텍처: `docs/architecture/three-repo-architecture.md`
 - [ATLAS:*] 마커 레퍼런스: `docs/architecture/subsystems/marker-reference.md`
 - feature.json 스키마: `docs/architecture/subsystems/feature-json-schema.md`
+- Composer → Scaffold 파이프라인: `docs/architecture/subsystems/composer-scaffold-pipeline.md`
 
 ---
 
