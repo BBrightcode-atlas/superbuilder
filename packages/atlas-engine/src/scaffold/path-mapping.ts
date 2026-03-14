@@ -1,54 +1,64 @@
-import { join } from "node:path";
-import type { PathMapping } from "./types";
+import { join } from "path";
 
+/** Slot names for feature-json path mapping */
 export type PathSlot = "server" | "client" | "admin" | "schema" | "widgets";
 
-export const DEFAULT_PATH_MAPPING: PathMapping = {
+interface PathEntry {
+	from: string;
+	to: string;
+}
+
+/** Path mapping type */
+export type PathMapping = Record<PathSlot, PathEntry>;
+
+/**
+ * Feature-json source path mapping.
+ *
+ * Maps feature package entrypoint directories to target project paths.
+ * Used when the source is superbuilder-features/features/{name}/src/*
+ * instead of the legacy boilerplate-internal paths.
+ */
+export const FEATURE_JSON_PATH_MAPPING: PathMapping = {
 	server: {
-		from: "packages/features-server/features",
+		from: "src/server",
 		to: "packages/features",
 	},
 	client: {
-		from: "apps/features-app/src/features",
+		from: "src/client",
 		to: "apps/app/src/features",
 	},
 	admin: {
-		from: "apps/feature-admin/src/features",
-		to: "apps/feature-admin/src/features",
+		from: "src/admin",
+		to: "apps/system-admin/src/features",
 	},
 	schema: {
-		from: "packages/features-db/src/schema/features",
+		from: "src/schema",
 		to: "packages/drizzle/src/schema/features",
 	},
 	widgets: {
-		from: "packages/widgets/src",
+		from: "src/widget",
 		to: "packages/widgets/src",
 	},
 };
 
-/** Import alias mapping (superbuilder -> target project) */
-export const IMPORT_ALIAS_MAP: Record<string, string> = {
-	"@superbuilder/features-server": "@repo/features",
-	"@superbuilder/features-db": "@repo/drizzle",
-	"@superbuilder/features-client/core": "@repo/core",
-	"@superbuilder/feature-ui": "@repo/ui",
-	"@superbuilder/widgets": "@repo/widgets",
-};
-
-export function resolveSourcePath(
-	mapping: PathMapping,
+/**
+ * Resolve source path for a feature-json based feature.
+ */
+export function resolveFeatureJsonSourcePath(
+	featuresRepoPath: string,
+	featureId: string,
 	slot: PathSlot,
-	featureName: string,
-	sourceRepoPath: string,
 ): string {
-	return join(sourceRepoPath, mapping[slot].from, featureName);
+	return join(featuresRepoPath, featureId, FEATURE_JSON_PATH_MAPPING[slot].from);
 }
 
-export function resolveTargetPath(
-	mapping: PathMapping,
-	slot: PathSlot,
-	featureName: string,
+/**
+ * Resolve target path for a feature-json based feature.
+ */
+export function resolveFeatureJsonTargetPath(
 	projectDir: string,
+	featureId: string,
+	slot: PathSlot,
 ): string {
-	return join(projectDir, mapping[slot].to, featureName);
+	return join(projectDir, FEATURE_JSON_PATH_MAPPING[slot].to, featureId);
 }

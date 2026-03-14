@@ -1,18 +1,16 @@
-export { scaffold } from "./scaffold";
+export { generateRemovalWorkflow, removeFeatures } from "./feature-remover";
 export {
-	DEFAULT_PATH_MAPPING,
-	IMPORT_ALIAS_MAP,
-	resolveSourcePath,
-	resolveTargetPath,
+	FEATURE_JSON_PATH_MAPPING,
+	resolveFeatureJsonSourcePath,
+	resolveFeatureJsonTargetPath,
 } from "./path-mapping";
-export type { PathSlot } from "./path-mapping";
-export { buildProjectSpec, writeProjectSpec } from "./spec-writer";
-export { cloneTemplate, initGitRepo } from "./template-clone";
-export { sanitizeTemplate } from "./template-sanitizer";
-export type { CloneOptions } from "./template-clone";
-export {
-	generateWorkflowMarkdown,
-	writeInstallWorkflow,
-} from "./workflow-writer";
-export type { WorkflowWriterInput } from "./workflow-writer";
-export type * from "./types";
+export type { PathMapping, PathSlot } from "./path-mapping";
+export type { RegisterInput, RegisterResult } from "./register";
+export { registerToBoilerplate } from "./register";
+export { scaffold } from "./scaffold";
+export type {
+	RemoveInput,
+	RemoveResult,
+	ScaffoldInput,
+	ScaffoldResult,
+} from "./types";
