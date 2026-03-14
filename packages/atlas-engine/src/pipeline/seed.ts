@@ -47,23 +47,107 @@ const orgId = crypto.randomUUID();
 const now = new Date();
 
 try {
+  // Create tables if they don't exist (better-auth core schema)
   await sql\`
-    INSERT INTO users (id, name, email, email_verified, created_at, updated_at)
+    CREATE TABLE IF NOT EXISTS "user" (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      email_verified BOOLEAN NOT NULL DEFAULT false,
+      image TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      is_active BOOLEAN DEFAULT true,
+      marketing_consent_at TIMESTAMP,
+      deleted_at TIMESTAMP
+    )
+  \`;
+  await sql\`
+    CREATE TABLE IF NOT EXISTS account (
+      id TEXT PRIMARY KEY,
+      account_id TEXT NOT NULL,
+      provider_id TEXT NOT NULL,
+      user_id TEXT NOT NULL REFERENCES "user"(id),
+      password TEXT,
+      access_token TEXT,
+      refresh_token TEXT,
+      id_token TEXT,
+      expires_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  \`;
+  await sql\`
+    CREATE TABLE IF NOT EXISTS session (
+      id TEXT PRIMARY KEY,
+      expires_at TIMESTAMP NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      ip_address TEXT,
+      user_agent TEXT,
+      user_id TEXT NOT NULL REFERENCES "user"(id),
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      active_organization_id TEXT
+    )
+  \`;
+  await sql\`
+    CREATE TABLE IF NOT EXISTS verification (
+      id TEXT PRIMARY KEY,
+      identifier TEXT NOT NULL,
+      value TEXT NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  \`;
+  await sql\`
+    CREATE TABLE IF NOT EXISTS organization (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      slug TEXT UNIQUE,
+      logo TEXT,
+      metadata TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  \`;
+  await sql\`
+    CREATE TABLE IF NOT EXISTS member (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL REFERENCES organization(id),
+      user_id TEXT NOT NULL REFERENCES "user"(id),
+      role TEXT NOT NULL DEFAULT 'member',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  \`;
+  await sql\`
+    CREATE TABLE IF NOT EXISTS profiles (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      email TEXT,
+      role TEXT DEFAULT 'member',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  \`;
+
+  // Seed data
+  await sql\`
+    INSERT INTO "user" (id, name, email, email_verified, created_at, updated_at)
     VALUES (\${userId}, \${process.env.SEED_NAME}, \${process.env.SEED_EMAIL}, true, \${now}, \${now})
   \`;
 
   await sql\`
-    INSERT INTO accounts (id, account_id, provider_id, user_id, password, created_at, updated_at)
+    INSERT INTO account (id, account_id, provider_id, user_id, password, created_at, updated_at)
     VALUES (\${crypto.randomUUID()}, \${process.env.SEED_EMAIL}, 'credential', \${userId}, \${process.env.SEED_PASSWORD_HASH}, \${now}, \${now})
   \`;
 
   await sql\`
-    INSERT INTO organizations (id, name, slug, created_at)
+    INSERT INTO organization (id, name, slug, created_at)
     VALUES (\${orgId}, \${process.env.SEED_PROJECT_SLUG}, \${process.env.SEED_PROJECT_SLUG}, \${now})
   \`;
 
   await sql\`
-    INSERT INTO members (id, organization_id, user_id, role, created_at)
+    INSERT INTO member (id, organization_id, user_id, role, created_at)
     VALUES (\${crypto.randomUUID()}, \${orgId}, \${userId}, 'owner', \${now})
   \`;
 
