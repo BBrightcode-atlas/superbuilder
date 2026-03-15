@@ -70,7 +70,7 @@ CLI agent ──┘       │
 | 호출자 | 진입점 | install 기본값 | 진행 콜백 |
 |--------|--------|---------------|----------|
 | **Desktop UI** | tRPC mutation (thin wrapper) | `false` (이후 UI에서 별도 실행) | UI progress bar |
-| **CLI agent** | `.agents/commands/compose.md` | `true` (파이프라인 내에서 직접) | 텍스트 출력 |
+| **CLI agent** | `.agents/commands/superbuilder-compose.md` | `true` (파이프라인 내에서 직접) | 텍스트 출력 |
 | **스크립트/자동화** | `composePipeline()` 직접 호출 | 설정에 따름 | 커스텀 콜백 |
 
 ---
@@ -372,14 +372,14 @@ async function seedInitialData(input: SeedInput): Promise<void> {
 
 ## 5. CLI Agent 스킬
 
-### `.agents/commands/compose.md`
+### `.agents/commands/superbuilder-compose.md`
 
 두 가지 모드를 지원한다.
 
 #### (a) 대화형 모드 — 인자 없이 실행
 
 ```
-사용자: /compose
+사용자: /superbuilder-compose
 ```
 
 agent가 수행하는 흐름:
@@ -449,15 +449,15 @@ Admin: https://my-saas-app.vercel.app/admin
 #### (b) 비대화형 모드 — 인자 전달
 
 ```
-사용자: /compose --features blog,comment,payment --name my-saas-app --path ~/Projects
+사용자: /superbuilder-compose --features blog,comment,payment --name my-saas-app --path ~/Projects
 ```
 
 또는 config 파일:
 ```
-사용자: /compose --config compose.json
+사용자: /superbuilder-compose --config superbuilder-compose.json
 ```
 
-`compose.json`:
+`superbuilder-compose.json`:
 ```json
 {
   "features": ["blog", "comment", "payment"],
@@ -477,6 +477,7 @@ Admin: https://my-saas-app.vercel.app/admin
 ---
 
 ## 6. Desktop tRPC 변경
+
 
 `apps/desktop/src/lib/trpc/routers/atlas/composer.ts`를 thin wrapper로 리팩토링:
 
@@ -543,7 +544,7 @@ packages/atlas-engine/src/
 │   └── seed.ts                  # seedInitialData() — system org + owner 사용자
 
 .agents/commands/
-└── compose.md                   # CLI agent 스킬
+└── superbuilder-compose.md      # CLI agent 스킬
 ```
 
 ### 수정 파일

@@ -163,7 +163,7 @@ import { BlogModule } from "@repo/features/blog";
 | `main` | `origin/main` | 안정 브랜치 — develop에서 PR로 머지 |
 | `main_superset` | `upstream/main` | superset 원본 추적 전용 — 직접 수정 금지 |
 
-Upstream sync: `/sync-upstream` 스킬 사용. `main_superset` ← upstream/main → sync branch → develop 머지.
+Upstream sync: `/superbuilder-sync-upstream` 스킬 사용. `main_superset` ← upstream/main → sync branch → develop 머지.
 
 ### 크로스 레포 작업 시 주의사항
 - Feature 코드는 superbuilder-features에만 존재한다. superbuilder 레포에 feature 코드를 넣지 않는다

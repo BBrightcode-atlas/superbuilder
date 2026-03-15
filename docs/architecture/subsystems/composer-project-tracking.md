@@ -67,7 +67,7 @@ scaffolding → provisioning → deploying → seeding → deployed
 
 ```
 ┌──────────────────────────┐     ┌──────────────────────────┐
-│  Desktop Composer (UI)   │     │  CLI /compose            │
+│  Desktop Composer (UI)   │     │  CLI /superbuilder-compose │
 │                          │     │                          │
 │  electronTrpc            │     │  composePipeline()       │
 │  → atlas.composer.*      │     │  → onProjectSave cb      │
@@ -114,7 +114,7 @@ Step 4: Vercel
   → apiTrpcClient.composer.update({ id, status:'deployed', vercelUrl })
 ```
 
-### 3. CLI `/compose` 흐름
+### 3. CLI `/superbuilder-compose` 흐름
 
 ```
 composePipeline({

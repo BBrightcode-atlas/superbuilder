@@ -15,7 +15,7 @@
 | **작업 레포** | superbuilder (Task 1-8, 10-11) + superbuilder-app-boilerplate (Task 9) |
 | **브랜치** | develop |
 | **사전 조건** | atlas-engine의 manifest/connection/transform 모듈 구현 완료 |
-| **완료 기준** | E2E: hello-world + comment scaffold → Vercel 배포 → 로그인 성공, `/spec-verify` 통과 |
+| **완료 기준** | E2E: hello-world + comment scaffold → Vercel 배포 → 로그인 성공, `/superbuilder-spec-verify` 통과 |
 
 ---
 
@@ -285,7 +285,7 @@ packages/atlas-engine/src/
 
 > 스펙 대비 구현 완전성 확인 + 전체 빌드/테스트/린트 통과
 
-- [ ] `/spec-verify docs/superpowers/specs/2026-03-15-scaffold-feature-json-migration-design.md` 실행
+- [ ] `/superbuilder-spec-verify docs/superpowers/specs/2026-03-15-scaffold-feature-json-migration-design.md` 실행
 - [ ] typecheck: `cd packages/atlas-engine && bun run typecheck`
 - [ ] test: `bun test packages/atlas-engine/`
 - [ ] lint: `bun run lint:fix`
@@ -299,7 +299,7 @@ packages/atlas-engine/src/
 
 > 전체 파이프라인을 실제 실행하여 검증
 
-- [ ] `/compose-e2e-test` 스킬 실행
+- [ ] `/superbuilder-compose-e2e-test` 스킬 실행
 - [ ] hello-world + comment feature로 프로젝트 생성
 - [ ] 전체 체크포인트 통과 확인:
   - scaffold 완료 (feature 코드 복사됨)

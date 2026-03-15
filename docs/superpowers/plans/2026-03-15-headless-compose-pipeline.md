@@ -15,7 +15,7 @@
 | **작업 레포** | superbuilder |
 | **작업 디렉토리** | packages/atlas-engine |
 | **브랜치** | develop |
-| **완료 기준** | composePipeline() 함수 동작, compose.md 스킬 작성, Desktop composer.ts thin wrapper로 리팩토링, `/spec-verify` 통과 |
+| **완료 기준** | composePipeline() 함수 동작, superbuilder-compose.md 스킬 작성, Desktop composer.ts thin wrapper로 리팩토링, `/superbuilder-spec-verify` 통과 |
 
 ---
 
@@ -369,9 +369,9 @@ seed 스크립트: 296-337행 → 그대로 복사
 
 ## Chunk 4: CLI 스킬 (Task 14)
 
-### Task 14: `.agents/commands/compose.md` — CLI agent 스킬
+### Task 14: `.agents/commands/superbuilder-compose.md` — CLI agent 스킬
 
-**파일:** `.agents/commands/compose.md`
+**파일:** `.agents/commands/superbuilder-compose.md`
 
 - [ ] 14-1. 스킬 설명 헤더 작성:
   - 목적: 프로젝트 생성 파이프라인 실행 (feature 선택 → scaffold → 배포)
@@ -401,17 +401,17 @@ seed 스크립트: 296-337행 → 그대로 복사
   - scaffold 실패: "boilerplate repo 접근 권한 확인 (gh auth status)"
   - neon 실패: "NEON_API_KEY 환경변수 확인"
   - vercel 실패: "VERCEL_TOKEN 환경변수 확인"
-- [ ] 14-7. Commit: `feat: add compose CLI skill for headless project creation`
+- [ ] 14-7. Commit: `feat: add superbuilder-compose CLI skill for headless project creation`
 
 ---
 
 ## Chunk 5: 스펙 대비 검증 + 빌드 검증 (Task 15-16)
 
-### Task 15: `/spec-verify` 실행 — 스펙 대비 구현 완전성 검증
+### Task 15: `/superbuilder-spec-verify` 실행 — 스펙 대비 구현 완전성 검증
 
 **필수**: 이 단계는 통과할 때까지 반복한다 (최대 5회).
 
-- [ ] 15-1. `/spec-verify docs/superpowers/specs/2026-03-15-headless-compose-pipeline-design.md` 실행
+- [ ] 15-1. `/superbuilder-spec-verify docs/superpowers/specs/2026-03-15-headless-compose-pipeline-design.md` 실행
   - Phase 1: 스펙에서 함수/인터페이스/필드/에러 처리/콜백 호출 추출
   - Phase 2: 실제 코드에서 각 항목 존재 여부 검증
   - Phase 3: 결과 테이블 출력 (PASS/FAIL)
