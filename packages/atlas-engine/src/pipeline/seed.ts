@@ -57,6 +57,7 @@ try {
       image TEXT,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      role TEXT DEFAULT 'user',
       banned BOOLEAN DEFAULT false,
       ban_reason TEXT,
       ban_expires TIMESTAMP,
@@ -77,6 +78,9 @@ try {
       password TEXT,
       access_token TEXT,
       refresh_token TEXT,
+      access_token_expires_at TIMESTAMP,
+      refresh_token_expires_at TIMESTAMP,
+      scope TEXT,
       id_token TEXT,
       expires_at TIMESTAMP,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -134,6 +138,19 @@ try {
       role TEXT DEFAULT 'member',
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
+    )
+  \`;
+
+  await sql\`
+    CREATE TABLE IF NOT EXISTS invitation (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL REFERENCES organization(id),
+      email TEXT NOT NULL,
+      role TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      inviter_id TEXT REFERENCES "user"(id),
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
     )
   \`;
 
