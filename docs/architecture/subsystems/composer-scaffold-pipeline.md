@@ -315,14 +315,20 @@ agent는 `.claude/commands/install-features.md` 워크플로우를 따라 추가
 
 ---
 
-## 향후 변경 예정 (feature.json 전환 후)
+## 현재 상태 (2026-03-15 — 전환 완료)
 
-현재 scaffold는 **boilerplate 내부의 superbuilder.json**을 source of truth로 사용한다.
-feature.json 전환이 완료되면:
+scaffold는 **"빈 템플릿 clone → superbuilder-features에서 feature 복사 + 연결"** 방식으로 전환 완료.
 
-1. `fetchRemoteManifest()` 대신 `scanFeatureManifests()` 사용
-2. `removeFeatures()` 대신 **"빈 템플릿 + feature 설치"** 방식으로 전환
-3. `connections` 필드를 수동 관리 대신 `deriveConnections()`로 자동 도출
-4. Import 변환: `transformImports()`로 `@superbuilder/*` → `@repo/*`
+**composePipeline() 8단계:**
+1. **resolve** — feature 의존성 해결 (scaffold 내부에서 scanFeatureManifests)
+2. **scaffold** — 빈 템플릿 clone → copyFeaturesToTemplate → transformImports → applyConnections → updateFeatureExports
+3. **neon** — Neon DB 프로젝트 생성
+4. **github** — GitHub repo 생성 + push
+5. **vercel** — 앱(apps/app) + 서버(apps/server) 2개 Vercel 프로젝트 배포
+6. **env** — .env 파일 생성 (DATABASE_URL, BETTER_AUTH_SECRET, VITE_API_URL, APP_NAME 등)
+7. **dbMigrate** — `pnpm exec drizzle-kit push --force` (DB 스키마 생성)
+8. **seed** — owner 사용자 + organization 생성 (changeme!! 비밀번호)
 
-상세: `docs/superpowers/specs/2026-03-14-backstage-feature-plugin-system-design.md` Section 7
+**E2E 검증 완료**: hello-world feature → Vercel 배포 → 로그인 HTTP 200 + session token
+
+상세 스펙: `docs/superpowers/specs/2026-03-15-headless-compose-pipeline-design.md`
