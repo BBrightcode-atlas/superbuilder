@@ -22,9 +22,7 @@ export function WorkspaceSidebarHeader({
 	const isWorkspacesListOpen = !!matchRoute({ to: "/workspaces" });
 	const isTasksOpen = !!matchRoute({ to: "/tasks", fuzzy: true });
 	const isAtlasOpen = !!matchRoute({ to: "/atlas", fuzzy: true });
-	const isBuildersOpen =
-		!!matchRoute({ to: "/atlas/composer", fuzzy: true }) ||
-		!!matchRoute({ to: "/atlas/deployments", fuzzy: true });
+	const isBuildersOpen = !!matchRoute({ to: "/builder", fuzzy: true });
 
 	const handleWorkspacesClick = () => {
 		if (isWorkspacesListOpen) {
