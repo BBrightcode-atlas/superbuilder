@@ -29,6 +29,7 @@ export async function deployToVercel(opts: {
 	token?: string;
 	teamId?: string;
 	framework?: string;
+	rootDirectory?: string;
 }): Promise<VercelResult> {
 	const token = opts.token ?? process.env.VERCEL_TOKEN;
 	if (!token) {
@@ -57,6 +58,7 @@ export async function deployToVercel(opts: {
 			repo: `${gitOwner}/${gitRepo}`,
 		},
 		installCommand: "pnpm install --no-frozen-lockfile",
+		rootDirectory: opts.rootDirectory ?? "apps/app",
 	};
 
 	let project: Record<string, unknown>;
