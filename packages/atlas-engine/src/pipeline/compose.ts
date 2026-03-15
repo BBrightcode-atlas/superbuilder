@@ -121,10 +121,16 @@ export async function composePipeline(
 	// Monorepo 배포: app (프론트엔드) + server (API) 2개 프로젝트
 	let vercelResult: VercelResult | undefined;
 	let vercelServerResult: VercelResult | undefined;
+	// BETTER_AUTH_SECRET을 미리 생성 (Vercel env + .env 양쪽에 동일 값 사용)
+	const { randomBytes } = await import("node:crypto");
+	const betterAuthSecret = randomBytes(32).toString("base64");
+
 	if (opts.vercel && githubResult) {
 		cb?.onStep?.("vercel", "start", "Vercel 프로젝트 배포 중...");
 		try {
-			const envVars: Record<string, string> = {};
+			const envVars: Record<string, string> = {
+				BETTER_AUTH_SECRET: betterAuthSecret,
+			};
 			if (neonResult?.databaseUrl) {
 				envVars.DATABASE_URL = neonResult.databaseUrl;
 			}
@@ -186,6 +192,7 @@ export async function composePipeline(
 			NEON_PROJECT_ID: neonResult?.projectId,
 			VERCEL_URL: vercelResult?.deploymentUrl,
 			BETTER_AUTH_URL: vercelServerResult?.deploymentUrl,
+			BETTER_AUTH_SECRET: betterAuthSecret,
 			VITE_API_URL: vercelServerResult?.deploymentUrl,
 		});
 		cb?.onStep?.("env", "done", ".env 파일 생성 완료");
