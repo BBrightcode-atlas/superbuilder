@@ -19,7 +19,7 @@ export function deriveConnections(
 
 	if (provides.client) {
 		const { routes } = provides.client;
-		conn.clientRoutesImport = `import { ${routes} } from "@features/${featureId}";`;
+		conn.clientRoutesImport = `import { ${routes} } from "@/features/${featureId}";`;
 		conn.clientRoutesSpread = `...${routes}(appLayoutRoute),`;
 	}
 

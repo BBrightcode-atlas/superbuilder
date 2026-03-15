@@ -40,7 +40,7 @@ describe("deriveConnections", () => {
 		};
 		const result = deriveConnections("blog", provides);
 		expect(result.clientRoutesImport).toBe(
-			'import { createBlogRoutes } from "@features/blog";',
+			'import { createBlogRoutes } from "@/features/blog";',
 		);
 		expect(result.clientRoutesSpread).toBe("...createBlogRoutes(appLayoutRoute),");
 	});

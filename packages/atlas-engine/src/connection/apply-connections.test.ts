@@ -197,7 +197,7 @@ describe("applyConnections", () => {
 			"utf-8",
 		);
 		expect(router).toContain(
-			'import { createBlogRoutes } from "@features/blog"',
+			'import { createBlogRoutes } from "@/features/blog"',
 		);
 		expect(router).toContain("...createBlogRoutes(appLayoutRoute),");
 	});
