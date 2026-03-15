@@ -94,8 +94,7 @@ try {
       two_factor_verified BOOLEAN DEFAULT false,
       active_organization_id TEXT,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      active_organization_id TEXT
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     )
   \`;
   await sql\`
