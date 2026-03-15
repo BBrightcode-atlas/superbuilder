@@ -6,7 +6,11 @@
 
 **Architecture:** atlas-engine에 `superbuilderFeatureDevPipeline()` 함수 추가. 메인 API(packages/trpc)에 누락 프로시저 완성. CLI 커맨드 `/superbuilder-feature-dev`, `/superbuilder-feature-verify` 제공.
 
-**Tech Stack:** TypeScript, Drizzle ORM, tRPC, Node.js child_process (claude CLI spawn)
+**Tech Stack:** TypeScript, Drizzle ORM, tRPC, Node.js child_process (git/gh only)
+
+> **NOTE (2026-03-15):** 구현 완료 후 아키텍처 변경됨. `spawnClaude()` 제거 → `onGenerate` 콜백 방식으로 전환.
+> AI 작업(spec/plan/implement)은 현재 실행 중인 agent가 직접 수행. 파이프라인은 인프라만 담당.
+> 최신 구현: `packages/atlas-engine/src/pipeline/superbuilder-feature-dev.ts`
 
 **Spec:** `docs/superpowers/specs/2026-03-15-feature-dev-pipeline-design.md`
 

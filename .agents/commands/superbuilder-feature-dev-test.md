@@ -7,11 +7,10 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent
 
 ## 개요
 
-`superbuilderFeatureDevPipeline()`으로 실제 "투표(voting)" feature를 생성하고,
+**현재 agent가 직접** "투표(voting)" feature를 설계하고 구현한다.
+파이프라인은 인프라(worktree, git, typecheck)만 담당하고,
+spec/plan/코드 작성은 agent가 직접 수행한다.
 모든 체크포인트가 통과할 때까지 **수정 → 재검증을 반복**한다.
-
-이 테스트는 단순 hello-world가 아닌 **실전 수준의 feature**를 생성하여
-파이프라인의 완성도를 검증한다.
 
 ---
 
@@ -45,74 +44,32 @@ mkdir -p /tmp/superbuilder-feature-dev-test/
 
 ### 실행 스크립트
 
-`/tmp/superbuilder-feature-dev-test/runner.ts` 저장:
+이 테스트는 **스크립트를 실행하는 것이 아니라**, agent가 직접 수행한다.
+파이프라인 함수는 인프라만 담당하고, AI 작업은 agent가 직접 한다.
 
-```typescript
-import { superbuilderFeatureDevPipeline } from "@superbuilder/atlas-engine";
-import { appendFileSync } from "node:fs";
+### 실행 방법
 
-const LOG_FILE = "/tmp/superbuilder-feature-dev-test/pipeline.log";
+agent가 아래 순서로 직접 수행:
 
-const result = await superbuilderFeatureDevPipeline(
-  {
-    prompt: `투표(Voting) 기능을 만들어주세요.
-
-요구사항:
-- 게시글이나 댓글에 찬성/반대 투표 가능
-- 사용자당 한 번만 투표 가능 (중복 투표 방지)
-- 투표 변경 가능 (찬성 → 반대)
-- 투표 취소 가능
-- 투표 수 집계 (찬성/반대 각각)
-
-서버: NestJS 모듈 (VotingModule, VotingService, VotingController)
-- POST /api/votes — 투표 생성/변경
-- DELETE /api/votes/:id — 투표 취소
-- GET /api/votes/count?targetType=post&targetId=xxx — 집계 조회
-
-클라이언트: React 컴포넌트
-- VoteButtons 컴포넌트 (찬성/반대 버튼 + 카운트 표시)
-- useVote hook (투표 상태 관리)
-
-DB 스키마 (Drizzle):
-- votes 테이블: id, userId, targetType(post|comment), targetId, value(up|down), createdAt, updatedAt
-- unique constraint: (userId, targetType, targetId)`,
-    featureName: "voting",
-    boilerplatePath: process.env.BOILERPLATE_PATH ?? `${process.env.HOME}/Projects/superbuilder-app-boilerplate`,
-    options: {
-      approvalMode: false,
-      agent: "claude",
-      skipVerify: false,
-      skipRegister: true, // PR 생성은 안 함 (테스트 환경)
-    },
-  },
-  {
-    onStep: (step, status, msg) => {
-      const line = `[${step}] ${status}: ${msg ?? ""}`;
-      console.log(line);
-      appendFileSync(LOG_FILE, line + "\n");
-    },
-    onLog: (msg) => {
-      console.log(msg);
-      appendFileSync(LOG_FILE, msg + "\n");
-    },
-  },
-);
-
-console.log("\n=== RESULT ===");
-console.log(JSON.stringify(result, null, 2));
-
-// 결과를 파일로도 저장
-import { writeFileSync } from "node:fs";
-writeFileSync(
-  "/tmp/superbuilder-feature-dev-test/result.json",
-  JSON.stringify(result, null, 2),
-);
-```
-
-실행:
+1. **Worktree 생성**
 ```bash
-cd /Users/bbright/Projects/superbuilder && bun run /tmp/superbuilder-feature-dev-test/runner.ts
+BOILERPLATE="${BOILERPLATE_PATH:-$HOME/Projects/superbuilder-app-boilerplate}"
+WORKTREE="$HOME/.superbuilder/worktrees/voting"
+mkdir -p "$HOME/.superbuilder/worktrees"
+git -C "$BOILERPLATE" worktree add "$WORKTREE" -b "feature/voting"
 ```
+
+2. **Spec 작성** — agent가 직접 투표 기능 spec 작성
+3. **Plan 작성** — agent가 직접 구현 계획 작성
+4. **구현** — agent가 worktree에서 Write/Edit 도구로 코드 작성:
+   - `packages/features/voting/` 디렉토리
+   - 서버 (VotingModule, VotingService, VotingController)
+   - 클라이언트 (VoteButtons, useVote)
+   - DB 스키마 (votes 테이블)
+   - feature.json
+   - marker 블록 connection 삽입
+   - `git add -A && git commit`
+5. **검증** — `bun run typecheck && bun run lint`
 
 ---
 
@@ -183,12 +140,12 @@ while true:
 
 | 문제 | 수정 대상 | 수정 내용 |
 |------|----------|----------|
-| spec이 너무 짧음 | `superbuilder-feature-dev.ts` → `buildSpecPrompt()` | 프롬프트 보강 |
-| plan에 파일 경로 없음 | `superbuilder-feature-dev.ts` → `buildPlanPrompt()` | 프롬프트 보강 |
-| agent가 feature.json 안 만듦 | `superbuilder-feature-dev.ts` → `buildImplementPrompt()` | 프롬프트에 feature.json 필수 명시 |
-| import 경로 `@superbuilder` 남음 | `superbuilder-feature-dev.ts` → `buildImplementPrompt()` | `@repo/*` 사용 규칙 명시 |
+| spec이 너무 짧음 | 커맨드 문서의 spec 작성 가이드 보강 | 더 상세한 지시사항 추가 |
+| plan에 파일 경로 없음 | 커맨드 문서의 plan 작성 가이드 보강 | 정확한 경로 명시 규칙 추가 |
+| agent가 feature.json 안 만듦 | 커맨드 문서에 feature.json 필수 명시 | 체크리스트 추가 |
+| import 경로 `@superbuilder` 남음 | agent 구현 시 `@repo/*` 사용 규칙 명시 | import 규칙 강화 |
 | worktree 생성 실패 | `superbuilder-feature-dev.ts` → createWorktree 단계 | base branch 확인 |
-| typecheck 실패 | `superbuilder-feature-dev.ts` → verify 단계 | verify 후 자동 수정 단계 추가 고려 |
+| typecheck 실패 | agent가 에러 분석 후 수정 → 재검증 | 반복 루프 |
 
 **수정 후 반드시:**
 1. `bun run typecheck --filter=@superbuilder/atlas-engine` 통과 확인
