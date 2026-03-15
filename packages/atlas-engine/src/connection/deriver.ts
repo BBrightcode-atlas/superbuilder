@@ -20,13 +20,13 @@ export function deriveConnections(
 	if (provides.client) {
 		const { routes } = provides.client;
 		conn.clientRoutesImport = `import { ${routes} } from "@features/${featureId}";`;
-		conn.clientRoutesSpread = `...${routes}(),`;
+		conn.clientRoutesSpread = `...${routes}(appLayoutRoute),`;
 	}
 
 	if (provides.admin) {
 		const { routes, menu } = provides.admin;
 		conn.adminRoutesImport = `import { ${routes} } from "./features/${featureId}";`;
-		conn.adminRoutesSpread = `...${routes}(),`;
+		conn.adminRoutesSpread = `...${routes}(adminLayoutRoute),`;
 		if (menu) {
 			conn.adminMenu = JSON.stringify({
 				id: featureId,

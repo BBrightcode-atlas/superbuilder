@@ -42,7 +42,7 @@ describe("deriveConnections", () => {
 		expect(result.clientRoutesImport).toBe(
 			'import { createBlogRoutes } from "@features/blog";',
 		);
-		expect(result.clientRoutesSpread).toBe("...createBlogRoutes(),");
+		expect(result.clientRoutesSpread).toBe("...createBlogRoutes(appLayoutRoute),");
 	});
 
 	it("derives admin connections from admin provides", () => {
@@ -56,7 +56,7 @@ describe("deriveConnections", () => {
 		expect(result.adminRoutesImport).toBe(
 			'import { createBlogAdminRoutes } from "./features/blog";',
 		);
-		expect(result.adminRoutesSpread).toBe("...createBlogAdminRoutes(),");
+		expect(result.adminRoutesSpread).toBe("...createBlogAdminRoutes(adminLayoutRoute),");
 		expect(result.adminMenu).toBe(
 			JSON.stringify({
 				id: "blog",

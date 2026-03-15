@@ -14,7 +14,7 @@ async function main() {
 
 	const result = await composePipeline(
 		{
-			features: ["hello-world", "comment"],
+			features: ["hello-world"],
 			projectName: PROJECT_NAME,
 			targetPath: TARGET_PATH,
 			options: {
