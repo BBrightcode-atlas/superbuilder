@@ -177,37 +177,52 @@ Core Contract는 feature가 의존하는 인터페이스의 **스텁**이다. fe
 ### 2.3 superbuilder-app-boilerplate (`BBrightcode-atlas/superbuilder-app-boilerplate`)
 
 최종 프로젝트의 **골격 템플릿**. `[ATLAS:*]` 마커가 있는 빈 셸이다.
+Feature 코드 없이 **auth, 조직 관리, 기본 설정이 동작**해야 한다.
 
 ```
 superbuilder-app-boilerplate/
 ├── apps/
-│   ├── atlas-server/              # NestJS + Fastify 백엔드
-│   │   ├── src/
-│   │   │   ├── app.module.ts      # [ATLAS:IMPORTS], [ATLAS:MODULES]
-│   │   │   └── trpc/
-│   │   │       └── router.ts      # [ATLAS:IMPORTS], [ATLAS:ROUTERS]
-│   │   └── ...
+│   ├── server/                    # NestJS + Fastify 백엔드
+│   │   └── src/
+│   │       ├── app.module.ts      # [ATLAS:IMPORTS], [ATLAS:MODULES]
+│   │       └── trpc/
+│   │           └── router.ts      # [ATLAS:IMPORTS], [ATLAS:ROUTERS]
 │   ├── app/                       # React + TanStack Router 프론트엔드
 │   │   └── src/
-│   │       ├── router.tsx         # [ATLAS:IMPORTS], [ATLAS:ROUTES]
-│   │       └── lib/
-│   │           └── feature-i18n.ts # [ATLAS:LOCALES_*]
-│   └── system-admin/              # 관리자 대시보드
-│       └── src/
-│           ├── router.tsx         # [ATLAS:IMPORTS], [ATLAS:ADMIN_ROUTES]
-│           └── feature-config.ts  # [ATLAS:FEATURE_MENUS]
+│   │       └── router.tsx         # [ATLAS:IMPORTS], [ATLAS:ROUTES]
+│   ├── admin/                     # 관리자 대시보드
+│   │   └── src/
+│   │       └── router.tsx         # [ATLAS:IMPORTS], [ATLAS:ADMIN_ROUTES]
+│   └── landing/                   # 랜딩 페이지 (Next.js)
 ├── packages/
-│   ├── features/                  # feature 모듈 (core만 유지, 나머지 이관 중)
+│   ├── core/                      # ★ Core 인프라 (feature 아님, 항상 포함)
+│   │   ├── auth/                  # Better Auth 설정, guards, hooks
+│   │   ├── trpc/                  # tRPC 기본 설정 (router, procedures)
+│   │   ├── i18n/                  # 다국어 지원
+│   │   ├── logger/                # 로깅
+│   │   ├── kv/                    # KV 캐시
+│   │   └── analytics/             # 기본 분석
+│   ├── features/                  # ★ 비어있음 — compose 시 여기에 feature 복사됨
 │   │   └── app-router.ts         # [ATLAS:IMPORTS], [ATLAS:ROUTERS]
-│   ├── drizzle/                   # Drizzle ORM 스키마
-│   │   ├── src/schema/
-│   │   │   └── index.ts          # [ATLAS:SCHEMA_EXPORTS]
-│   │   └── src/schema-registry.ts # [ATLAS:SCHEMA_IMPORTS], [ATLAS:SCHEMA_SPREAD]
-│   ├── core/                      # 공유 비즈니스 로직
-│   └── widgets/                   # 위젯 패키지
-├── superbuilder.json              # 레거시 (비어있음, feature.json으로 대체됨)
-└── drizzle.config.ts              # [ATLAS:TABLES]
+│   ├── drizzle/                   # Drizzle ORM
+│   │   └── src/schema/
+│   │       ├── core/              # ★ Core 스키마 (auth-tables, files, terms 등)
+│   │       ├── features/          # compose 시 feature 스키마가 여기에 복사됨
+│   │       └── index.ts           # [ATLAS:SCHEMAS]
+│   ├── ui/                        # 공유 UI 컴포넌트
+│   └── shared/                    # 공유 유틸리티
+└── superbuilder.json              # 레거시 (비어있음)
 ```
+
+#### Core 인프라 vs Feature 구분
+
+| 항목 | 위치 | compose 시 동작 |
+|------|------|----------------|
+| auth (로그인/회원가입) | `packages/core/auth/` | 항상 포함 — 건드리지 않음 |
+| DB 기본 테이블 (user, org, session) | `packages/drizzle/src/schema/core/` | 항상 포함 |
+| tRPC 기본 설정 | `packages/core/trpc/` | 항상 포함 |
+| feature 코드 (blog, voting 등) | `packages/features/` | **빈 상태** → compose 시 복사됨 |
+| feature 스키마 | `packages/drizzle/src/schema/features/` | **빈 상태** → compose 시 복사됨 |
 
 ---
 

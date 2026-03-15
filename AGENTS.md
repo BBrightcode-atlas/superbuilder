@@ -82,6 +82,22 @@ bun run clean:workspaces   # Clean all workspace node_modules
 
 **Feature 코드는 `superbuilder-features` 레포에 있다.** 이 레포(superbuilder)는 피처를 **조회, 조합, 배포**하는 도구이다.
 
+### Core vs Extension Feature 구분
+
+| 구분 | 위치 | 설명 | 예시 |
+|------|------|------|------|
+| **Core 인프라** | `boilerplate/packages/core/` | 모든 프로젝트에 필수. feature가 아닌 인프라. compose 시 항상 포함. | auth, trpc, i18n, logger, kv |
+| **Core 스키마** | `boilerplate/packages/drizzle/src/schema/core/` | 인증, 파일 등 기본 DB 테이블 | auth-tables, files, terms |
+| **Extension Feature** | `superbuilder-features/features/` | 선택적 기능. compose 시 사용자가 선택. | blog, comment, payment, voting |
+| **Core Contract** | `superbuilder-features/core/` | feature가 의존하는 공유 라이브러리 | core-auth, core-trpc, core-schema, core-ui, core-db |
+
+**핵심 규칙:**
+- Boilerplate는 **feature 코드 없이** auth/profile/설정이 동작해야 한다 (로그인, 조직 생성, 기본 설정)
+- `packages/core/auth/` — Better Auth 설정, guards, hooks (boilerplate 내장)
+- `packages/drizzle/src/schema/core/` — user, organization, session 등 기본 테이블 (boilerplate 내장)
+- Feature에서 core를 사용할 때: `@superbuilder/core-trpc`, `@superbuilder/core-schema` 등 import
+- resolver는 `group === "core"` feature를 자동 포함하지만, 현재 core group feature는 없음 (core는 boilerplate 내장)
+
 ### Source of Truth
 - **`feature.json`** (superbuilder-features/features/*/feature.json) = 피처 카탈로그의 source of truth
 - `scanFeatureManifests()`로 로컬 스캔 → `manifestsToRegistry()`로 FeatureRegistry 생성
@@ -137,13 +153,14 @@ import { BlogModule } from "@repo/features/blog";
 
 현재 오케스트레이션은 Desktop feature-studio.ts에 있음. 외부 CLI 진입점이 필요하면 핸들러 함수들을 atlas-engine/pipeline으로 추출.
 
-### Feature 개발 흐름 (CLI Agent)
-1. Feature Studio에서 spec/plan 생성 → 승인
-2. Boilerplate repo의 **git worktree** 생성 (`~/.superbuilder/worktrees/{name}/`)
-3. CLI agent (claude/codex)가 **worktree를 cwd**로 피처 코드 작성
-4. Agent가 marker 블록 삽입 + superbuilder.json 업데이트 + commit/push
+### Feature 개발 흐름
+1. `/superbuilder-feature-dev` 또는 Feature Studio에서 spec/plan 생성 → 승인
+2. **superbuilder-features** repo의 git worktree 생성 (`~/.superbuilder/worktrees/{name}/`)
+3. 현재 agent가 worktree의 `features/{name}/` 디렉토리에 직접 코드 작성
+4. feature.json + server + client + schema + common 구조 생성
 5. 자동 검증 (typecheck + lint) → Human QA
-6. 승인 시 boilerplate에 PR 생성 → 머지 → 피처 등록 완료
+6. 승인 시 superbuilder-features에 PR 생성 → 머지 → feature 등록 완료
+7. compose 시 atlas-engine이 superbuilder-features에서 feature를 복사하여 boilerplate에 연결
 
 ## 3-Repo 아키텍처
 
