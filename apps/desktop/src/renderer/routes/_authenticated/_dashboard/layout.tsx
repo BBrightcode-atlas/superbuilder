@@ -2,11 +2,13 @@ import { FEATURE_FLAGS } from "@superset/shared/constants";
 import {
 	createFileRoute,
 	Outlet,
+	useLocation,
 	useMatchRoute,
 	useNavigate,
 } from "@tanstack/react-router";
 import { useFeatureFlagEnabled } from "posthog-js/react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { SidebarTabBar } from "renderer/components/SidebarTabBar";
 import { ResizablePanel } from "renderer/screens/main/components/ResizablePanel";
 import { V2WorkspaceSidebar } from "renderer/screens/main/components/V2WorkspaceSidebar";
 import { WorkspaceSidebar } from "renderer/screens/main/components/WorkspaceSidebar";
@@ -93,33 +95,47 @@ function DashboardLayout() {
 		[openNewWorkspaceModal, currentWorkspace?.projectId],
 	);
 
+	const location = useLocation();
+
+	// Hide WorkspaceSidebar when on routes that have their own sub-sidebar
+	const showWorkspaceSidebar = !location.pathname.startsWith("/features")
+		&& !location.pathname.startsWith("/builder")
+		&& !location.pathname.startsWith("/ui");
+
 	return (
 		<div className="flex flex-col h-full w-full">
 			<TopBar />
 			<div className="flex flex-1 overflow-hidden">
 				{isWorkspaceSidebarOpen && (
 					<ResizablePanel
-						width={workspaceSidebarWidth}
+						width={showWorkspaceSidebar ? workspaceSidebarWidth : COLLAPSED_WORKSPACE_SIDEBAR_WIDTH}
 						onWidthChange={setWorkspaceSidebarWidth}
 						isResizing={isWorkspaceSidebarResizing}
 						onResizingChange={setWorkspaceSidebarIsResizing}
 						minWidth={COLLAPSED_WORKSPACE_SIDEBAR_WIDTH}
-						maxWidth={MAX_WORKSPACE_SIDEBAR_WIDTH}
+						maxWidth={showWorkspaceSidebar ? MAX_WORKSPACE_SIDEBAR_WIDTH : COLLAPSED_WORKSPACE_SIDEBAR_WIDTH}
 						handleSide="right"
 						clampWidth={false}
 						onDoubleClickHandle={() =>
 							setWorkspaceSidebarWidth(DEFAULT_WORKSPACE_SIDEBAR_WIDTH)
 						}
 					>
-						{isV2CloudEnabled ? (
-							<V2WorkspaceSidebar isCollapsed={isWorkspaceSidebarCollapsed()} />
-						) : (
-							<WorkspaceSidebar
-								isCollapsed={isWorkspaceSidebarCollapsed()}
-								activeProjectId={currentWorkspace?.projectId ?? null}
-								activeProjectName={currentWorkspace?.project?.name ?? null}
-							/>
-						)}
+						<div className="flex flex-col h-full">
+							<SidebarTabBar />
+							{showWorkspaceSidebar && (
+								<div className="flex-1 overflow-hidden">
+									{isV2CloudEnabled ? (
+										<V2WorkspaceSidebar isCollapsed={isWorkspaceSidebarCollapsed()} />
+									) : (
+										<WorkspaceSidebar
+											isCollapsed={isWorkspaceSidebarCollapsed()}
+											activeProjectId={currentWorkspace?.projectId ?? null}
+											activeProjectName={currentWorkspace?.project?.name ?? null}
+										/>
+									)}
+								</div>
+							)}
+						</div>
 					</ResizablePanel>
 				)}
 				<Outlet />
