@@ -166,6 +166,33 @@ export async function composePipeline(
 			});
 			cb?.onLog?.(`서버 배포: ${vercelServerResult.deploymentUrl}`);
 
+			// 3) App에 서버 URL 환경변수 추가 (서버 생성 후에야 URL을 알 수 있음)
+			cb?.onLog?.("Vercel: 앱에 API URL 환경변수 설정 중...");
+			const { vercelFetch } = await import("./vercel");
+			const appToken = opts.vercelToken ?? process.env.VERCEL_TOKEN ?? "";
+			const appQuery = opts.vercelTeamId ? `?teamId=${opts.vercelTeamId}` : "";
+			for (const ev of [
+				{ key: "VITE_API_URL", value: vercelServerResult.deploymentUrl },
+			]) {
+				try {
+					await vercelFetch(
+						`/v10/projects/${vercelResult.projectId}/env${appQuery}`,
+						{
+							method: "POST",
+							body: JSON.stringify({
+								key: ev.key,
+								value: ev.value,
+								target: ["production", "preview", "development"],
+								type: "encrypted",
+							}),
+						},
+						appToken,
+					);
+				} catch {
+					// already exists 등 — non-fatal
+				}
+			}
+
 			cb?.onStep?.(
 				"vercel",
 				"done",
