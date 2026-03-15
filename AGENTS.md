@@ -189,6 +189,7 @@ Upstream sync: `/sync-upstream` 스킬 사용. `main_superset` ← upstream/main
 - 3-Repo 아키텍처: `docs/architecture/three-repo-architecture.md`
 - [ATLAS:*] 마커 레퍼런스: `docs/architecture/subsystems/marker-reference.md`
 - feature.json 스키마: `docs/architecture/subsystems/feature-json-schema.md`
+- Auth 시스템: `docs/architecture/subsystems/auth-system.md`
 - Composer → Scaffold 파이프라인: `docs/architecture/subsystems/composer-scaffold-pipeline.md`
 
 ---
