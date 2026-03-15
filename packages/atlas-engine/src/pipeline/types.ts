@@ -91,6 +91,7 @@ export interface ComposeResult {
 	neon?: NeonResult;
 	github?: GitHubResult;
 	vercel?: VercelResult;
+	vercelServer?: VercelResult;
 	installed: boolean;
 	seed?: SeedResult;
 }

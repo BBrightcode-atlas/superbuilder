@@ -118,7 +118,9 @@ export async function composePipeline(
 	}
 
 	// ── Step 5: vercel (NON-FATAL, opt-in, requires github) ──────
+	// Monorepo 배포: app (프론트엔드) + server (API) 2개 프로젝트
 	let vercelResult: VercelResult | undefined;
+	let vercelServerResult: VercelResult | undefined;
 	if (opts.vercel && githubResult) {
 		cb?.onStep?.("vercel", "start", "Vercel 프로젝트 배포 중...");
 		try {
@@ -126,17 +128,42 @@ export async function composePipeline(
 			if (neonResult?.databaseUrl) {
 				envVars.DATABASE_URL = neonResult.databaseUrl;
 			}
+
+			// 1) App (프론트엔드) — apps/app, Vite (먼저 생성하여 URL 확보)
+			cb?.onLog?.("Vercel: 앱(프론트엔드) 프로젝트 생성 중...");
 			vercelResult = await deployToVercel({
 				repoUrl: githubResult.repoUrl,
 				projectName: input.projectName,
 				envVars,
 				token: opts.vercelToken,
 				teamId: opts.vercelTeamId,
+				rootDirectory: "apps/app",
 			});
+			cb?.onLog?.(`앱 배포: ${vercelResult.deploymentUrl}`);
+
+			// 2) Server (API) — apps/server, NestJS
+			// 서버에 앱 URL을 CORS + AUTH URL로 전달
+			const serverEnvVars: Record<string, string> = {
+				...envVars,
+				CORS_ORIGINS: vercelResult.deploymentUrl,
+				BETTER_AUTH_URL: vercelResult.deploymentUrl,
+			};
+			cb?.onLog?.("Vercel: 서버(API) 프로젝트 생성 중...");
+			vercelServerResult = await deployToVercel({
+				repoUrl: githubResult.repoUrl,
+				projectName: `${input.projectName}-api`,
+				envVars: serverEnvVars,
+				token: opts.vercelToken,
+				teamId: opts.vercelTeamId,
+				framework: "other",
+				rootDirectory: "apps/server",
+			});
+			cb?.onLog?.(`서버 배포: ${vercelServerResult.deploymentUrl}`);
+
 			cb?.onStep?.(
 				"vercel",
 				"done",
-				`Vercel 배포 완료: ${vercelResult.deploymentUrl}`,
+				`앱: ${vercelResult.deploymentUrl} | API: ${vercelServerResult.deploymentUrl}`,
 			);
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
@@ -156,7 +183,8 @@ export async function composePipeline(
 			DATABASE_URL: neonResult?.databaseUrl,
 			NEON_PROJECT_ID: neonResult?.projectId,
 			VERCEL_URL: vercelResult?.deploymentUrl,
-			BETTER_AUTH_URL: vercelResult?.deploymentUrl,
+			BETTER_AUTH_URL: vercelServerResult?.deploymentUrl,
+			VITE_API_URL: vercelServerResult?.deploymentUrl,
 		});
 		cb?.onStep?.("env", "done", ".env 파일 생성 완료");
 	} catch (e) {
@@ -215,6 +243,7 @@ export async function composePipeline(
 		neon: neonResult,
 		github: githubResult,
 		vercel: vercelResult,
+		vercelServer: vercelServerResult,
 		installed,
 		seed: seedResult,
 	};
