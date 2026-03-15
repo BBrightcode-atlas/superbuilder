@@ -165,3 +165,15 @@ export const featureRegistrationStatusEnum = z.enum(
 export type FeatureRegistrationStatus = z.infer<
 	typeof featureRegistrationStatusEnum
 >;
+
+// Composer project enums
+export const composerProjectStatusValues = [
+	"scaffolding",
+	"provisioning",
+	"deploying",
+	"seeding",
+	"deployed",
+	"error",
+] as const;
+export const composerProjectStatusEnum = z.enum(composerProjectStatusValues);
+export type ComposerProjectStatus = z.infer<typeof composerProjectStatusEnum>;

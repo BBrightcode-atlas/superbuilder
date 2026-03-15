@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./composer";
 export * from "./enums";
 export * from "./feature-studio";
 export * from "./github";

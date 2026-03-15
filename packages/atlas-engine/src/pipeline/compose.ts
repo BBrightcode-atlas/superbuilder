@@ -9,6 +9,7 @@ import type {
 	ComposeCallbacks,
 	ComposeInput,
 	ComposeOptions,
+	ComposeProjectRecord,
 	ComposeResult,
 	GitHubResult,
 	NeonResult,
@@ -48,6 +49,24 @@ export async function composePipeline(
 	const cb = callbacks ?? input.callbacks;
 	const projectDir = join(input.targetPath, input.projectName);
 
+	// Project record for central DB persistence
+	const record: ComposeProjectRecord = {
+		name: input.projectName,
+		status: "scaffolding",
+		features: input.features,
+		ownerEmail: opts.ownerEmail,
+	};
+
+	const saveProject = async () => {
+		try {
+			await cb?.onProjectSave?.(record);
+		} catch {
+			// non-fatal — don't block pipeline for DB save failures
+		}
+	};
+
+	await saveProject();
+
 	// ── Step 1+2: resolve + scaffold (FATAL) ─────────────────────
 	// scaffold()가 내부에서 features source resolve → manifest scan → copy → transform → connections 수행
 	// compose에서는 feature IDs를 전달하고 scaffold에 위임
@@ -67,6 +86,9 @@ export async function composePipeline(
 		"done",
 		`${scaffoldResult.installedFeatures.length}개 피처 설치 완료`,
 	);
+	record.features = scaffoldResult.installedFeatures;
+	record.status = "provisioning";
+	await saveProject();
 
 	// ── Step 3: neon (NON-FATAL, opt-in) ─────────────────────────
 	let neonResult: NeonResult | undefined;
@@ -78,6 +100,8 @@ export async function composePipeline(
 				orgId: opts.neonOrgId,
 				apiKey: opts.neonApiKey,
 			});
+			record.neonProjectId = neonResult.projectId;
+			await saveProject();
 			cb?.onStep?.(
 				"neon",
 				"done",
@@ -103,6 +127,8 @@ export async function composePipeline(
 				org: opts.githubOrg,
 				private: opts.private,
 			});
+			record.githubRepoUrl = githubResult.repoUrl;
+			await saveProject();
 			cb?.onStep?.(
 				"github",
 				"done",
@@ -128,6 +154,8 @@ export async function composePipeline(
 	const betterAuthSecret = randomBytes(32).toString("base64");
 
 	if (opts.vercel && githubResult) {
+		record.status = "deploying";
+		await saveProject();
 		cb?.onStep?.("vercel", "start", "Vercel 프로젝트 배포 중...");
 		try {
 			const envVars: Record<string, string> = {
@@ -245,6 +273,19 @@ export async function composePipeline(
 				cb?.onLog?.(`Landing 배포 실패 (non-fatal): ${e instanceof Error ? e.message : e}`);
 			}
 
+			record.vercelProjectId = vercelResult.projectId;
+			record.vercelUrl = vercelResult.deploymentUrl;
+			record.vercelServerProjectId = vercelServerResult.projectId;
+			record.vercelServerUrl = vercelServerResult.deploymentUrl;
+			if (vercelAdminResult) {
+				record.vercelAdminProjectId = vercelAdminResult.projectId;
+				record.vercelAdminUrl = vercelAdminResult.deploymentUrl;
+			}
+			if (vercelLandingResult) {
+				record.vercelLandingProjectId = vercelLandingResult.projectId;
+				record.vercelLandingUrl = vercelLandingResult.deploymentUrl;
+			}
+			await saveProject();
 			cb?.onStep?.(
 				"vercel",
 				"done",
@@ -254,6 +295,8 @@ export async function composePipeline(
 			const msg = e instanceof Error ? e.message : String(e);
 			cb?.onStep?.("vercel", "error", msg);
 			cb?.onLog?.("Vercel 배포 실패 — 계속 진행합니다");
+			record.errorMessage = `vercel: ${msg}`;
+			await saveProject();
 		}
 	} else if (opts.vercel && !githubResult) {
 		cb?.onStep?.("vercel", "skip", "GitHub 레포가 없어 건너뜀");
@@ -327,6 +370,8 @@ export async function composePipeline(
 	// ── Step 8: seed (NON-FATAL, requires neon + dbMigrate) ──────
 	let seedResult: SeedResult | undefined;
 	if (neonResult && dbMigrated) {
+		record.status = "seeding";
+		await saveProject();
 		cb?.onStep?.("seed", "start", "초기 데이터 시딩 중...");
 		try {
 			seedResult = await seedInitialData({
@@ -347,6 +392,8 @@ export async function composePipeline(
 	}
 
 	// ── Done ─────────────────────────────────────────────────────
+	record.status = "deployed";
+	await saveProject();
 	cb?.onLog?.("파이프라인 완료");
 
 	return {

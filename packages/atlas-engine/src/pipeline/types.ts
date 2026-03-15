@@ -17,6 +17,24 @@ export type ComposeStep =
 // Callbacks
 // ─────────────────────────────────────────────────────────────
 
+export interface ComposeProjectRecord {
+	name: string;
+	status: "scaffolding" | "provisioning" | "deploying" | "seeding" | "deployed" | "error";
+	features: string[];
+	githubRepoUrl?: string;
+	neonProjectId?: string;
+	vercelProjectId?: string;
+	vercelUrl?: string;
+	vercelServerProjectId?: string;
+	vercelServerUrl?: string;
+	vercelAdminProjectId?: string;
+	vercelAdminUrl?: string;
+	vercelLandingProjectId?: string;
+	vercelLandingUrl?: string;
+	ownerEmail?: string;
+	errorMessage?: string;
+}
+
 export interface ComposeCallbacks {
 	onStep?: (
 		step: ComposeStep,
@@ -24,6 +42,8 @@ export interface ComposeCallbacks {
 		message?: string,
 	) => void;
 	onLog?: (message: string) => void;
+	/** Called to persist project state to central DB. Return project ID on first call. */
+	onProjectSave?: (record: ComposeProjectRecord) => Promise<string | void>;
 }
 
 // ─────────────────────────────────────────────────────────────
