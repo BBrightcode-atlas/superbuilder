@@ -33,7 +33,7 @@ function FeatureDetailPage() {
           Feature not found: {featureId}
         </p>
         <Link
-          to="/features/catalog"
+          to="/atlas/catalog"
           className="text-sm text-primary mt-2 inline-block"
         >
           Back to catalog
@@ -45,7 +45,7 @@ function FeatureDetailPage() {
   return (
     <div className="p-6 max-w-3xl">
       <Link
-        to="/features/catalog"
+        to="/atlas/catalog"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
       >
         <HiArrowLeft className="size-3.5" />

@@ -17,15 +17,15 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Features",
     items: [
-      { to: "/features/catalog", label: "Catalog", icon: HiOutlineCube as IconType },
-      { to: "/features/studio", label: "Studio", icon: HiOutlineSparkles as IconType },
+      { to: "/atlas/catalog", label: "Catalog", icon: HiOutlineCube as IconType },
+      { to: "/atlas/studio", label: "Studio", icon: HiOutlineSparkles as IconType },
     ],
   },
   {
     title: "Builders",
     items: [
-      { to: "/builder/composer", label: "Composer", icon: HiOutlineWrenchScrewdriver as IconType },
-      { to: "/builder/deployments", label: "Deployments", icon: HiOutlineRocketLaunch as IconType },
+      { to: "/atlas/composer", label: "Composer", icon: HiOutlineWrenchScrewdriver as IconType },
+      { to: "/atlas/deployments", label: "Deployments", icon: HiOutlineRocketLaunch as IconType },
     ],
   },
 ];

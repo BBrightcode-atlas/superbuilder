@@ -1,1 +1,0 @@
-export { SidebarTabBar } from "./SidebarTabBar";

@@ -27,7 +27,7 @@ export function FeatureCard({
 }: FeatureCardProps) {
   return (
     <Link
-      to="/features/catalog/$featureId"
+      to="/atlas/catalog/$featureId"
       params={{ featureId: id }}
       className="block rounded-lg border border-border p-4 hover:border-primary/50 hover:bg-accent/30 transition-all"
     >

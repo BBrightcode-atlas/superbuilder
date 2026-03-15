@@ -21,7 +21,7 @@ export function WorkspaceSidebarHeader({
 
 	const isWorkspacesListOpen = !!matchRoute({ to: "/workspaces" });
 	const isTasksOpen = !!matchRoute({ to: "/tasks", fuzzy: true });
-	const isAtlasOpen = !!matchRoute({ to: "/features", fuzzy: true }) || !!matchRoute({ to: "/builder", fuzzy: true });
+	const isAtlasOpen = !!matchRoute({ to: "/atlas", fuzzy: true });
 
 	const handleWorkspacesClick = () => {
 		if (isWorkspacesListOpen) {
@@ -49,7 +49,7 @@ export function WorkspaceSidebarHeader({
 	};
 
 	const handleAtlasClick = () => {
-		navigate({ to: "/features/catalog" });
+		navigate({ to: "/atlas/catalog" });
 	};
 
 	if (isCollapsed) {

@@ -45,7 +45,7 @@ function DeploymentsPage() {
 					</p>
 				</div>
 				<Button
-					onClick={() => navigate({ to: "/builder/composer" })}
+					onClick={() => navigate({ to: "/atlas/composer" })}
 					size="sm"
 				>
 					<LuPlus className="size-4 mr-1" />
@@ -64,7 +64,7 @@ function DeploymentsPage() {
 					</p>
 					<Button
 						variant="outline"
-						onClick={() => navigate({ to: "/builder/composer" })}
+						onClick={() => navigate({ to: "/atlas/composer" })}
 					>
 						첫 프로젝트 만들기
 					</Button>
