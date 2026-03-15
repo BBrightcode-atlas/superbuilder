@@ -9,6 +9,7 @@ import {
 import { useFeatureFlagEnabled } from "posthog-js/react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { SidebarTabBar } from "renderer/components/SidebarTabBar";
+import { SidebarTabProvider } from "renderer/stores/sidebar-tab-state";
 import { ResizablePanel } from "renderer/screens/main/components/ResizablePanel";
 import { V2WorkspaceSidebar } from "renderer/screens/main/components/V2WorkspaceSidebar";
 import { WorkspaceSidebar } from "renderer/screens/main/components/WorkspaceSidebar";
@@ -103,7 +104,8 @@ function DashboardLayout() {
 		&& !location.pathname.startsWith("/ui");
 
 	return (
-		<div className="flex flex-col h-full w-full">
+		<SidebarTabProvider>
+			<div className="flex flex-col h-full w-full">
 			<TopBar />
 			<div className="flex flex-1 overflow-hidden">
 				{isWorkspaceSidebarOpen && (
@@ -138,8 +140,9 @@ function DashboardLayout() {
 						</div>
 					</ResizablePanel>
 				)}
-				<Outlet />
+					<Outlet />
 			</div>
-		</div>
+			</div>
+		</SidebarTabProvider>
 	);
 }

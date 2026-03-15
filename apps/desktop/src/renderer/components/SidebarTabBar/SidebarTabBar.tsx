@@ -1,4 +1,3 @@
-import { useAtom } from "jotai";
 import { useNavigate, useLocation } from "@tanstack/react-router";
 import { cn } from "@superset/ui/utils";
 import {
@@ -8,22 +7,39 @@ import {
 	HiOutlineCube,
 	HiOutlineWrenchScrewdriver,
 } from "react-icons/hi2";
-import {
-	activeSidebarTabAtom,
-	type SidebarTab,
-} from "../../stores/sidebar-tab-state";
+import { useSidebarTab, type SidebarTab } from "../../stores/sidebar-tab-state";
 import { useEffect } from "react";
 
-const TABS: { id: SidebarTab; icon: typeof HiOutlineFolder; label: string; path?: string }[] = [
+const TABS: {
+	id: SidebarTab;
+	icon: typeof HiOutlineFolder;
+	label: string;
+	path?: string;
+}[] = [
 	{ id: "workspace", icon: HiOutlineFolder, label: "Workspace" },
-	{ id: "task", icon: HiOutlineClipboardDocumentList, label: "Task", path: "/tasks" },
+	{
+		id: "task",
+		icon: HiOutlineClipboardDocumentList,
+		label: "Task",
+		path: "/tasks",
+	},
 	{ id: "ui", icon: HiOutlinePaintBrush, label: "UI", path: "/ui" },
-	{ id: "features", icon: HiOutlineCube, label: "Features", path: "/features" },
-	{ id: "builder", icon: HiOutlineWrenchScrewdriver, label: "Builder", path: "/builder" },
+	{
+		id: "features",
+		icon: HiOutlineCube,
+		label: "Features",
+		path: "/features",
+	},
+	{
+		id: "builder",
+		icon: HiOutlineWrenchScrewdriver,
+		label: "Builder",
+		path: "/builder",
+	},
 ];
 
 export function SidebarTabBar() {
-	const [activeTab, setActiveTab] = useAtom(activeSidebarTabAtom);
+	const { activeTab, setActiveTab } = useSidebarTab();
 	const navigate = useNavigate();
 	const location = useLocation();
 
@@ -44,7 +60,7 @@ export function SidebarTabBar() {
 					type="button"
 					onClick={() => {
 						setActiveTab(tab.id);
-						if (tab.path) navigate({ to: tab.path });
+						if (tab.path) navigate({ to: tab.path as string });
 					}}
 					className={cn(
 						"flex items-center justify-center size-8 rounded-md transition-colors",
