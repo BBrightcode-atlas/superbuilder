@@ -36,7 +36,8 @@ export async function seedInitialData(opts: {
 	});
 	const passwordHash = `${salt.toString("hex")}:${key.toString("hex")}`;
 
-	// Write temp seed script (uses postgres from project deps)
+	// Seed script — tables are already created by drizzle-kit push (dbMigrate step).
+	// This script only inserts initial data: owner user, account, organization, member.
 	const seedScript = `
 import postgres from "postgres";
 
@@ -47,137 +48,32 @@ const orgId = crypto.randomUUID();
 const now = new Date();
 
 try {
-  // Create tables if they don't exist (better-auth core schema)
-  await sql\`
-    CREATE TABLE IF NOT EXISTS "user" (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      email_verified BOOLEAN NOT NULL DEFAULT false,
-      image TEXT,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      role TEXT DEFAULT 'user',
-      banned BOOLEAN DEFAULT false,
-      ban_reason TEXT,
-      ban_expires TIMESTAMP,
-      two_factor_enabled BOOLEAN DEFAULT false,
-      two_factor_secret TEXT,
-      two_factor_backup_codes TEXT,
-      is_active BOOLEAN DEFAULT true,
-      marketing_consent_at TIMESTAMP,
-      deleted_at TIMESTAMP
-    )
-  \`;
-  await sql\`
-    CREATE TABLE IF NOT EXISTS account (
-      id TEXT PRIMARY KEY,
-      account_id TEXT NOT NULL,
-      provider_id TEXT NOT NULL,
-      user_id TEXT NOT NULL REFERENCES "user"(id),
-      password TEXT,
-      access_token TEXT,
-      refresh_token TEXT,
-      access_token_expires_at TIMESTAMP,
-      refresh_token_expires_at TIMESTAMP,
-      scope TEXT,
-      id_token TEXT,
-      expires_at TIMESTAMP,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  \`;
-  await sql\`
-    CREATE TABLE IF NOT EXISTS session (
-      id TEXT PRIMARY KEY,
-      expires_at TIMESTAMP NOT NULL,
-      token TEXT NOT NULL UNIQUE,
-      ip_address TEXT,
-      user_agent TEXT,
-      user_id TEXT NOT NULL REFERENCES "user"(id),
-      two_factor_verified BOOLEAN DEFAULT false,
-      active_organization_id TEXT,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  \`;
-  await sql\`
-    CREATE TABLE IF NOT EXISTS verification (
-      id TEXT PRIMARY KEY,
-      identifier TEXT NOT NULL,
-      value TEXT NOT NULL,
-      expires_at TIMESTAMP NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    )
-  \`;
-  await sql\`
-    CREATE TABLE IF NOT EXISTS organization (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      slug TEXT UNIQUE,
-      logo TEXT,
-      metadata TEXT,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  \`;
-  await sql\`
-    CREATE TABLE IF NOT EXISTS member (
-      id TEXT PRIMARY KEY,
-      organization_id TEXT NOT NULL REFERENCES organization(id),
-      user_id TEXT NOT NULL REFERENCES "user"(id),
-      role TEXT NOT NULL DEFAULT 'member',
-      created_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  \`;
-  await sql\`
-    CREATE TABLE IF NOT EXISTS profiles (
-      id TEXT PRIMARY KEY,
-      name TEXT,
-      email TEXT,
-      role TEXT DEFAULT 'member',
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    )
-  \`;
-
-  await sql\`
-    CREATE TABLE IF NOT EXISTS invitation (
-      id TEXT PRIMARY KEY,
-      organization_id TEXT NOT NULL REFERENCES organization(id),
-      email TEXT NOT NULL,
-      role TEXT,
-      status TEXT NOT NULL DEFAULT 'pending',
-      inviter_id TEXT REFERENCES "user"(id),
-      expires_at TIMESTAMP NOT NULL,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  \`;
-
-  // Seed data
+  // Insert owner user
   await sql\`
     INSERT INTO "user" (id, name, email, email_verified, created_at, updated_at)
     VALUES (\${userId}, \${process.env.SEED_NAME}, \${process.env.SEED_EMAIL}, true, \${now}, \${now})
+    ON CONFLICT (email) DO NOTHING
   \`;
 
+  // Insert credential account
   await sql\`
     INSERT INTO account (id, account_id, provider_id, user_id, password, created_at, updated_at)
     VALUES (\${crypto.randomUUID()}, \${process.env.SEED_EMAIL}, 'credential', \${userId}, \${process.env.SEED_PASSWORD_HASH}, \${now}, \${now})
+    ON CONFLICT DO NOTHING
   \`;
 
+  // Insert organization
   await sql\`
     INSERT INTO organization (id, name, slug, created_at)
     VALUES (\${orgId}, \${process.env.SEED_PROJECT_SLUG}, \${process.env.SEED_PROJECT_SLUG}, \${now})
+    ON CONFLICT (slug) DO NOTHING
   \`;
 
+  // Insert owner membership
   await sql\`
     INSERT INTO member (id, organization_id, user_id, role, created_at)
     VALUES (\${crypto.randomUUID()}, \${orgId}, \${userId}, 'owner', \${now})
-  \`;
-
-  await sql\`
-    INSERT INTO profiles (id, name, email, role, created_at, updated_at)
-    VALUES (\${userId}, \${process.env.SEED_NAME}, \${process.env.SEED_EMAIL}, 'owner', \${now}, \${now})
+    ON CONFLICT DO NOTHING
   \`;
 
   console.log(JSON.stringify({ success: true, userId, orgId }));
@@ -193,8 +89,6 @@ try {
 	await writeFile(seedPath, seedScript, "utf-8");
 
 	try {
-		// Dependencies already installed by installFeatures() step
-		// Run seed script from packages/drizzle where postgres package is available
 		const { stdout } = await execFileAsync("bun", ["run", seedPath], {
 			cwd: join(opts.projectDir, "packages/drizzle"),
 			env: {

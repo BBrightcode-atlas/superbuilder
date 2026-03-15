@@ -45,15 +45,20 @@ export async function installFeatures(opts: {
 		const envContent = await readFile(envPath, "utf-8");
 		const dbUrlMatch = envContent.match(/^DATABASE_URL=(.+)$/m);
 		if (dbUrlMatch) {
-			// drizzle-kit push는 NestJS 데코레이터 파싱 문제가 있으므로
-			// better-auth가 첫 실행 시 자동으로 테이블을 생성하도록
-			// BETTER_AUTH_URL 환경변수만 설정해두면 됨.
-			// 명시적 migration이 필요하면 프로젝트에서 직접 실행:
-			//   cd packages/drizzle && pnpm exec drizzle-kit push --force
+			const drizzleDir = join(projectDir, "packages", "drizzle");
+			await execFileAsync(
+				pm.runner,
+				["drizzle-kit", "push", "--force"],
+				{
+					cwd: drizzleDir,
+					timeout: 60_000,
+					env: { ...process.env, DATABASE_URL: dbUrlMatch[1] },
+				},
+			);
 			migrated = true;
 		}
 	} catch {
-		// .env missing — non-fatal
+		// drizzle-kit push 실패 — non-fatal, 수동 실행 안내
 	}
 
 	return { installed: true, migrated };

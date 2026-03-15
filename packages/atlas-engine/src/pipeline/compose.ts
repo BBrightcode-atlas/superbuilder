@@ -247,16 +247,42 @@ export async function composePipeline(
 			const msg = e instanceof Error ? e.message : String(e);
 			cb?.onStep?.("install", "error", msg);
 			cb?.onLog?.(
-				"설치 실패 — bun install && bunx drizzle-kit push 를 수동 실행하세요",
+				"설치 실패 — pnpm install && pnpm exec drizzle-kit push 를 수동 실행하세요",
 			);
 		}
 	} else {
 		cb?.onStep?.("install", "skip");
 	}
 
-	// ── Step 8: seed (NON-FATAL, opt-in, requires install+neon) ──
+	// ── Step 7.5: dbMigrate (NON-FATAL, requires neon) ──────────
+	// drizzle-kit push로 DB 스키마 생성 — install 여부와 무관하게 neon이 있으면 실행
+	let dbMigrated = false;
+	if (neonResult?.databaseUrl) {
+		cb?.onStep?.("dbMigrate" as any, "start", "DB 스키마 마이그레이션 중...");
+		try {
+			const { execFile: execCb } = await import("node:child_process");
+			const { promisify } = await import("node:util");
+			const execAsync = promisify(execCb);
+			const drizzleDir = join(projectDir, "packages", "drizzle");
+			// pnpx or bunx depending on what's available
+			const runner = installed ? "pnpx" : "bunx";
+			await execAsync(runner, ["drizzle-kit", "push", "--force"], {
+				cwd: drizzleDir,
+				timeout: 60_000,
+				env: { ...process.env, DATABASE_URL: neonResult.databaseUrl },
+			});
+			dbMigrated = true;
+			cb?.onStep?.("dbMigrate" as any, "done", "DB 스키마 생성 완료");
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			cb?.onStep?.("dbMigrate" as any, "error", msg);
+			cb?.onLog?.("DB 마이그레이션 실패 — drizzle-kit push를 수동 실행하세요");
+		}
+	}
+
+	// ── Step 8: seed (NON-FATAL, requires neon + dbMigrate) ──────
 	let seedResult: SeedResult | undefined;
-	if (installed && neonResult) {
+	if (neonResult && dbMigrated) {
 		cb?.onStep?.("seed", "start", "초기 데이터 시딩 중...");
 		try {
 			seedResult = await seedInitialData({
