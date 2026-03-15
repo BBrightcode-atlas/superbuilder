@@ -607,16 +607,12 @@ Neon/GitHub/Vercel은 **비필수 단계**로, 실패해도 프로젝트 scaffol
 
 ---
 
-## 부록: 향후 확장
+## 부록: 전환 완료 (2026-03-15)
 
-### feature.json 전환 후
+feature.json 전환이 완료되었다:
 
-현재 `fetchRemoteManifest()`로 boilerplate의 `superbuilder.json`을 읽지만, feature.json 전환 완료 후:
-
-1. `scanFeatureManifests()`로 `superbuilder-features/features/*/feature.json` 스캔
-2. `manifestsToRegistry()`로 FeatureRegistry 변환
-3. scaffold 방식 변경: "전체 clone → 제거" → "빈 템플릿 + feature 설치"
-4. `deriveConnections()` + `applyConnections()`로 마커 자동 삽입
-5. `transformImports()`로 `@superbuilder/*` → `@repo/*` 변환
-
-`composePipeline()`의 인터페이스는 동일하게 유지. 내부 구현만 변경.
+1. ✅ `scanFeatureManifests()` → `manifestsToRegistry()` (superbuilder-features 스캔)
+2. ✅ scaffold: 빈 템플릿 clone → `copyFeaturesToTemplate()` → `transformImports()` → `applyConnections()`
+3. ✅ `composePipeline()` 8단계 파이프라인 (scaffold + neon + github + vercel + seed)
+4. ✅ E2E 검증 완료 (hello-world → Vercel 배포 → 로그인 성공)
+5. ✅ Desktop catalog: `scanFeatureManifests` 기반으로 전환

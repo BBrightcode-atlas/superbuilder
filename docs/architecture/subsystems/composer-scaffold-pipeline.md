@@ -46,9 +46,9 @@ UI 상태 관리: `useAtlasComposerStore` (Zustand)
 
 ```
 registry.ts router
-  → fetchRemoteManifest()
-    → GitHub API로 superbuilder-app-boilerplate/superbuilder.json 조회
-    → BoilerplateManifest 반환 (features, groups, dependencies)
+  → scanFeatureManifests(featuresDir)
+    → superbuilder-features/features/*/feature.json 로컬 스캔
+    → manifestsToRegistry() → FeatureRegistry 반환
   → UI에 feature 카드 렌더링
   → 사용자가 feature 토글 → selectedFeatures[] 업데이트
 ```
@@ -261,16 +261,18 @@ feature 의존성 그래프:
 
 | 단계 | 함수 | 파일 |
 |------|------|------|
-| Feature 목록 조회 | `fetchRemoteManifest()` | `atlas-engine/manifest/remote.ts` |
-| 의존성 해결 | `resolveFeatures(manifest, selected)` | `atlas-engine/resolver/resolver.ts` |
-| 토폴로지 정렬 | `topologicalSort()` | `resolver.ts` 내부 |
+| Feature 스캔 | `scanFeatureManifests(dir)` | `atlas-engine/manifest/scanner.ts` |
+| Registry 변환 | `manifestsToRegistry(manifests)` | `atlas-engine/manifest/adapter.ts` |
 | 프로젝트 생성 | `scaffold(input)` | `atlas-engine/scaffold/scaffold.ts` |
-| Feature 제거 | `removeFeatures(input)` | `atlas-engine/scaffold/feature-remover.ts` |
-| 역의존성 계산 | `resolveRemovalSet()` | `feature-remover.ts` 내부 |
-| 마커 코드 삭제 | `removeFromMarkerBlock()` | `feature-remover.ts` 내부 |
-| Manifest 로드/저장 | `loadManifest()`, `saveManifest()` | `atlas-engine/manifest/local.ts` |
-| GitHub push | `gh repo create --push` | `atlas/composer.ts` |
-| CLI agent 실행 | `spawn("claude", [...])` | `atlas/composer.ts` |
+| Feature 복사 | `copyFeaturesToTemplate()` | `atlas-engine/scaffold/copy-features.ts` |
+| Import 변환 | `transformDirectory()` | `atlas-engine/scaffold/transform-files.ts` |
+| Connection 삽입 | `applyConnections()` | `atlas-engine/connection/apply-connections.ts` |
+| 전체 파이프라인 | `composePipeline()` | `atlas-engine/pipeline/compose.ts` |
+| Neon DB | `createNeonProject()` | `atlas-engine/pipeline/neon.ts` |
+| GitHub push | `pushToGitHub()` | `atlas-engine/pipeline/github.ts` |
+| Vercel 배포 | `deployToVercel()` | `atlas-engine/pipeline/vercel.ts` |
+| DB 마이그레이션 | `pnpm exec drizzle-kit push` | `atlas-engine/pipeline/install.ts` |
+| Owner seed | `seedInitialData()` | `atlas-engine/pipeline/seed.ts` |
 
 ---
 

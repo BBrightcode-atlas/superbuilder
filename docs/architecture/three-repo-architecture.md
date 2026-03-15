@@ -205,7 +205,7 @@ superbuilder-app-boilerplate/
 │   │   └── src/schema-registry.ts # [ATLAS:SCHEMA_IMPORTS], [ATLAS:SCHEMA_SPREAD]
 │   ├── core/                      # 공유 비즈니스 로직
 │   └── widgets/                   # 위젯 패키지
-├── superbuilder.json              # ★ feature 메타데이터 카탈로그 (레거시, source of truth)
+├── superbuilder.json              # 레거시 (비어있음, feature.json으로 대체됨)
 └── drizzle.config.ts              # [ATLAS:TABLES]
 ```
 

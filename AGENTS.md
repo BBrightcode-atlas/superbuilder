@@ -80,24 +80,25 @@ bun run clean:workspaces   # Clean all workspace node_modules
 
 ## Boilerplate & Feature Rules
 
-**Feature 코드는 이 레포에 없다.** 모든 피처 코드는 별도의 boilerplate 레포(`BBrightcode-atlas/superbuilder-app-boilerplate`)에 존재한다. 이 레포(superbuilder)는 피처를 **생성, 관리, 조합**하는 도구이다.
+**Feature 코드는 `superbuilder-features` 레포에 있다.** 이 레포(superbuilder)는 피처를 **조회, 조합, 배포**하는 도구이다.
 
 ### Source of Truth
-- **`superbuilder.json`** (boilerplate repo, `develop` branch) = 피처 카탈로그의 유일한 source of truth
-- Superbuilder는 GitHub API (`gh api`)로 이 파일을 읽기만 한다
-- 피처 메타데이터를 superbuilder 코드에 하드코딩하지 않는다
+- **`feature.json`** (superbuilder-features/features/*/feature.json) = 피처 카탈로그의 source of truth
+- `scanFeatureManifests()`로 로컬 스캔 → `manifestsToRegistry()`로 FeatureRegistry 생성
+- ~~`superbuilder.json`은 레거시~~ — boilerplate에 남아있지만 빈 상태 (`"features": {}`)
 
 ### atlas-engine (`packages/atlas-engine`)
-- **manifest/** — `superbuilder.json` 읽기 (`remote.ts`: gh api, `local.ts`: 파일)
+- **manifest/** — `scanFeatureManifests()` (feature.json 스캔), `manifestsToRegistry()` (FeatureRegistry 변환)
 - **resolver/** — 의존성 해석 + 토폴로지 정렬
-- **scaffold/** — boilerplate clone → 피처 제거 → 새 프로젝트 생성
-- **scaffold/register.ts** — 피처 코드를 boilerplate에 등록 (PR 생성)
+- **connection/** — `deriveConnections()` (provides → 코드 스니펫), `applyConnections()` (마커에 삽입)
+- **transform/** — `transformImports()` (@superbuilder/* → @repo/* 변환)
+- **scaffold/** — 빈 템플릿 clone → feature 복사 → import 변환 → connection 삽입
+- **pipeline/** — `composePipeline()` (scaffold + Neon + GitHub + Vercel + seed)
 
 ### Feature Lifecycle
-1. **조회**: `fetchRemoteManifest()` → `manifest.features` (1분 캐시)
-2. **등록**: `registerToBoilerplate()` → boilerplate에 코드 복사 + marker 삽입 + manifest 업데이트 + PR
-3. **제거**: `removeFeatures()` → 디렉토리 삭제 + marker 제거 + manifest 업데이트 (역의존성 캐스케이드)
-4. **프로젝트 생성**: `scaffold()` → boilerplate clone → 불필요 피처 제거 → git init
+1. **조회**: `scanFeatureManifests(featuresDir)` → `FeatureManifest[]` (feature.json 기반)
+2. **프로젝트 생성**: `scaffold()` → 빈 템플릿 clone → superbuilder-features에서 feature 복사 → import 변환 → connection 삽입
+3. **배포**: `composePipeline()` → scaffold + Neon DB + GitHub + Vercel(app+server+admin+landing) + seed
 
 ### Marker 블록 규칙
 ```typescript
@@ -109,10 +110,10 @@ import { BlogModule } from "@repo/features/blog";
 - 피처 제거 시: 정확한 매칭으로 해당 줄 삭제
 
 ### Desktop Atlas Routers (`apps/desktop/src/lib/trpc/routers/atlas/`)
-- `registry.ts` — manifest 조회 (캐시)
+- `registry.ts` — `scanFeatureManifests` → `manifestsToRegistry` (superbuilder-features에서 스캔)
 - `resolver.ts` — 의존성 해석
-- `composer.ts` — 프로젝트 생성 (scaffold)
-- `feature-studio.ts` — Feature Studio 워크플로우 + boilerplate 등록
+- `composer.ts` — `composePipeline()` thin wrapper (scaffold + 배포)
+- `feature-studio.ts` — Feature Studio 워크플로우
 
 ### 상세 설계
 - 조회/등록 흐름: `docs/architecture/subsystems/feature-lifecycle.md`
@@ -166,7 +167,7 @@ Upstream sync: `/sync-upstream` 스킬 사용. `main_superset` ← upstream/main
 
 ### 크로스 레포 작업 시 주의사항
 - Feature 코드는 superbuilder-features에만 존재한다. superbuilder 레포에 feature 코드를 넣지 않는다
-- `superbuilder.json` (boilerplate)은 레거시 source of truth. 신규 feature는 `feature.json` 기반으로 작성한다
+- `superbuilder.json` (boilerplate)은 레거시 — 빈 상태. Feature 메타데이터는 `feature.json` 기반으로 관리한다
 - Import 경로: feature 개발 시 `@superbuilder/*`, scaffold 후 `@repo/*`로 자동 변환
 - Submodule: `superbuilder/features/` → superbuilder-features (로컬 개발용)
 
