@@ -147,11 +147,21 @@ import { BlogModule } from "@repo/features/blog";
 
 3개 레포로 관심사를 분리한다. 상세는 `docs/architecture/three-repo-architecture.md` 참조.
 
-| 레포 | 역할 | 기본 브랜치 |
-|------|------|-----------|
-| `BBrightcode-atlas/superbuilder` | 빌더 도구 (Desktop, atlas-engine, Registry) | `develop` |
-| `BBrightcode-atlas/superbuilder-features` | Feature 코드 저장소 (feature 패키지, Core Contract, Dev Kit) | `main` |
-| `BBrightcode-atlas/superbuilder-app-boilerplate` | 앱 템플릿 (빈 셸 + `[ATLAS:*]` 마커) | `develop` |
+| 레포 | 역할 | 작업 브랜치 | 안정 브랜치 |
+|------|------|-----------|-----------|
+| `BBrightcode-atlas/superbuilder` | 빌더 도구 (Desktop, atlas-engine, Registry) | `develop` | `main` |
+| `BBrightcode-atlas/superbuilder-features` | Feature 코드 저장소 (feature 패키지, Core Contract, Dev Kit) | `main` | `main` |
+| `BBrightcode-atlas/superbuilder-app-boilerplate` | 앱 템플릿 (빈 셸 + `[ATLAS:*]` 마커) | `develop` | `develop` |
+
+### 브랜치 구조 (superbuilder)
+
+| 브랜치 | 추적 | 역할 |
+|--------|------|------|
+| `develop` | `origin/develop` | 작업 브랜치 — 모든 개발은 여기서 |
+| `main` | `origin/main` | 안정 브랜치 — develop에서 PR로 머지 |
+| `main_superset` | `upstream/main` | superset 원본 추적 전용 — 직접 수정 금지 |
+
+Upstream sync: `/sync-upstream` 스킬 사용. `main_superset` ← upstream/main → sync branch → develop 머지.
 
 ### 크로스 레포 작업 시 주의사항
 - Feature 코드는 superbuilder-features에만 존재한다. superbuilder 레포에 feature 코드를 넣지 않는다
