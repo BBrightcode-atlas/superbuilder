@@ -49,7 +49,8 @@ Desktop UI 없이 CLI에서 직접 프로젝트를 생성한다. `@superbuilder/
 | 커맨드 | 설명 |
 |--------|------|
 | `/feature-scaffold` | 새 feature 패키지를 처음부터 생성 (scaffold) |
-| `/feature-dev` | Feature의 독립 실행 환경(dev harness)을 세팅하고 실행 |
+| `/superbuilder-feature-dev` | Feature 개발 파이프라인 — spec → plan → worktree → 구현 → 검증 → 등록 |
+| `/superbuilder-feature-verify` | Feature Dev E2E 검증 — 전체 파이프라인 자동 실행 + 체크포인트 검증 |
 | `/feature-validate` | Feature 패키지의 정합성을 종합 검증 |
 | `/feature-migrate` | Feature를 boilerplate에서 superbuilder-features로 마이그레이션 |
 
