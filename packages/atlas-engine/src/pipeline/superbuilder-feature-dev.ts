@@ -108,7 +108,7 @@ export async function superbuilderFeatureDevPipeline(
 	await execFile(
 		"git",
 		["worktree", "add", worktreePath, "-b", branchName],
-		{ cwd: input.boilerplatePath },
+		{ cwd: input.featuresRepoPath },
 	);
 	cb?.onStep?.("createWorktree", "done", "Worktree 생성 완료");
 
@@ -152,7 +152,7 @@ export async function superbuilderFeatureDevPipeline(
 	);
 	if (qaDecision === "rejected") {
 		result.status = "rejected_at_human_qa";
-		await cleanupWorktree(worktreePath, input.boilerplatePath, cb);
+		await cleanupWorktree(worktreePath, input.featuresRepoPath, cb);
 		return result;
 	}
 
@@ -184,7 +184,7 @@ export async function superbuilderFeatureDevPipeline(
 		if (regDecision === "rejected") {
 			try { await execFile("gh", ["pr", "close", result.prUrl], { cwd: worktreePath, timeout: 30_000 }); } catch {}
 			result.status = "rejected_at_registration";
-			await cleanupWorktree(worktreePath, input.boilerplatePath, cb);
+			await cleanupWorktree(worktreePath, input.featuresRepoPath, cb);
 			return result;
 		}
 	}
@@ -203,7 +203,7 @@ export async function superbuilderFeatureDevPipeline(
 	}
 
 	// ── Step 8: cleanup ──────────────────────────────────────────
-	await cleanupWorktree(worktreePath, input.boilerplatePath, cb);
+	await cleanupWorktree(worktreePath, input.featuresRepoPath, cb);
 
 	result.status = "complete";
 	cb?.onLog?.("파이프라인 완료");

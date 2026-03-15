@@ -52,7 +52,8 @@ export interface FeatureDevOptions {
 export interface FeatureDevInput {
 	prompt: string;
 	featureName?: string;
-	boilerplatePath: string;
+	/** superbuilder-features repo 경로 (feature 코드가 여기에 생성됨) */
+	featuresRepoPath: string;
 	options?: FeatureDevOptions;
 	callbacks?: FeatureDevCallbacks;
 }
