@@ -192,6 +192,8 @@ export async function composePipeline(
 			BETTER_AUTH_URL: vercelServerResult?.deploymentUrl,
 			BETTER_AUTH_SECRET: betterAuthSecret,
 			VITE_API_URL: vercelServerResult?.deploymentUrl,
+			VITE_APP_NAME: input.projectName,
+			APP_NAME: input.projectName,
 		});
 		cb?.onStep?.("env", "done", ".env 파일 생성 완료");
 	} catch (e) {
