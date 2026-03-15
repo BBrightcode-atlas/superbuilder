@@ -1,1 +1,0 @@
-ALTER TYPE "public"."booking_provider_status" ADD VALUE 'pending_review' BEFORE 'active';

@@ -1,3 +1,0 @@
-/**
- * Community Feature Constants
- */

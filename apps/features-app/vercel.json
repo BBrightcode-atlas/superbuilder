@@ -1,6 +1,0 @@
-{
-  "buildCommand": "cd ../.. && pnpm --filter app exec vite build",
-  "installCommand": "cd ../.. && pnpm install",
-  "outputDirectory": "dist",
-  "framework": "vite"
-}
