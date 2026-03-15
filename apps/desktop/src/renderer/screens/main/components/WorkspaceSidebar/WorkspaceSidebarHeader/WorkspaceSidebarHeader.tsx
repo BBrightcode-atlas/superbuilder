@@ -2,7 +2,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { cn } from "@superset/ui/utils";
 import { useMatchRoute, useNavigate } from "@tanstack/react-router";
 import { HiOutlineClipboardDocumentList } from "react-icons/hi2";
-import { LuBoxes, LuHammer, LuLayers } from "react-icons/lu";
+import { LuBoxes, LuHammer, LuLayers, LuPuzzle } from "react-icons/lu";
 import { GATED_FEATURES, usePaywall } from "renderer/components/Paywall";
 import { useTasksFilterStore } from "renderer/routes/_authenticated/_dashboard/tasks/stores/tasks-filter-state";
 import { STROKE_WIDTH } from "../constants";
@@ -21,12 +21,12 @@ export function WorkspaceSidebarHeader({
 
 	const isWorkspacesListOpen = !!matchRoute({ to: "/workspaces" });
 	const isTasksOpen = !!matchRoute({ to: "/tasks", fuzzy: true });
+	const isUiOpen = !!matchRoute({ to: "/ui" as string, fuzzy: true });
 	const isAtlasOpen = !!matchRoute({ to: "/atlas", fuzzy: true });
 	const isBuildersOpen = !!matchRoute({ to: "/builder" as string, fuzzy: true });
 
 	const handleWorkspacesClick = () => {
 		if (isWorkspacesListOpen) {
-			// Navigate back to workspace view
 			navigate({ to: "/workspace" });
 		} else {
 			navigate({ to: "/workspaces" });
@@ -47,6 +47,10 @@ export function WorkspaceSidebarHeader({
 			if (lastSearch) search.search = lastSearch;
 			navigate({ to: "/tasks", search });
 		});
+	};
+
+	const handleUiClick = () => {
+		navigate({ to: "/ui/gallery" as string });
 	};
 
 	const handleAtlasClick = () => {
@@ -97,6 +101,24 @@ export function WorkspaceSidebarHeader({
 						</button>
 					</TooltipTrigger>
 					<TooltipContent side="right">Tasks</TooltipContent>
+				</Tooltip>
+
+				<Tooltip delayDuration={300}>
+					<TooltipTrigger asChild>
+						<button
+							type="button"
+							onClick={handleUiClick}
+							className={cn(
+								"flex items-center justify-center size-8 rounded-md transition-colors",
+								isUiOpen
+									? "text-foreground bg-accent"
+									: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+							)}
+						>
+							<LuPuzzle className="size-4" strokeWidth={STROKE_WIDTH} />
+						</button>
+					</TooltipTrigger>
+					<TooltipContent side="right">UI</TooltipContent>
 				</Tooltip>
 
 				<Tooltip delayDuration={300}>
@@ -175,6 +197,22 @@ export function WorkspaceSidebarHeader({
 					/>
 				</div>
 				<span className="text-sm font-medium flex-1 text-left">Tasks</span>
+			</button>
+
+			<button
+				type="button"
+				onClick={handleUiClick}
+				className={cn(
+					"flex items-center gap-2 px-2 py-1.5 w-full rounded-md transition-colors",
+					isUiOpen
+						? "text-foreground bg-accent"
+						: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+				)}
+			>
+				<div className="flex items-center justify-center size-5">
+					<LuPuzzle className="size-4" strokeWidth={STROKE_WIDTH} />
+				</div>
+				<span className="text-sm font-medium flex-1 text-left">UI</span>
 			</button>
 
 			<button
