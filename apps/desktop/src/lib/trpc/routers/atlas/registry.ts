@@ -43,7 +43,9 @@ let cachedRegistry: FeatureRegistry | null = null;
 function getRegistry(): FeatureRegistry {
 	if (cachedRegistry) return cachedRegistry;
 	const featuresDir = getFeaturesDir();
+	console.log("[registry] Scanning features from:", featuresDir);
 	const manifests = scanFeatureManifests(featuresDir);
+	console.log("[registry] Found", manifests.length, "features:", manifests.map(m => m.id).join(", "));
 	cachedRegistry = manifestsToRegistry(manifests);
 	return cachedRegistry;
 }
