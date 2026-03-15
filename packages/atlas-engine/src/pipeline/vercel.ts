@@ -31,6 +31,7 @@ export async function deployToVercel(opts: {
 	framework?: string | null;
 	rootDirectory?: string;
 	buildCommand?: string;
+	outputDirectory?: string;
 }): Promise<VercelResult> {
 	const token = opts.token ?? process.env.VERCEL_TOKEN;
 	if (!token) {
@@ -62,6 +63,9 @@ export async function deployToVercel(opts: {
 		rootDirectory: opts.rootDirectory ?? "apps/app",
 		...(opts.buildCommand !== undefined && {
 			buildCommand: opts.buildCommand,
+		}),
+		...(opts.outputDirectory !== undefined && {
+			outputDirectory: opts.outputDirectory,
 		}),
 	};
 

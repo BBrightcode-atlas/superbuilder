@@ -158,6 +158,7 @@ export async function composePipeline(
 				framework: null,
 				rootDirectory: "apps/server",
 				buildCommand: "",
+				outputDirectory: ".",
 			});
 			cb?.onLog?.(`서버 배포: ${vercelServerResult.deploymentUrl}`);
 
