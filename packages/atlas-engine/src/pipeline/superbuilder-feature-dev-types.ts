@@ -16,6 +16,8 @@ export interface ApprovalContext {
 	summary?: string;
 }
 
+export type GenerateKind = "spec" | "plan" | "implement";
+
 export interface FeatureDevCallbacks {
 	onStep?: (
 		step: FeatureDevStep,
@@ -27,15 +29,24 @@ export interface FeatureDevCallbacks {
 		type: "spec_plan" | "human_qa" | "registration",
 		context: ApprovalContext,
 	) => Promise<"approved" | "rejected">;
+	/**
+	 * AI 작업 콜백. 호출자(현재 agent)가 직접 수행.
+	 * - "spec": prompt를 받아 spec 텍스트 반환
+	 * - "plan": spec을 받아 plan 텍스트 반환
+	 * - "implement": plan을 받아 worktree에서 코드 구현 (반환값 무시)
+	 */
+	onGenerate?: (
+		kind: GenerateKind,
+		input: string,
+		featureName: string,
+	) => Promise<string>;
 }
 
 export interface FeatureDevOptions {
 	approvalMode?: boolean;
-	agent?: "claude" | "codex";
 	skipVerify?: boolean;
 	skipRegister?: boolean;
 	worktreeBasePath?: string;
-	featuresSourceDir?: string;
 }
 
 export interface FeatureDevInput {
