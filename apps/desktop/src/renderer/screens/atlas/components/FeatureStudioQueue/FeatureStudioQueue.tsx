@@ -66,7 +66,7 @@ export function FeatureStudioQueue({
 								<div className="space-y-2">
 									<div className="flex items-center gap-2">
 										<Link
-											to="/atlas/studio/$requestId"
+											to="/features/studio/$requestId"
 											params={{ requestId: request.id }}
 											className="text-sm font-medium text-foreground hover:underline"
 										>
@@ -99,7 +99,7 @@ export function FeatureStudioQueue({
 									</Button>
 									<Button asChild size="sm">
 										<Link
-											to="/atlas/studio/$requestId"
+											to="/features/studio/$requestId"
 											params={{ requestId: request.id }}
 										>
 											상세 보기

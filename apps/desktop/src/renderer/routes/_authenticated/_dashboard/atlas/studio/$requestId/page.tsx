@@ -52,7 +52,7 @@ function FeatureStudioRequestDetailPage() {
 		<div className="space-y-6 p-6">
 			<div className="flex items-center justify-between gap-4">
 				<Button asChild variant="ghost" size="sm">
-					<Link to="/atlas/studio">목록으로</Link>
+					<Link to="/features/studio">목록으로</Link>
 				</Button>
 			</div>
 

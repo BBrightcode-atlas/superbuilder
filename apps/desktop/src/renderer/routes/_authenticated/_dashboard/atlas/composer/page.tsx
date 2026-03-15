@@ -707,7 +707,7 @@ function ComposerPage() {
               </Button>
               <Button
                 onClick={() =>
-                  navigate({ to: "/atlas/deployments" as string })
+                  navigate({ to: "/builder/deployments" as string })
                 }
               >
                 배포 목록으로
