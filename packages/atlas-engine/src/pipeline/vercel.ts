@@ -28,7 +28,7 @@ export async function deployToVercel(opts: {
 	envVars?: Record<string, string>;
 	token?: string;
 	teamId?: string;
-	framework?: string;
+	framework?: string | null;
 	rootDirectory?: string;
 }): Promise<VercelResult> {
 	const token = opts.token ?? process.env.VERCEL_TOKEN;

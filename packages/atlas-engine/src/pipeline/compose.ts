@@ -155,7 +155,7 @@ export async function composePipeline(
 				envVars: serverEnvVars,
 				token: opts.vercelToken,
 				teamId: opts.vercelTeamId,
-				framework: "other",
+				framework: null,
 				rootDirectory: "apps/server",
 			});
 			cb?.onLog?.(`서버 배포: ${vercelServerResult.deploymentUrl}`);
