@@ -92,6 +92,8 @@ export interface ComposeResult {
 	github?: GitHubResult;
 	vercel?: VercelResult;
 	vercelServer?: VercelResult;
+	vercelAdmin?: VercelResult;
+	vercelLanding?: VercelResult;
 	installed: boolean;
 	seed?: SeedResult;
 }

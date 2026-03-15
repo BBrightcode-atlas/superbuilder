@@ -121,6 +121,8 @@ export async function composePipeline(
 	// Monorepo 배포: app (프론트엔드) + server (API) 2개 프로젝트
 	let vercelResult: VercelResult | undefined;
 	let vercelServerResult: VercelResult | undefined;
+	let vercelAdminResult: VercelResult | undefined;
+	let vercelLandingResult: VercelResult | undefined;
 	// BETTER_AUTH_SECRET을 미리 생성 (Vercel env + .env 양쪽에 동일 값 사용)
 	const { randomBytes } = await import("node:crypto");
 	const betterAuthSecret = randomBytes(32).toString("base64");
@@ -153,7 +155,7 @@ export async function composePipeline(
 			const serverUrl = `https://${serverProjectName}.vercel.app`;
 			const serverEnvVars: Record<string, string> = {
 				...envVars,
-				CORS_ORIGINS: `${vercelResult.deploymentUrl},${serverUrl}`,
+				CORS_ORIGINS: `${vercelResult.deploymentUrl},${serverUrl},https://${input.projectName}-admin.vercel.app`,
 				BETTER_AUTH_URL: serverUrl,
 				APP_NAME: input.projectName,
 				NODE_ENV: "production",
@@ -200,10 +202,53 @@ export async function composePipeline(
 				}
 			}
 
+			// 4) Admin — apps/admin, Vite
+			cb?.onLog?.("Vercel: 관리자(Admin) 프로젝트 생성 중...");
+			try {
+				const adminEnvVars: Record<string, string> = {
+					...envVars,
+					VITE_API_URL: vercelServerResult.deploymentUrl,
+					VITE_APP_NAME: input.projectName,
+				};
+				vercelAdminResult = await deployToVercel({
+					repoUrl: githubResult.repoUrl,
+					projectName: `${input.projectName}-admin`,
+					envVars: adminEnvVars,
+					token: opts.vercelToken,
+					teamId: opts.vercelTeamId,
+					rootDirectory: "apps/admin",
+				});
+				cb?.onLog?.(`Admin 배포: ${vercelAdminResult.deploymentUrl}`);
+			} catch (e) {
+				cb?.onLog?.(`Admin 배포 실패 (non-fatal): ${e instanceof Error ? e.message : e}`);
+			}
+
+			// 5) Landing — apps/landing, Next.js
+			cb?.onLog?.("Vercel: 랜딩(Landing) 프로젝트 생성 중...");
+			try {
+				const landingEnvVars: Record<string, string> = {
+					VITE_APP_NAME: input.projectName,
+					NEXT_PUBLIC_APP_NAME: input.projectName,
+					NEXT_PUBLIC_APP_URL: vercelResult.deploymentUrl,
+				};
+				vercelLandingResult = await deployToVercel({
+					repoUrl: githubResult.repoUrl,
+					projectName: `${input.projectName}-landing`,
+					envVars: landingEnvVars,
+					token: opts.vercelToken,
+					teamId: opts.vercelTeamId,
+					framework: "nextjs",
+					rootDirectory: "apps/landing",
+				});
+				cb?.onLog?.(`Landing 배포: ${vercelLandingResult.deploymentUrl}`);
+			} catch (e) {
+				cb?.onLog?.(`Landing 배포 실패 (non-fatal): ${e instanceof Error ? e.message : e}`);
+			}
+
 			cb?.onStep?.(
 				"vercel",
 				"done",
-				`앱: ${vercelResult.deploymentUrl} | API: ${vercelServerResult.deploymentUrl}`,
+				`앱: ${vercelResult.deploymentUrl} | API: ${vercelServerResult.deploymentUrl} | Admin: ${vercelAdminResult?.deploymentUrl ?? "skip"} | Landing: ${vercelLandingResult?.deploymentUrl ?? "skip"}`,
 			);
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
@@ -312,6 +357,8 @@ export async function composePipeline(
 		github: githubResult,
 		vercel: vercelResult,
 		vercelServer: vercelServerResult,
+		vercelAdmin: vercelAdminResult,
+		vercelLanding: vercelLandingResult,
 		installed,
 		seed: seedResult,
 	};
