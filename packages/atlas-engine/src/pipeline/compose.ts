@@ -264,9 +264,8 @@ export async function composePipeline(
 			const { promisify } = await import("node:util");
 			const execAsync = promisify(execCb);
 			const drizzleDir = join(projectDir, "packages", "drizzle");
-			// pnpx or bunx depending on what's available
-			const runner = installed ? "pnpx" : "bunx";
-			await execAsync(runner, ["drizzle-kit", "push", "--force"], {
+			// pnpm exec for workspace resolution
+			await execAsync("pnpm", ["exec", "drizzle-kit", "push", "--force"], {
 				cwd: drizzleDir,
 				timeout: 60_000,
 				env: { ...process.env, DATABASE_URL: neonResult.databaseUrl },
