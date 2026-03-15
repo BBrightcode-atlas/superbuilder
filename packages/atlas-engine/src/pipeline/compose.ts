@@ -148,21 +148,27 @@ export async function composePipeline(
 			cb?.onLog?.(`앱 배포: ${vercelResult.deploymentUrl}`);
 
 			// 2) Server (API) — apps/server, NestJS
-			// 서버에 앱 URL을 CORS + AUTH URL로 전달
+			// 서버에 앱 URL을 CORS, 서버 자신 URL을 AUTH URL로 전달
+			const serverProjectName = `${input.projectName}-api`;
+			const serverUrl = `https://${serverProjectName}.vercel.app`;
 			const serverEnvVars: Record<string, string> = {
 				...envVars,
-				CORS_ORIGINS: vercelResult.deploymentUrl,
-				BETTER_AUTH_URL: vercelResult.deploymentUrl,
+				CORS_ORIGINS: `${vercelResult.deploymentUrl},${serverUrl}`,
+				BETTER_AUTH_URL: serverUrl,
+				APP_NAME: input.projectName,
+				NODE_ENV: "production",
 			};
 			cb?.onLog?.("Vercel: 서버(API) 프로젝트 생성 중...");
 			vercelServerResult = await deployToVercel({
 				repoUrl: githubResult.repoUrl,
-				projectName: `${input.projectName}-api`,
+				projectName: serverProjectName,
 				envVars: serverEnvVars,
 				token: opts.vercelToken,
 				teamId: opts.vercelTeamId,
 				framework: null,
 				rootDirectory: "apps/server",
+				buildCommand: "nest build",
+				outputDirectory: ".",
 			});
 			cb?.onLog?.(`서버 배포: ${vercelServerResult.deploymentUrl}`);
 
@@ -173,6 +179,7 @@ export async function composePipeline(
 			const appQuery = opts.vercelTeamId ? `?teamId=${opts.vercelTeamId}` : "";
 			for (const ev of [
 				{ key: "VITE_API_URL", value: vercelServerResult.deploymentUrl },
+				{ key: "VITE_APP_NAME", value: input.projectName },
 			]) {
 				try {
 					await vercelFetch(

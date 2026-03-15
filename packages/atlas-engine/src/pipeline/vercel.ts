@@ -59,7 +59,7 @@ export async function deployToVercel(opts: {
 			type: "github",
 			repo: `${gitOwner}/${gitRepo}`,
 		},
-		installCommand: "pnpm install --no-frozen-lockfile",
+		installCommand: "cd ../.. && pnpm install --no-frozen-lockfile",
 		rootDirectory: opts.rootDirectory ?? "apps/app",
 		...(opts.buildCommand !== undefined && {
 			buildCommand: opts.buildCommand,
@@ -86,7 +86,7 @@ export async function deployToVercel(opts: {
 			const fallbackBody: Record<string, unknown> = {
 				name: opts.projectName,
 				framework,
-				installCommand: "pnpm install --no-frozen-lockfile",
+				installCommand: "cd ../.. && pnpm install --no-frozen-lockfile",
 			};
 			project = (await vercelFetch(
 				`/v10/projects${queryParams}`,
