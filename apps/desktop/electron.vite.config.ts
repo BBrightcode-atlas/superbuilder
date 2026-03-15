@@ -106,6 +106,12 @@ export default defineConfig({
 			),
 			"process.env.VERCEL_TOKEN": defineEnv(process.env.VERCEL_TOKEN),
 			"process.env.NEON_API_KEY": defineEnv(process.env.NEON_API_KEY),
+			"process.env.SUPERBUILDER_FEATURES_PATH": defineEnv(
+				process.env.SUPERBUILDER_FEATURES_PATH,
+			),
+			"process.env.SUPERBUILDER_PATH": defineEnv(
+				process.env.SUPERBUILDER_PATH,
+			),
 		},
 
 		build: {
