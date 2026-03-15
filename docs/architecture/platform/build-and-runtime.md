@@ -66,10 +66,13 @@ This uses Expo and an entirely different runtime distribution path.
 
 ### Service applications
 
-- `apps/features-server` with NestJS/Fastify
-- `apps/agent-server` with Hono
 - `apps/electric-proxy` as worker-style proxy
 - `packages/workspace-service` as a Hono + tRPC service
+
+> **Legacy (삭제됨):** `apps/features-server` (NestJS/Fastify) and
+> `apps/agent-server` (Hono) have been deleted. Feature server modules now live
+> in `superbuilder-features/features/*/server/`. Agent runtime is handled by
+> the Mastra-based runtime inside the Desktop app.
 
 ## Development topology
 

@@ -2,125 +2,118 @@
 
 ## Summary
 
-This repository is a Bun and Turborepo monorepo built from a Superset fork and
-is being reshaped into a `superbuilder` system.
+This repository (`superbuilder`) is one of three repositories that together form
+the superbuilder platform. It is a Bun and Turborepo monorepo originally forked
+from Superset, now fully shaped into the builder tool layer of the 3-repo
+architecture.
 
-The important architectural point is not that it has two equal long-term
-stacks. The important point is that it contains:
+## 3-Repo Architecture
 
-- a legacy Superset-derived application and package layer, still using the
-  `@superset/*` namespace in many places
-- a newer `@superbuilder/*` layer that adds feature generation, feature
-  management, agent workflows, and project-building capabilities
+The platform is split across three repositories with clear responsibility
+boundaries:
 
-The intended direction is convergence. `@superset/*` is best read as the current
-base that is being absorbed into a broader `superbuilder` platform rather than
-as the final brand or final system boundary.
+| Repo | Role | Working branch | Stable branch |
+|------|------|---------------|---------------|
+| `BBrightcode-atlas/superbuilder` | Builder tool (Desktop, atlas-engine, Registry) | `develop` | `main` |
+| `BBrightcode-atlas/superbuilder-features` | Feature code (each feature in `features/{name}/`) | `main` | `main` |
+| `BBrightcode-atlas/superbuilder-app-boilerplate` | Empty app template with `[ATLAS:*]` markers | `develop` | `develop` |
+
+**Feature code lives exclusively in `superbuilder-features`.** This repo
+(superbuilder) contains only the tooling that queries, composes, and deploys
+features — not the features themselves.
+
+For the full 3-repo architecture spec see
+`docs/architecture/three-repo-architecture.md`.
 
 ## System purpose
 
-At a product level, this repository is becoming a combined creation system:
+At a product level, the superbuilder platform is a combined creation system:
 
 - start from code and workspace context
-- derive or manage reusable features
-- compose those features into larger project surfaces
-- support that flow with admin tools, agent tooling, auth, sync, and shared UI
+- discover and manage reusable features (via `superbuilder-features`)
+- compose those features into new project surfaces (via `superbuilder-app-boilerplate`)
+- support that flow with Desktop tooling, agent workflows, atlas-engine, and
+  shared infrastructure
 
-That is why the repo contains both classic product surfaces and a dedicated
-feature subsystem. The feature subsystem is not an unrelated sidecar. It is part
-of the system's broader creation pipeline.
+## This repo: builder tool layer
 
-## Legacy base and emerging layer
+### Apps in `superbuilder`
 
-### 1. Superset-derived base
+- `apps/web` — main authenticated browser UI (app.superset.sh)
+- `apps/api` — HTTP APIs, auth routes, integrations, and tRPC endpoints
+- `apps/admin` — internal admin analytics and management
+- `apps/marketing` — public acquisition and content site (superset.sh)
+- `apps/docs` — documentation site
+- `apps/desktop` — Electron desktop product; primary orchestration surface for
+  Atlas workflows
+- `apps/mobile` — React Native mobile product (Expo)
 
-The Superset-derived layer is the current operational base of the repository.
+### Core packages in `superbuilder`
 
-It includes apps such as:
+- `@superset/auth` — Better Auth server + client
+- `@superset/db` — Drizzle schema, Feature Studio schema (migrated 2026-03-13)
+- `@superset/trpc` — typed procedure routers, Feature Studio router (migrated 2026-03-13)
+- `@superset/ui` — shadcn/ui components, TailwindCSS v4
+- `@superset/shared` — cross-app types, constants, auth helpers
+- `@superset/mcp` — MCP server and tool registration
+- `@superset/desktop-mcp` — desktop-specific MCP exposure
+- `@superset/local-db` — desktop-local persistence
+- `@superset/workspace-service` — workspace orchestration service
+- `@superset/chat` / `@superset/chat-mastra` — chat and Mastra integration
+- `@superset/agent` — agent orchestration primitives
+- `@superset/email` — email templates and rendering
+- `@superbuilder/atlas-engine` — feature manifest scanning, dependency
+  resolution, scaffold, and pipeline
 
-- `apps/web` for the primary authenticated product UI
-- `apps/api` for HTTP APIs, auth routes, integrations, and tRPC endpoints
-- `apps/admin` for internal admin analytics and management
-- `apps/marketing` for the public site and content marketing surface
-- `apps/docs` for documentation
-- `apps/desktop` for the Electron desktop product
-- `apps/mobile` for the React Native mobile product
+## Legacy apps (삭제됨)
 
-It also includes core packages such as:
+> **Legacy (삭제됨):** The following apps were part of an earlier single-repo
+> architecture where feature code lived inside `superbuilder`. They have been
+> deleted as the platform migrated to the 3-repo model. Their responsibilities
+> now live in `superbuilder-features` and `superbuilder-app-boilerplate`.
 
-- `@superset/auth`
-- `@superset/db`
-- `@superset/trpc`
-- `@superset/ui`
-- `@superset/shared`
-- `@superset/mcp`
-- `@superset/workspace-service`
+| Deleted app | Current equivalent |
+|-------------|-------------------|
+| `apps/features-app` | `superbuilder-app-boilerplate/apps/app` |
+| `apps/features-landing` / `apps/features-landing/landing` | `superbuilder-app-boilerplate/apps/landing` |
+| `apps/feature-admin` | `superbuilder-app-boilerplate/apps/admin` |
+| `apps/features-server` | Feature modules in `superbuilder-features/features/*/` |
+| `apps/agent-server` | Replaced by Mastra-based agent runtime in Desktop |
 
-This layer provides much of the current runtime foundation: Better Auth,
-Drizzle with Neon/Postgres, Next.js web surfaces, Electron desktop runtime,
-Expo mobile runtime, and shared typed APIs through tRPC.
+## Legacy packages (삭제됨)
 
-### 2. Superbuilder feature and project layer
+> **Legacy (삭제됨):** The following packages were part of the earlier
+> single-repo architecture. They have been deleted. Their responsibilities have
+> moved to `superbuilder-features` (per-feature) or been absorbed into existing
+> `@superset/*` packages.
 
-The newer `@superbuilder/*` layer is where the repository becomes a feature and
-project creation system rather than only an application suite.
+| Deleted package | Current equivalent |
+|-----------------|-------------------|
+| `packages/features-server` (`@superbuilder/features-server`) | Feature server modules in `superbuilder-features/features/*/server/` |
+| `packages/feature-ui` (`@superbuilder/feature-ui`) | Per-feature UI in `superbuilder-features/features/*/` |
+| `packages/features-db` (`@superbuilder/drizzle`) | Per-feature DB schema in `superbuilder-features/features/*/`; platform schema in `@superset/db` |
+| `packages/features-cli` (`@superbuilder/features-cli`) | CLI tooling absorbed into `@superbuilder/atlas-engine` |
+| `packages/widgets` (`@superbuilder/widgets`) | Per-feature widget code in `superbuilder-features` |
 
-It combines Superset-derived infrastructure with Feature Atlas-style
-capabilities and conventions.
-
-It includes:
-
-- `apps/features-app`
-- `apps/features-landing/landing`
-- `apps/feature-admin`
-- `apps/features-server`
-- `apps/agent-server`
-
-It also includes shared packages such as:
-
-- `@superbuilder/features-client`
-- `@superbuilder/features-server`
-- `@superbuilder/feature-ui`
-- `@superbuilder/widgets`
-- `@superbuilder/drizzle`
-- `@superbuilder/atlas-engine`
-- `@superbuilder/features-cli`
-
-This layer introduces the feature folder system, feature-specific client and
-server contracts, widgets, generation helpers, and feature admin surfaces.
-
-Conceptually, this is the part of the repo that moves toward:
-
-- code-aware tooling
-- feature creation and management
-- project composition built from feature units
-
-It still carries some older Supabase-era patterns in places while moving toward
-the same Better Auth direction used by the Superset-derived base.
-
-## High-level runtime map
+## High-level runtime map (current)
 
 ### User-facing product surfaces
 
-- `apps/web` is the main authenticated browser app
-- `apps/marketing` is the public acquisition and content site
-- `apps/docs` is the documentation site
-- `apps/mobile` is the mobile surface
-- `apps/desktop` is the richest local workstation client
-- `apps/features-landing/landing` is a feature-system-specific landing/template surface
+- `apps/web` — main authenticated browser app
+- `apps/marketing` — public acquisition and content site
+- `apps/docs` — documentation site
+- `apps/mobile` — mobile surface
+- `apps/desktop` — richest local workstation client; Atlas orchestration hub
 
-### Product backends and service layers
+### Product backends
 
-- `apps/api` is the main Next.js API surface for the Superset-derived base
-- `apps/features-server` is the NestJS backend for the feature and project layer
-- `apps/agent-server` is a Hono-based AI and streaming server for feature agents
-- `packages/workspace-service` is a focused Hono + tRPC service used by the desktop app
+- `apps/api` — main Next.js API for web/admin/desktop
+- `packages/workspace-service` — Hono + tRPC service used by Desktop
 
 ### Infrastructure and support services
 
-- `apps/electric-proxy` authorizes and filters Electric SQL sync traffic
-- `apps/streams` is currently only a placeholder package, not a developed runtime surface
-- `apps/workers` contains standalone remote-control and webhook tooling
+- `apps/electric-proxy` — authorizes and filters Electric SQL sync traffic
+- `apps/workers` — remote-control and webhook tooling
 
 ## Core architectural ideas
 
@@ -129,46 +122,32 @@ the same Better Auth direction used by the Superset-derived base.
 Most applications stay thin by depending on shared packages rather than
 redefining infrastructure locally.
 
-Examples:
-
 - auth logic is centralized in `packages/auth`
 - database schema is centralized in `packages/db`
 - typed procedure routers are centralized in `packages/trpc`
 - reusable UI is centralized in `packages/ui`
 - desktop-specific local persistence is centralized in `packages/local-db`
+- feature scanning/resolution/scaffold is centralized in `packages/atlas-engine`
 
-The newer superbuilder layer follows the same package-first pattern:
+### B. Feature code lives in a separate repo
 
-- server feature logic in `packages/features-server`
-- client feature utilities in `packages/features-client`
-- feature UI in `packages/feature-ui`
-- reusable connected feature widgets in `packages/widgets`
+Feature code (server modules, client pages, DB schema, UI components per
+feature) lives in `superbuilder-features`. This repo contains only the tooling
+to discover, resolve, and scaffold those features. The `superbuilder-app-boilerplate`
+repo contains the empty app template that receives scaffolded feature code.
 
-### B. Namespace split does not equal product split
+### C. Auth and identity are a cross-platform concern
 
-The `@superset/*` and `@superbuilder/*` namespaces should be read as a migration
-artifact and responsibility split, not as proof of two unrelated products.
-
-The repository is converging toward one larger system where the older namespace
-provides a lot of the infrastructure base and the newer namespace provides the
-feature and project composition model.
-
-### C. Auth and identity are becoming a cross-platform concern
-
-The Superset-derived base already uses Better Auth and exposes session-aware APIs
-across web, desktop, and mobile. The feature layer is still in migration and
-currently mixes older Supabase-oriented assumptions with a newer Better Auth
-direction.
-
-That means the repository is not just multi-app; it is also mid-transition in
-its identity model while the platform converges.
+Better Auth provides session-aware APIs across web, desktop, and mobile. All
+new feature code in `superbuilder-features` targets the same Better Auth
+foundation.
 
 ### D. Agents are a first-class subsystem
 
-This is not a simple CRUD product monorepo. Agent execution, MCP, remote tools,
-workspace orchestration, and AI-assisted flows are central to the product.
+Agent execution, MCP, remote tools, workspace orchestration, and AI-assisted
+flows are central to the product.
 
-That shows up in:
+Key locations:
 
 - `packages/agent`
 - `packages/chat`
@@ -177,19 +156,16 @@ That shows up in:
 - `packages/desktop-mcp`
 - `packages/workspace-service`
 - `apps/api` agent endpoints
-- `apps/desktop` agent orchestration UX
-- `apps/agent-server` in the feature and project layer
+- `apps/desktop` agent orchestration UX and Atlas routers
 
 ### E. The desktop app is the thickest client
 
-The Electron app is not a shell around a website. It has distinct main,
-preload, and renderer boundaries, local persistence, agent orchestration,
-terminal management, protocol/deep-link handling, and integration with MCP and
-workspace services.
+The Electron app has distinct main, preload, and renderer boundaries, local
+persistence, agent orchestration, terminal management, protocol/deep-link
+handling, and integration with MCP and workspace services. It is also the
+primary UI for Atlas workflows (Feature Studio, Composer, Catalog, Deployments).
 
 ## Main external services
-
-The repository integrates with a wide range of infrastructure:
 
 - Neon / Postgres for primary relational data
 - Better Auth for auth, sessions, orgs, API keys, and OAuth flows
@@ -199,23 +175,24 @@ The repository integrates with a wide range of infrastructure:
 - Sentry for error monitoring
 - Electric SQL for sync and live data distribution
 - Upstash for queueing and rate limiting
-- Vercel Blob and KV in parts of the Superset stack
+- Vercel for hosting and deployment pipeline (also managed via atlas-engine)
 - Slack, Linear, GitHub, and OAuth provider integrations
 - Anthropic, OpenAI, Google, and Mastra for agent/model workflows
 
 ## Recommended mental model
 
-Treat the repo as three connected layers:
+Treat the platform as three connected repos, each with a clear job:
 
-1. Product surfaces
-   Web, desktop, mobile, marketing, docs, admin.
+1. **`superbuilder`** (this repo) — builder tooling
+   Desktop app, atlas-engine, shared platform packages, API, web UI.
 
-2. Shared platform
-   Auth, DB, tRPC, shared UI, MCP, chat, local sync, workspace orchestration.
+2. **`superbuilder-features`** — feature library
+   The catalog of reusable features. Each feature owns its server, client, DB
+   schema, and UI code. Features are discovered by atlas-engine via `feature.json`.
 
-3. Feature and project creation layer
-   The part of the system that turns code and product context into managed
-   features and then uses those features to build larger project surfaces.
+3. **`superbuilder-app-boilerplate`** — app template
+   An empty shell with `[ATLAS:*]` markers. scaffold() clones this and fills it
+   with the selected features from `superbuilder-features`.
 
-If you start with this model, the repository becomes much easier to reason
-about than if you assume it is a single unified app.
+If you understand these three repos and their data flow, the entire system
+becomes straightforward to reason about.
