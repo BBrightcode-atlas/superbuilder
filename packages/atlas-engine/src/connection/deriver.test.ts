@@ -29,9 +29,9 @@ describe("deriveConnections", () => {
 		);
 		expect(result.trpcRouterKey).toBe("blog: blogRouter,");
 		expect(result.trpcTypeImport).toBe(
-			'import type { blogRouter } from "./blog";',
+			'import { blogRouter } from "./blog";',
 		);
-		expect(result.trpcTypeKey).toBe("blog: typeof blogRouter;");
+		expect(result.trpcTypeKey).toBe("blog: blogRouter,");
 	});
 
 	it("derives client route connections from client provides", () => {

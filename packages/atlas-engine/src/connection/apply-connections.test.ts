@@ -179,8 +179,8 @@ describe("applyConnections", () => {
 			join(TEST_DIR, "packages", "features", "app-router.ts"),
 			"utf-8",
 		);
-		expect(appRouter).toContain('import type { blogRouter } from "./blog"');
-		expect(appRouter).toContain("blog: typeof blogRouter;");
+		expect(appRouter).toContain('import { blogRouter } from "./blog"');
+		expect(appRouter).toContain("blog: blogRouter,");
 	});
 
 	it("inserts client routes at app router markers", () => {

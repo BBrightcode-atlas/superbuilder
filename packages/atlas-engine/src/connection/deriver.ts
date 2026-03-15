@@ -13,8 +13,8 @@ export function deriveConnections(
 		conn.nestModuleRef = `${module},`;
 		conn.trpcRouterImport = `import { ${router} } from "@repo/features/${featureId}";`;
 		conn.trpcRouterKey = `${routerKey}: ${router},`;
-		conn.trpcTypeImport = `import type { ${router} } from "./${featureId}";`;
-		conn.trpcTypeKey = `${routerKey}: typeof ${router};`;
+		conn.trpcTypeImport = `import { ${router} } from "./${featureId}";`;
+		conn.trpcTypeKey = `${routerKey}: ${router},`;
 	}
 
 	if (provides.client) {
