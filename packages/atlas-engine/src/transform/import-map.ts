@@ -1,5 +1,6 @@
 export const STATIC_IMPORT_MAP: Record<string, string> = {
 	"@superbuilder/core-auth": "@repo/core/auth",
+	"@superbuilder/core-trpc/client": "@/lib/trpc",
 	"@superbuilder/core-trpc": "@repo/core/trpc",
 	"@superbuilder/core-db": "@repo/drizzle",
 	"@superbuilder/core-schema": "@repo/drizzle",
