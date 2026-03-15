@@ -13,7 +13,7 @@ async function detectPM(
 		const raw = await readFile(join(projectDir, "package.json"), "utf-8");
 		const pkg = JSON.parse(raw);
 		const pm = pkg.packageManager ?? "";
-		if (pm.startsWith("pnpm")) return { cmd: "pnpm", runner: "pnpx" };
+		if (pm.startsWith("pnpm")) return { cmd: "pnpm", runner: "pnpm" };
 		if (pm.startsWith("yarn")) return { cmd: "yarn", runner: "yarn" };
 	} catch {}
 	return { cmd: "bun", runner: "bunx" };
@@ -46,9 +46,13 @@ export async function installFeatures(opts: {
 		const dbUrlMatch = envContent.match(/^DATABASE_URL=(.+)$/m);
 		if (dbUrlMatch) {
 			const drizzleDir = join(projectDir, "packages", "drizzle");
+			const runnerArgs =
+				pm.cmd === "pnpm"
+					? ["exec", "drizzle-kit", "push", "--force"]
+					: ["drizzle-kit", "push", "--force"];
 			await execFileAsync(
-				pm.runner,
-				["drizzle-kit", "push", "--force"],
+				pm.cmd === "pnpm" ? "pnpm" : pm.runner,
+				runnerArgs,
 				{
 					cwd: drizzleDir,
 					timeout: 60_000,
