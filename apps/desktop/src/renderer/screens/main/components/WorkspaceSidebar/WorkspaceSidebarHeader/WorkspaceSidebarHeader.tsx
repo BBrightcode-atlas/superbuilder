@@ -2,7 +2,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { cn } from "@superset/ui/utils";
 import { useMatchRoute, useNavigate } from "@tanstack/react-router";
 import { HiOutlineClipboardDocumentList } from "react-icons/hi2";
-import { LuBoxes, LuLayers } from "react-icons/lu";
+import { LuBoxes, LuHammer, LuLayers } from "react-icons/lu";
 import { GATED_FEATURES, usePaywall } from "renderer/components/Paywall";
 import { useTasksFilterStore } from "renderer/routes/_authenticated/_dashboard/tasks/stores/tasks-filter-state";
 import { STROKE_WIDTH } from "../constants";
@@ -22,6 +22,9 @@ export function WorkspaceSidebarHeader({
 	const isWorkspacesListOpen = !!matchRoute({ to: "/workspaces" });
 	const isTasksOpen = !!matchRoute({ to: "/tasks", fuzzy: true });
 	const isAtlasOpen = !!matchRoute({ to: "/atlas", fuzzy: true });
+	const isBuildersOpen =
+		!!matchRoute({ to: "/atlas/composer", fuzzy: true }) ||
+		!!matchRoute({ to: "/atlas/deployments", fuzzy: true });
 
 	const handleWorkspacesClick = () => {
 		if (isWorkspacesListOpen) {
@@ -50,6 +53,10 @@ export function WorkspaceSidebarHeader({
 
 	const handleAtlasClick = () => {
 		navigate({ to: "/atlas/catalog" });
+	};
+
+	const handleBuildersClick = () => {
+		navigate({ to: "/atlas/composer" });
 	};
 
 	if (isCollapsed) {
@@ -112,6 +119,24 @@ export function WorkspaceSidebarHeader({
 					<TooltipContent side="right">Features</TooltipContent>
 				</Tooltip>
 
+				<Tooltip delayDuration={300}>
+					<TooltipTrigger asChild>
+						<button
+							type="button"
+							onClick={handleBuildersClick}
+							className={cn(
+								"flex items-center justify-center size-8 rounded-md transition-colors",
+								isBuildersOpen
+									? "text-foreground bg-accent"
+									: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+							)}
+						>
+							<LuHammer className="size-4" strokeWidth={STROKE_WIDTH} />
+						</button>
+					</TooltipTrigger>
+					<TooltipContent side="right">Builders</TooltipContent>
+				</Tooltip>
+
 				<NewWorkspaceButton isCollapsed />
 			</div>
 		);
@@ -168,6 +193,22 @@ export function WorkspaceSidebarHeader({
 					<LuBoxes className="size-4" strokeWidth={STROKE_WIDTH} />
 				</div>
 				<span className="text-sm font-medium flex-1 text-left">Features</span>
+			</button>
+
+			<button
+				type="button"
+				onClick={handleBuildersClick}
+				className={cn(
+					"flex items-center gap-2 px-2 py-1.5 w-full rounded-md transition-colors",
+					isBuildersOpen
+						? "text-foreground bg-accent"
+						: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+				)}
+			>
+				<div className="flex items-center justify-center size-5">
+					<LuHammer className="size-4" strokeWidth={STROKE_WIDTH} />
+				</div>
+				<span className="text-sm font-medium flex-1 text-left">Builders</span>
 			</button>
 
 			<NewWorkspaceButton />
