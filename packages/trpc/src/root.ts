@@ -6,6 +6,7 @@ import { analyticsRouter } from "./router/analytics";
 import { apiKeyRouter } from "./router/api-key";
 import { billingRouter } from "./router/billing";
 import { chatRouter } from "./router/chat";
+import { composerRouter } from "./router/composer";
 import { deviceRouter } from "./router/device";
 import { featureStudioRouter } from "./router/feature-studio";
 import { integrationRouter } from "./router/integration";
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
 	analytics: analyticsRouter,
 	billing: billingRouter,
 	chat: chatRouter,
+	composer: composerRouter,
 	device: deviceRouter,
 	featureStudio: featureStudioRouter,
 	integration: integrationRouter,
