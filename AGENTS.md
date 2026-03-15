@@ -76,6 +76,7 @@ bun run clean:workspaces   # Clean all workspace node_modules
 4. **Workspace MCP config** - keep shared MCP servers in `.mcp.json`; `.cursor/mcp.json` should link to `../.mcp.json`. Codex uses `.codex/config.toml` (run with `CODEX_HOME=.codex codex ...`). OpenCode uses `opencode.json` and should mirror the same MCP set using OpenCode's `remote`/`local` schema.
 5. **Mastracode fork workflow** - for Superset's internal `mastracode` fork bundle and release process, follow `docs/mastracode-fork-workflow.md`.
 6. **Desktop git env** - in `apps/desktop`, do not import `simple-git` directly for runtime use or call raw `execFile("git", ...)`. Use the helpers in `apps/desktop/src/lib/trpc/routers/workspaces/utils/git-client.ts` so git resolves with shell-derived env/PATH.
+8. **main 브랜치 직접 머지 금지** — agent는 develop 브랜치까지만 push/머지한다. `main`으로의 머지는 사람이 직접 수행한다. PR 생성은 가능하지만 머지는 하지 않는다.
 
 ## Boilerplate & Feature Rules
 
