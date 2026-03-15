@@ -42,6 +42,7 @@ export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
 	]);
 	await rm(join(input.targetDir, ".git"), { recursive: true, force: true });
 	await updatePackageName(input.targetDir, input.projectName);
+	await updateSuperbuilderJson(input.targetDir, input.projectName);
 
 	// 2. Resolve features source
 	const featuresDir = await resolveFeaturesSource(input);
@@ -123,6 +124,21 @@ async function resolveFeaturesSource(input: ScaffoldInput): Promise<string> {
 	const tmpDir = join(tmpdir(), `superbuilder-features-${Date.now()}`);
 	await execFile("gh", ["repo", "clone", repo, tmpDir, "--", "--depth=1"]);
 	return join(tmpDir, "features");
+}
+
+async function updateSuperbuilderJson(
+	dir: string,
+	projectName: string,
+): Promise<void> {
+	const jsonPath = join(dir, "superbuilder.json");
+	try {
+		const raw = await readFile(jsonPath, "utf-8");
+		const data = JSON.parse(raw);
+		data.project = { ...data.project, name: projectName };
+		await writeFile(jsonPath, `${JSON.stringify(data, null, 2)}\n`, "utf-8");
+	} catch {
+		// superbuilder.json missing — non-fatal
+	}
 }
 
 async function updatePackageName(dir: string, name: string): Promise<void> {

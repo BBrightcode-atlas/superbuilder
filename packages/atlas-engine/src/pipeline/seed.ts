@@ -57,6 +57,12 @@ try {
       image TEXT,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      banned BOOLEAN DEFAULT false,
+      ban_reason TEXT,
+      ban_expires TIMESTAMP,
+      two_factor_enabled BOOLEAN DEFAULT false,
+      two_factor_secret TEXT,
+      two_factor_backup_codes TEXT,
       is_active BOOLEAN DEFAULT true,
       marketing_consent_at TIMESTAMP,
       deleted_at TIMESTAMP
@@ -85,6 +91,8 @@ try {
       ip_address TEXT,
       user_agent TEXT,
       user_id TEXT NOT NULL REFERENCES "user"(id),
+      two_factor_verified BOOLEAN DEFAULT false,
+      active_organization_id TEXT,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
       active_organization_id TEXT
