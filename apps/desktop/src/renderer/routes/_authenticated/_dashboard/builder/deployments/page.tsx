@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@superset/ui/badge";
 import { Button } from "@superset/ui/button";
 import { Spinner } from "@superset/ui/spinner";
-import { LuPlus } from "react-icons/lu";
-import { electronTrpc } from "renderer/lib/electron-trpc";
-import { DeploymentCard } from "renderer/screens/atlas/components/DeploymentCard";
+import { LuPlus, LuExternalLink, LuGitBranch, LuTrash2 } from "react-icons/lu";
+import { apiTrpcClient } from "renderer/lib/api-trpc-client";
 
 export const Route = createFileRoute(
 	"/_authenticated/_dashboard/builder/deployments/",
@@ -11,29 +12,33 @@ export const Route = createFileRoute(
 	component: DeploymentsPage,
 });
 
+const STATUS_BADGE: Record<
+	string,
+	{ label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
+	scaffolding: { label: "스캐폴딩", variant: "outline" },
+	provisioning: { label: "프로비저닝", variant: "outline" },
+	deploying: { label: "배포 중", variant: "outline" },
+	seeding: { label: "시딩", variant: "outline" },
+	deployed: { label: "배포됨", variant: "default" },
+	error: { label: "오류", variant: "destructive" },
+};
+
 function DeploymentsPage() {
 	const navigate = useNavigate();
-	const utils = electronTrpc.useUtils();
+	const queryClient = useQueryClient();
 
-	const { data: projects, isLoading } =
-		electronTrpc.atlas.deployments.list.useQuery();
-
-	const deleteMutation = electronTrpc.atlas.deployments.delete.useMutation({
-		onSuccess: () => {
-			utils.atlas.deployments.list.invalidate();
-		},
+	const { data: projects, isLoading } = useQuery({
+		queryKey: ["composer", "projects"],
+		queryFn: () => apiTrpcClient.composer.list.query(),
 	});
 
-	const openInFinderMutation =
-		electronTrpc.external.openInFinder.useMutation();
-
-	const handleDelete = (id: string) => {
-		deleteMutation.mutate({ id });
-	};
-
-	const handleOpenFolder = (path: string) => {
-		openInFinderMutation.mutate(path);
-	};
+	const deleteMutation = useMutation({
+		mutationFn: (id: string) => apiTrpcClient.composer.delete.mutate({ id }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["composer", "projects"] });
+		},
+	});
 
 	return (
 		<div className="p-6 space-y-6">
@@ -41,7 +46,7 @@ function DeploymentsPage() {
 				<div>
 					<h1 className="text-lg font-semibold">배포 목록</h1>
 					<p className="text-sm text-muted-foreground">
-						Atlas Composer로 생성한 프로젝트를 관리합니다
+						Composer로 생성한 프로젝트를 관리합니다
 					</p>
 				</div>
 				<Button
@@ -71,14 +76,107 @@ function DeploymentsPage() {
 				</div>
 			) : (
 				<div className="grid gap-4 md:grid-cols-2">
-					{projects.map((project) => (
-						<DeploymentCard
-							key={project.id}
-							project={project}
-							onDelete={handleDelete}
-							onOpenFolder={handleOpenFolder}
-						/>
-					))}
+					{projects.map((project) => {
+						const statusInfo = STATUS_BADGE[project.status] ?? STATUS_BADGE.deployed;
+						const features = (project.features as string[]) ?? [];
+
+						return (
+							<div
+								key={project.id}
+								className="rounded-lg border border-border p-4 space-y-3"
+							>
+								<div className="flex items-start justify-between">
+									<div>
+										<h3 className="text-sm font-semibold">{project.name}</h3>
+										<p className="text-xs text-muted-foreground mt-0.5">
+											{new Date(project.createdAt).toLocaleDateString("ko-KR")}
+										</p>
+									</div>
+									<Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+								</div>
+
+								<div className="flex items-center gap-4 text-xs text-muted-foreground">
+									<span>{features.length} Features</span>
+								</div>
+
+								{features.length > 0 ? (
+									<div className="flex flex-wrap gap-1">
+										{features.map((f) => (
+											<Badge key={f} variant="secondary" className="text-[10px] px-1.5 py-0">
+												{f}
+											</Badge>
+										))}
+									</div>
+								) : null}
+
+								{project.githubRepoUrl ? (
+									<a
+										href={project.githubRepoUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="flex items-center gap-1 text-xs text-primary hover:underline"
+									>
+										<LuGitBranch className="size-3" />
+										{project.githubRepoUrl}
+									</a>
+								) : null}
+
+								{project.neonProjectId ? (
+									<a
+										href={`https://console.neon.tech/app/projects/${project.neonProjectId}`}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="flex items-center gap-1 text-xs text-primary hover:underline"
+									>
+										<LuExternalLink className="size-3" />
+										Neon: {project.neonProjectId}
+									</a>
+								) : null}
+
+								{project.vercelUrl ? (
+									<a
+										href={project.vercelUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="flex items-center gap-1 text-xs text-primary hover:underline"
+									>
+										<LuExternalLink className="size-3" />
+										App: {project.vercelUrl}
+									</a>
+								) : null}
+
+								{project.vercelServerUrl ? (
+									<a
+										href={project.vercelServerUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="flex items-center gap-1 text-xs text-muted-foreground hover:underline"
+									>
+										<LuExternalLink className="size-3" />
+										API: {project.vercelServerUrl}
+									</a>
+								) : null}
+
+								{project.errorMessage ? (
+									<p className="text-xs text-destructive bg-destructive/10 rounded p-2">
+										{project.errorMessage}
+									</p>
+								) : null}
+
+								<div className="flex justify-end gap-1 pt-1">
+									<Button
+										variant="ghost"
+										size="sm"
+										className="text-destructive hover:text-destructive"
+										onClick={() => deleteMutation.mutate(project.id)}
+										disabled={deleteMutation.isPending}
+									>
+										<LuTrash2 className="size-3.5" />
+									</Button>
+								</div>
+							</div>
+						);
+					})}
 				</div>
 			)}
 		</div>

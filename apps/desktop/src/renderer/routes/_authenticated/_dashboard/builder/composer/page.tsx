@@ -17,6 +17,7 @@ import {
 } from "renderer/screens/atlas/components/PipelineProgress";
 import { useAtlasComposerStore } from "renderer/stores/atlas-state";
 import { authClient } from "renderer/lib/auth-client";
+import { apiTrpcClient } from "renderer/lib/api-trpc-client";
 import { useState } from "react";
 
 export const Route = createFileRoute(
@@ -27,6 +28,7 @@ export const Route = createFileRoute(
 
 interface PipelineState {
   active: boolean;
+  composerProjectId: string | null;
   steps: Array<{
     label: string;
     status: PipelineStepStatus;
@@ -45,6 +47,7 @@ interface PipelineState {
 
 const INITIAL_PIPELINE: PipelineState = {
   active: false,
+  composerProjectId: null,
   steps: [
     { label: "프로젝트 스캐폴드", status: "pending" },
     { label: "GitHub Push", status: "pending" },
@@ -164,6 +167,20 @@ function ComposerPage() {
     // Step 0: Scaffold (template clone + spec + workflow + git init)
     updateStep(0, "running", "프로젝트 뼈대를 생성하는 중...");
 
+    // Create record in Neon DB for shared tracking
+    let composerProjectId: string | null = null;
+    try {
+      const cpRecord = await apiTrpcClient.composer.create.mutate({
+        name: projectName.trim(),
+        features: selectedFeatures,
+        ownerEmail: session?.user?.email ?? undefined,
+      });
+      composerProjectId = cpRecord.id;
+      setPipeline((prev) => ({ ...prev, composerProjectId: cpRecord.id }));
+    } catch {
+      // Non-fatal — continue without central tracking
+    }
+
     try {
       const result = await composeMutation.mutateAsync({
         selected: selectedFeatures,
@@ -177,6 +194,14 @@ function ComposerPage() {
       });
 
       updateStep(0, "done", `프로젝트 스캐폴드 완료 — ${result.features.length}개 Feature 선택됨`);
+
+      if (composerProjectId) {
+        apiTrpcClient.composer.update.mutate({
+          id: composerProjectId,
+          status: "provisioning",
+          features: result.features,
+        }).catch(() => {});
+      }
 
       let gitHubOwner: string | undefined;
       let gitHubRepo: string | undefined;
@@ -194,6 +219,12 @@ function ComposerPage() {
           gitHubOwner = ghResult.owner;
           gitHubRepo = ghResult.repo;
           updateStep(1, "done", `${ghResult.repoUrl} Push 완료`);
+          if (composerProjectId) {
+            apiTrpcClient.composer.update.mutate({
+              id: composerProjectId,
+              githubRepoUrl: ghResult.repoUrl,
+            }).catch(() => {});
+          }
         } catch (error) {
           updateStep(
             1,
@@ -225,11 +256,15 @@ function ComposerPage() {
       updateStep(3, "pending", "Feature 설치 후 진행");
       updateStep(4, "pending", "Neon 완료 후 진행");
     } catch (error) {
-      updateStep(
-        0,
-        "failed",
-        error instanceof Error ? error.message : "알 수 없는 오류",
-      );
+      const errMsg = error instanceof Error ? error.message : "알 수 없는 오류";
+      updateStep(0, "failed", errMsg);
+      if (composerProjectId) {
+        apiTrpcClient.composer.update.mutate({
+          id: composerProjectId,
+          status: "error",
+          errorMessage: errMsg,
+        }).catch(() => {});
+      }
     }
   };
 
@@ -331,6 +366,13 @@ function ComposerPage() {
         orgId,
         atlasProjectId: pipeline.result.projectId,
       });
+
+      if (pipeline.composerProjectId) {
+        apiTrpcClient.composer.update.mutate({
+          id: pipeline.composerProjectId,
+          neonProjectId: neonProject.id,
+        }).catch(() => {});
+      }
 
       updateStep(3, "running", ".env 파일 작성 중...");
       await neonWriteEnvMutation.mutateAsync({
@@ -529,6 +571,17 @@ function ComposerPage() {
         } catch {
           // connectGitRepo 실패 — GitHub Integration 미설치 가능성
         }
+      }
+
+      if (pipeline.composerProjectId) {
+        apiTrpcClient.composer.update.mutate({
+          id: pipeline.composerProjectId,
+          status: "deployed",
+          vercelProjectId: appProject.id,
+          vercelUrl: finalUrl,
+          vercelServerProjectId: apiProject.id,
+          vercelServerUrl: apiProject.url,
+        }).catch(() => {});
       }
 
       updateStep(
