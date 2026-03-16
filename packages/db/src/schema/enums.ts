@@ -166,6 +166,46 @@ export type FeatureRegistrationStatus = z.infer<
 	typeof featureRegistrationStatusEnum
 >;
 
+// Feature Queue enums
+export const featureQueueBatchStatusValues = [
+	"pending",
+	"processing",
+	"completed",
+	"partial_failed",
+	"failed",
+	"cancelled",
+] as const;
+export const featureQueueBatchStatusEnum = z.enum(
+	featureQueueBatchStatusValues,
+);
+export type FeatureQueueBatchStatus = z.infer<
+	typeof featureQueueBatchStatusEnum
+>;
+
+export const featureQueueItemStatusValues = [
+	"pending",
+	"waiting_deps",
+	"processing",
+	"paused",
+	"completed",
+	"failed",
+	"cancelled",
+] as const;
+export const featureQueueItemStatusEnum = z.enum(featureQueueItemStatusValues);
+export type FeatureQueueItemStatus = z.infer<typeof featureQueueItemStatusEnum>;
+
+export const featureQueueItemComplexityValues = [
+	"light",
+	"medium",
+	"heavy",
+] as const;
+export const featureQueueItemComplexityEnum = z.enum(
+	featureQueueItemComplexityValues,
+);
+export type FeatureQueueItemComplexity = z.infer<
+	typeof featureQueueItemComplexityEnum
+>;
+
 // Composer project enums
 export const composerProjectStatusValues = [
 	"scaffolding",

@@ -3,6 +3,8 @@ export { writeEnvFile } from "./env";
 export { pushToGitHub } from "./github";
 export { installFeatures } from "./install";
 export { createNeonProject } from "./neon";
+export * from "./queue-processor";
+export { processQueue } from "./queue-processor";
 export { seedInitialData } from "./seed";
 export { superbuilderFeatureDevPipeline } from "./superbuilder-feature-dev";
 export * from "./superbuilder-feature-dev-types";

@@ -9,11 +9,8 @@ import {
 	users,
 } from "./auth";
 import {
-	githubInstallations,
-	githubPullRequests,
-	githubRepositories,
-} from "./github";
-import {
+	featureQueueBatches,
+	featureQueueItems,
 	featureRegistrations,
 	featureRequestApprovals,
 	featureRequestArtifacts,
@@ -22,6 +19,11 @@ import {
 	featureRequests,
 	featureRequestWorktrees,
 } from "./feature-studio";
+import {
+	githubInstallations,
+	githubPullRequests,
+	githubRepositories,
+} from "./github";
 import {
 	agentCommands,
 	chatSessions,
@@ -522,6 +524,36 @@ export const featureRegistrationsRelations = relations(
 		registeredBy: one(users, {
 			fields: [featureRegistrations.registeredById],
 			references: [users.id],
+		}),
+	}),
+);
+
+// Feature Queue relations
+export const featureQueueBatchesRelations = relations(
+	featureQueueBatches,
+	({ one, many }) => ({
+		organization: one(organizations, {
+			fields: [featureQueueBatches.organizationId],
+			references: [organizations.id],
+		}),
+		createdBy: one(users, {
+			fields: [featureQueueBatches.createdById],
+			references: [users.id],
+		}),
+		items: many(featureQueueItems),
+	}),
+);
+
+export const featureQueueItemsRelations = relations(
+	featureQueueItems,
+	({ one }) => ({
+		batch: one(featureQueueBatches, {
+			fields: [featureQueueItems.batchId],
+			references: [featureQueueBatches.id],
+		}),
+		featureRequest: one(featureRequests, {
+			fields: [featureQueueItems.featureRequestId],
+			references: [featureRequests.id],
 		}),
 	}),
 );

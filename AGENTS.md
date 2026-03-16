@@ -93,6 +93,7 @@ bun run clean:workspaces   # Clean all workspace node_modules
 
 **핵심 규칙:**
 - Boilerplate는 **feature 코드 없이** auth/profile/설정이 동작해야 한다 (로그인, 조직 생성, 기본 설정)
+- **인증은 boilerplate 전담** — 소셜 로그인(카카오, 구글, GitHub 등), 회원가입, 비밀번호 재설정, 세션 관리 등 기본 인증은 **모두 boilerplate `packages/core/auth/`에서 처리**한다. Extension feature로 만들지 않는다. Better Auth의 social provider 추가도 boilerplate 레벨에서 한다.
 - `packages/core/auth/` — Better Auth 설정, guards, hooks (boilerplate 내장)
 - `packages/drizzle/src/schema/core/` — user, organization, session 등 기본 테이블 (boilerplate 내장)
 - Feature에서 core를 사용할 때: `@superbuilder/core-trpc`, `@superbuilder/core-schema` 등 import

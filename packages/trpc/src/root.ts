@@ -8,6 +8,7 @@ import { billingRouter } from "./router/billing";
 import { chatRouter } from "./router/chat";
 import { composerRouter } from "./router/composer";
 import { deviceRouter } from "./router/device";
+import { featureQueueRouter } from "./router/feature-queue";
 import { featureStudioRouter } from "./router/feature-studio";
 import { integrationRouter } from "./router/integration";
 import { organizationRouter } from "./router/organization";
@@ -28,6 +29,7 @@ export const appRouter = createTRPCRouter({
 	chat: chatRouter,
 	composer: composerRouter,
 	device: deviceRouter,
+	featureQueue: featureQueueRouter,
 	featureStudio: featureStudioRouter,
 	integration: integrationRouter,
 	organization: organizationRouter,

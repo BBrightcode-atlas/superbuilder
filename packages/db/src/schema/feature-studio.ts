@@ -15,6 +15,9 @@ import {
 	featureApprovalStatusValues,
 	featureApprovalTypeValues,
 	featureArtifactKindValues,
+	featureQueueBatchStatusValues,
+	featureQueueItemComplexityValues,
+	featureQueueItemStatusValues,
 	featureRegistrationStatusValues,
 	featureRequestMessageKindValues,
 	featureRequestMessageRoleValues,
@@ -54,6 +57,18 @@ export const featureRunStatus = pgEnum(
 export const featureRegistrationStatus = pgEnum(
 	"feature_registration_status",
 	featureRegistrationStatusValues,
+);
+export const featureQueueBatchStatus = pgEnum(
+	"feature_queue_batch_status",
+	featureQueueBatchStatusValues,
+);
+export const featureQueueItemStatus = pgEnum(
+	"feature_queue_item_status",
+	featureQueueItemStatusValues,
+);
+export const featureQueueItemComplexity = pgEnum(
+	"feature_queue_item_complexity",
+	featureQueueItemComplexityValues,
 );
 
 // Tables
@@ -255,7 +270,9 @@ export const featureRegistrations = pgTable(
 			onDelete: "set null",
 		}),
 		registeredCommitSha: varchar("registered_commit_sha", { length: 64 }),
-		registrationMetadata: jsonb("registration_metadata").$type<Record<string, unknown>>(),
+		registrationMetadata: jsonb("registration_metadata").$type<
+			Record<string, unknown>
+		>(),
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at")
 			.notNull()
@@ -272,3 +289,82 @@ export type InsertFeatureRegistration =
 	typeof featureRegistrations.$inferInsert;
 export type SelectFeatureRegistration =
 	typeof featureRegistrations.$inferSelect;
+
+// Feature Queue tables
+export const featureQueueBatches = pgTable(
+	"feature_queue_batches",
+	{
+		id: uuid().primaryKey().defaultRandom(),
+		organizationId: uuid("organization_id")
+			.notNull()
+			.references(() => organizations.id, { onDelete: "cascade" }),
+		createdById: uuid("created_by_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		title: varchar({ length: 300 }),
+		status: featureQueueBatchStatus().notNull().default("pending"),
+		concurrencyLimit: integer("concurrency_limit").notNull().default(1),
+		totalItems: integer("total_items").notNull().default(0),
+		completedItems: integer("completed_items").notNull().default(0),
+		failedItems: integer("failed_items").notNull().default(0),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at")
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+	},
+	(table) => [
+		index("feature_queue_batches_created_by_idx").on(table.createdById),
+		index("feature_queue_batches_status_idx").on(table.status),
+		index("feature_queue_batches_created_at_idx").on(table.createdAt),
+	],
+);
+
+export type InsertFeatureQueueBatch = typeof featureQueueBatches.$inferInsert;
+export type SelectFeatureQueueBatch = typeof featureQueueBatches.$inferSelect;
+
+export const featureQueueItems = pgTable(
+	"feature_queue_items",
+	{
+		id: uuid().primaryKey().defaultRandom(),
+		batchId: uuid("batch_id")
+			.notNull()
+			.references(() => featureQueueBatches.id, { onDelete: "cascade" }),
+		featureRequestId: uuid("feature_request_id").references(
+			() => featureRequests.id,
+			{ onDelete: "set null" },
+		),
+		position: integer().notNull(),
+		status: featureQueueItemStatus().notNull().default("pending"),
+		rawPrompt: text("raw_prompt").notNull(),
+		title: varchar({ length: 200 }),
+		estimatedComplexity: featureQueueItemComplexity("estimated_complexity")
+			.notNull()
+			.default("medium"),
+		sessionId: varchar("session_id", { length: 255 }),
+		resumeToken: text("resume_token"),
+		retryCount: integer("retry_count").notNull().default(0),
+		maxRetries: integer("max_retries").notNull().default(3),
+		lastError: text("last_error"),
+		metadata: jsonb().$type<Record<string, unknown>>(),
+		startedAt: timestamp("started_at"),
+		completedAt: timestamp("completed_at"),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at")
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+	},
+	(table) => [
+		index("feature_queue_items_batch_idx").on(table.batchId),
+		index("feature_queue_items_status_idx").on(table.status),
+		index("feature_queue_items_session_idx").on(table.sessionId),
+		index("feature_queue_items_processing_idx").on(
+			table.status,
+			table.position,
+		),
+	],
+);
+
+export type InsertFeatureQueueItem = typeof featureQueueItems.$inferInsert;
+export type SelectFeatureQueueItem = typeof featureQueueItems.$inferSelect;
