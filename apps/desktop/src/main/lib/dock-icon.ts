@@ -225,6 +225,24 @@ function drawBorder({
 }
 
 /**
+ * Sets the macOS dock icon to the app icon.
+ * No-op on non-macOS platforms.
+ */
+export function setDockIcon(): void {
+	if (process.platform !== "darwin") return;
+
+	try {
+		const iconPath = getIconPath();
+		const icon = nativeImage.createFromPath(iconPath);
+		if (!icon.isEmpty()) {
+			app.dock?.setIcon(icon);
+		}
+	} catch (error) {
+		console.error("[dock-icon] Failed to set dock icon:", error);
+	}
+}
+
+/**
  * Sets the macOS dock icon with a colored border based on the workspace name.
  * No-op on non-macOS platforms or when no workspace name is set.
  */

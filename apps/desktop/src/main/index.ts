@@ -29,7 +29,7 @@ import { initAppState } from "./lib/app-state";
 import { requestAppleEventsAccess } from "./lib/apple-events-permission";
 import { setupAutoUpdater } from "./lib/auto-updater";
 import { resolveDevWorkspaceName } from "./lib/dev-workspace-name";
-import { setWorkspaceDockIcon } from "./lib/dock-icon";
+import { setDockIcon, setWorkspaceDockIcon } from "./lib/dock-icon";
 import { loadWebviewBrowserExtension } from "./lib/extensions";
 import { getHostServiceManager } from "./lib/host-service-manager";
 import { localDb } from "./lib/local-db";
@@ -334,6 +334,7 @@ if (!gotTheLock) {
 		}
 
 		ensureProjectIconsDir();
+		setDockIcon();
 		setWorkspaceDockIcon();
 		initSentry();
 		await initAppState();
