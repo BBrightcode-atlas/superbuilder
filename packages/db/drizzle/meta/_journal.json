@@ -211,6 +211,13 @@
       "when": 1773580047114,
       "tag": "0029_add_composer_projects",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1773656151659,
+      "tag": "0030_add_feature_queue_tables",
+      "breakpoints": true
     }
   ]
 }
