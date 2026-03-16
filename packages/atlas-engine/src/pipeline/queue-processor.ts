@@ -23,6 +23,10 @@ export interface QueueBatch {
 	totalItems: number;
 }
 
+export interface UpdateItemResult {
+	retried?: boolean;
+}
+
 export interface QueueApi {
 	getBatch(batchId: string): Promise<QueueBatch & { items: QueueItem[] }>;
 	nextItems(batchId: string): Promise<QueueItem[]>;
@@ -33,7 +37,7 @@ export interface QueueApi {
 		resumeToken?: string;
 		featureRequestId?: string;
 		lastError?: string;
-	}): Promise<void>;
+	}): Promise<UpdateItemResult | undefined>;
 }
 
 export interface QueueProcessorCallbacks extends FeatureDevCallbacks {
@@ -85,10 +89,16 @@ export async function processQueue(
 	const total = batch.totalItems;
 
 	let processedCount = 0;
+	let emptyRounds = 0;
+	const maxEmptyRounds = 3;
 
-	while (true) {
+	while (emptyRounds < maxEmptyRounds) {
 		const nextItems = await api.nextItems(batchId);
-		if (nextItems.length === 0) break;
+		if (nextItems.length === 0) {
+			emptyRounds++;
+			continue;
+		}
+		emptyRounds = 0;
 
 		// 병렬 실행: concurrencyLimit만큼 동시 처리
 		const tasks = nextItems.map((item) =>
@@ -140,13 +150,22 @@ export async function processQueue(
 		} catch (e) {
 			const errorMsg = e instanceof Error ? e.message : String(e);
 
-			await api.updateItemStatus({
+			const updateResult = await api.updateItemStatus({
 				itemId: item.id,
 				status: "failed",
 				lastError: errorMsg,
 			});
 
-			callbacks?.onItemError?.(item, errorMsg, index, totalItems);
+			if (updateResult?.retried) {
+				callbacks?.onItemError?.(
+					item,
+					`${errorMsg} (auto-retry scheduled)`,
+					index,
+					totalItems,
+				);
+			} else {
+				callbacks?.onItemError?.(item, errorMsg, index, totalItems);
+			}
 		}
 	}
 }

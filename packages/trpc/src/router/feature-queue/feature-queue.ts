@@ -127,6 +127,11 @@ export const featureQueueRouter = {
 				});
 			}
 
+			// Block if batch is terminal
+			if (["completed", "failed", "cancelled"].includes(batch.status)) {
+				return [];
+			}
+
 			// Count currently processing items
 			const [processingCount] = await db
 				.select({ count: count() })
@@ -157,9 +162,34 @@ export const featureQueueRouter = {
 	updateItemStatus: protectedProcedure
 		.input(updateItemStatusSchema)
 		.mutation(async ({ input }) => {
+			// Fetch current item for retry logic
+			const current = await db.query.featureQueueItems.findFirst({
+				where: eq(featureQueueItems.id, input.itemId),
+			});
+
+			if (!current) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: `Queue item not found: ${input.itemId}`,
+				});
+			}
+
+			// Auto-retry: if status=failed and retryCount < maxRetries, reset to pending
+			let effectiveStatus = input.status;
+			if (
+				input.status === "failed" &&
+				current.retryCount < current.maxRetries
+			) {
+				effectiveStatus = "pending";
+			}
+
 			const updates: Record<string, unknown> = {
-				status: input.status,
+				status: effectiveStatus,
 			};
+
+			if (input.status === "failed") {
+				updates.retryCount = current.retryCount + 1;
+			}
 
 			if (input.sessionId !== undefined) updates.sessionId = input.sessionId;
 			if (input.resumeToken !== undefined)
@@ -168,12 +198,12 @@ export const featureQueueRouter = {
 				updates.featureRequestId = input.featureRequestId;
 			if (input.lastError !== undefined) updates.lastError = input.lastError;
 
-			if (input.status === "processing") {
+			if (effectiveStatus === "processing") {
 				updates.startedAt = new Date();
 			} else if (
-				input.status === "completed" ||
-				input.status === "failed" ||
-				input.status === "cancelled"
+				effectiveStatus === "completed" ||
+				effectiveStatus === "failed" ||
+				effectiveStatus === "cancelled"
 			) {
 				updates.completedAt = new Date();
 			}
@@ -194,7 +224,7 @@ export const featureQueueRouter = {
 			// Sync batch counters
 			await syncBatchCounters(updated.batchId);
 
-			return updated;
+			return { ...updated, retried: effectiveStatus !== input.status };
 		}),
 
 	resumeItem: protectedProcedure
@@ -224,14 +254,18 @@ export const featureQueueRouter = {
 	cancelBatch: protectedProcedure
 		.input(cancelBatchSchema)
 		.mutation(async ({ input }) => {
-			// Cancel all pending/processing items
+			// Cancel all pending/processing/waiting items
 			await db
 				.update(featureQueueItems)
 				.set({ status: "cancelled", completedAt: new Date() })
 				.where(
 					and(
 						eq(featureQueueItems.batchId, input.batchId),
-						inArray(featureQueueItems.status, ["pending", "waiting_deps"]),
+						inArray(featureQueueItems.status, [
+							"pending",
+							"waiting_deps",
+							"processing",
+						]),
 					),
 				);
 
