@@ -6,7 +6,10 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.2",
+		"@semantic-release/git": "^10.0.1",
+		"@semantic-release/github": "^12.0.6",
 		"dotenv-cli": "^11.0.0",
+		"semantic-release": "^25.0.3",
 		"sherif": "^1.10.0",
 		"turbo": "^2.8.7"
 	},
@@ -37,7 +40,9 @@
 		"release:canary": "./scripts/release-canary.sh",
 		"db:push": "bun run --cwd packages/db push",
 		"db:migrate": "bun run --cwd packages/db migrate",
-		"db:generate:desktop": "bun run --cwd packages/local-db generate"
+		"db:generate:desktop": "bun run --cwd packages/local-db generate",
+		"release": "semantic-release",
+		"release:dry": "semantic-release --dry-run"
 	},
 	"type": "module",
 	"workspaces": [
