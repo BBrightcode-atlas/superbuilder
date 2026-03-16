@@ -259,7 +259,7 @@ function PlansPage() {
 
 		if (action === "contact") {
 			track("enterprise_trial_requested", { source: "billing_plans" });
-			openUrl.mutate("mailto:founders@superset.sh");
+			openUrl.mutate("mailto:founders@bbrightcode.com");
 			return;
 		}
 
@@ -371,7 +371,7 @@ function PlansPage() {
 								track("billing_support_contacted", {
 									source: "billing_plans_inline",
 								});
-								openUrl.mutate("mailto:founders@superset.sh");
+								openUrl.mutate("mailto:founders@bbrightcode.com");
 							}}
 							className="inline-flex items-center gap-1 text-primary hover:underline"
 						>
