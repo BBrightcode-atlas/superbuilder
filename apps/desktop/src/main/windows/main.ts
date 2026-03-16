@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { workspaces, worktrees } from "@superset/local-db";
 import { eq } from "drizzle-orm";
 import type { BrowserWindow } from "electron";
-import { app, Notification, nativeTheme } from "electron";
+import { app, nativeImage, Notification, nativeTheme } from "electron";
 import { createWindow } from "lib/electron-app/factories/windows/create";
 import { createAppRouter } from "lib/trpc/routers";
 import { localDb } from "main/lib/local-db";
@@ -101,9 +101,17 @@ export async function MainWindow() {
 		? `${productName} — ${workspaceName}`
 		: productName;
 
+	const iconPath = join(
+		app.getAppPath(),
+		app.isPackaged
+			? "resources/build/icons/icon.png"
+			: "src/resources/build/icons/icon.png",
+	);
+
 	const window = createWindow({
 		id: "main",
 		title: windowTitle,
+		icon: nativeImage.createFromPath(iconPath),
 		width: initialBounds.width,
 		height: initialBounds.height,
 		x: initialBounds.x,
