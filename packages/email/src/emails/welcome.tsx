@@ -7,11 +7,11 @@ interface WelcomeEmailProps {
 
 export function WelcomeEmail({ userName = "there" }: WelcomeEmailProps) {
 	return (
-		<StandardLayout preview="Welcome to Superset! Let's get you started.">
-			<Heading style={heading}>Welcome to Superset, {userName}!</Heading>
+		<StandardLayout preview="Welcome to SuperBuilder! Let's get you started.">
+			<Heading style={heading}>Welcome to SuperBuilder, {userName}!</Heading>
 
 			<Text style={paragraph}>
-				Thanks for joining Superset. We're excited to help you automate your
+				Thanks for joining SuperBuilder. We're excited to help you automate your
 				workflows and boost your productivity with AI-powered task management.
 			</Text>
 

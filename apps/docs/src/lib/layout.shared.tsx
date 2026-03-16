@@ -7,8 +7,8 @@ export function baseOptions(): BaseLayoutProps {
 		nav: {
 			title: (
 				<div className="flex items-center gap-2">
-					<Image src="/logo.png" alt="Superset" width={24} height={24} />
-					<span className="font-semibold">Superset</span>
+					<Image src="/logo.png" alt="SuperBuilder" width={24} height={24} />
+					<span className="font-semibold">SuperBuilder</span>
 				</div>
 			),
 			url: COMPANY.MARKETING_URL,

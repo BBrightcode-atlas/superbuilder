@@ -11,7 +11,7 @@ config({
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
 	...config,
-	name: "Superset",
+	name: "SuperBuilder",
 	slug: "superset",
 	version: "1.0.0",
 	orientation: "portrait",

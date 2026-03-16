@@ -21,7 +21,7 @@ export function Footer({ showSocial = true }: FooterProps) {
 			<Section className="pb-4">
 				<Img
 					src={`${env.NEXT_PUBLIC_MARKETING_URL}/assets/emails/logo-full.png`}
-					alt="Superset"
+					alt="SuperBuilder"
 					width="160"
 				/>
 			</Section>
@@ -96,7 +96,7 @@ export function Footer({ showSocial = true }: FooterProps) {
 
 			{/* Company Info */}
 			<Text className="text-muted text-xs leading-none m-0">
-				© 2026 Superset. All rights reserved.
+				© 2026 SuperBuilder. All rights reserved.
 			</Text>
 		</Section>
 	);

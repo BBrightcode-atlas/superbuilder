@@ -10,9 +10,9 @@ export const PROTOCOL_SCHEMES = {
 
 // Company
 export const COMPANY = {
-	NAME: "Superset",
+	NAME: "SuperBuilder",
 	DOMAIN: "superset.sh",
-	EMAIL_DOMAIN: "@superset.sh",
+	EMAIL_DOMAIN: "@bbrightcode.com",
 	GITHUB_URL: "https://github.com/superset-sh/superset",
 	DOCS_URL: process.env.NEXT_PUBLIC_DOCS_URL || "https://docs.superset.sh",
 	MARKETING_URL: process.env.NEXT_PUBLIC_MARKETING_URL || "https://superset.sh",
@@ -24,7 +24,7 @@ export const COMPANY = {
 		(process.env.NEXT_PUBLIC_MARKETING_URL || "https://superset.sh") +
 		"/changelog",
 	X_URL: "https://x.com/superset_sh",
-	MAIL_TO: "mailto:founders@superset.sh",
+	MAIL_TO: "mailto:founders@bbrightcode.com",
 	REPORT_ISSUE_URL: "https://github.com/superset-sh/superset/issues/new",
 	DISCORD_URL: "https://discord.gg/cZeD9WYcV7",
 } as const;
@@ -33,7 +33,7 @@ export const COMPANY = {
 export const THEME_STORAGE_KEY = "superset-theme";
 
 // Download URLs
-export const DOWNLOAD_URL_MAC_ARM64 = `${COMPANY.GITHUB_URL}/releases/latest/download/Superset-arm64.dmg`;
+export const DOWNLOAD_URL_MAC_ARM64 = `${COMPANY.GITHUB_URL}/releases/latest/download/SuperBuilder-arm64.dmg`;
 
 // Auth token configuration
 export const TOKEN_CONFIG = {
