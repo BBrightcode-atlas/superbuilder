@@ -103,6 +103,7 @@ export interface Provides {
 	admin?: AdminProvides;
 	schema?: SchemaProvides;
 	widget?: WidgetProvides;
+	landing?: LandingProvides;
 }
 
 export interface ServerProvides {
@@ -142,6 +143,34 @@ export interface WidgetProvides {
 	component: string;
 	/** Props the widget accepts */
 	props?: string[];
+}
+
+export interface LandingProvides {
+	/** Landing pages to generate */
+	pages: LandingPage[];
+}
+
+export interface LandingPage {
+	/** Route path (e.g. "/board") → apps/landing/src/app/(public)/{path}/page.tsx */
+	path: string;
+	/** SSR with serverTrpc prefetch */
+	ssr: boolean;
+	/** Page template type */
+	template: "widget-page" | "custom";
+	/** Widget configuration (required for widget-page template) */
+	widget?: {
+		/** Import package (e.g. "@superbuilder/feature-board/landing") */
+		package: string;
+		/** Component name (e.g. "LandingBoardList") */
+		component: string;
+		/** tRPC procedure for SSR prefetch (dot notation, e.g. "board.list") */
+		initialDataProcedure?: string;
+	};
+	/** Next.js metadata */
+	metadata?: {
+		title: string;
+		description?: string;
+	};
 }
 
 // ─────────────────────────────────────────────────────────────
