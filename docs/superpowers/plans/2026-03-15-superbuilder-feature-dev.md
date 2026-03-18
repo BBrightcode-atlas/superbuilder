@@ -1,5 +1,7 @@
 # Superbuilder Feature Dev Pipeline Implementation Plan
 
+> **⚠️ OUTDATED (2026-03-15):** 이 플랜은 초기 설계 문서입니다. 현행 구현은 `boilerplatePath` 대신 `featuresRepoPath`를 사용하고, `spawnClaude` 대신 `onGenerate` 콜백 패턴으로 변경되었습니다. 현행 참조: `.agents/commands/superbuilder-feature-dev.md`, `packages/atlas-engine/src/pipeline/superbuilder-feature-dev.ts`
+
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Feature 개발 전체 흐름(spec → plan → implement → verify → register)을 CLI 실행 가능한 파이프라인으로 구현

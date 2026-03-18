@@ -33,7 +33,7 @@ Desktop에서 실행 시 → Desktop이 agent session을 통해 수행.
 | 1 | generateSpec | 호출자 (onGenerate) | YES | 사용자 프롬프트 → spec 텍스트 생성 |
 | 2 | generatePlan | 호출자 (onGenerate) | YES | spec → plan 텍스트 생성 |
 | - | [승인: spec_plan] | 파이프라인 (onApproval) | - | approvalMode 시 호출 |
-| 3 | createWorktree | 파이프라인 | YES | boilerplate에 git worktree 생성 |
+| 3 | createWorktree | 파이프라인 | YES | superbuilder-features에 git worktree 생성 |
 | 4 | implement | 호출자 (onGenerate) | NO | worktree에서 feature 코드 작성 |
 | 5 | verify | 파이프라인 | NO | typecheck + lint |
 | - | [승인: human_qa] | 파이프라인 (onApproval) | - | approvalMode 시 호출 |
@@ -52,7 +52,7 @@ Desktop에서 실행 시 → Desktop이 agent session을 통해 수행.
 interface FeatureDevInput {
   prompt: string;              // 사용자의 feature 요청 텍스트
   featureName?: string;        // 명시하지 않으면 onGenerate("spec") 결과에서 추출
-  boilerplatePath: string;     // boilerplate repo 로컬 경로
+  featuresRepoPath: string;   // superbuilder-features repo 로컬 경로
   options?: FeatureDevOptions;
   callbacks?: FeatureDevCallbacks;
 }
@@ -146,7 +146,7 @@ approvalMode === false:
 ```
 callbacks.onGenerate("implement", planText, featureName)
 → 호출자가 worktree 디렉토리에서 직접 코드 작성
-→ packages/features/{name}/ 생성, feature.json, marker 삽입, commit
+→ features/{name}/ 생성, feature.json, package.json, commit
 ```
 
 ### 4.6 verify
@@ -163,7 +163,7 @@ callbacks.onGenerate("implement", planText, featureName)
 ```
 파이프라인이 직접 실행:
   git push origin feature/{featureName}
-  gh pr create --base develop --title "feat: add {featureName}"
+  gh pr create --base main --title "feat: add {featureName}"
 ```
 
 ### 4.8 complete
@@ -244,7 +244,7 @@ packages/trpc/src/router/feature-studio/
 
 | 변수 | 용도 |
 |------|------|
-| `BOILERPLATE_PATH` | boilerplate repo 로컬 경로 |
+| `FEATURES_REPO_PATH` | superbuilder-features repo 로컬 경로 (기본: ~/Projects/superbuilder-features) |
 
 ---
 

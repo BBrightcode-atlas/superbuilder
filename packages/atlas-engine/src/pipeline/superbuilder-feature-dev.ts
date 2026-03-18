@@ -212,13 +212,13 @@ export async function superbuilderFeatureDevPipeline(
 
 async function cleanupWorktree(
 	worktreePath: string,
-	boilerplatePath: string,
+	featuresRepoPath: string,
 	cb: FeatureDevCallbacks | undefined,
 ): Promise<void> {
 	cb?.onStep?.("cleanup", "start", "Worktree 정리...");
 	try {
 		await execFile("git", ["worktree", "remove", worktreePath, "--force"], {
-			cwd: boilerplatePath, timeout: 30_000,
+			cwd: featuresRepoPath, timeout: 30_000,
 		});
 		cb?.onStep?.("cleanup", "done", "정리 완료");
 	} catch {

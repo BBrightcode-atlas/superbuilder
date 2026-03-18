@@ -156,12 +156,17 @@ import { BlogModule } from "@repo/features/blog";
 
 ### Feature 개발 흐름
 1. `/superbuilder-feature-dev` 또는 Feature Studio에서 spec/plan 생성 → 승인
-2. **superbuilder-features** repo의 git worktree 생성 (`~/.superbuilder/worktrees/{name}/`)
-3. 현재 agent가 worktree의 `features/{name}/` 디렉토리에 직접 코드 작성
-4. feature.json + server + client + schema + common 구조 생성
-5. 자동 검증 (typecheck + lint) → Human QA
+2. **superbuilder-features** repo 내에서 git worktree 생성 (`~/.superbuilder/worktrees/{name}/`)
+3. **에이전트가 worktree 안에서 직접 작업** — 기존 features/, core/ 코드를 바로 참조하며 구현
+4. worktree의 `features/{name}/` 디렉토리에 feature.json + server + client + schema + common 구조 생성
+5. worktree 내에서 자동 검증 (typecheck + lint) → Human QA
 6. 승인 시 superbuilder-features에 PR 생성 → 머지 → feature 등록 완료
 7. compose 시 atlas-engine이 superbuilder-features에서 feature를 복사하여 boilerplate에 연결
+
+**왜 superbuilder-features 내부에서 작업하는가:**
+- 기존 feature 패턴(bookmark, reaction 등)을 직접 참조하며 일관된 구조 유지
+- core contract(`@superbuilder/core-*`)의 실제 코드를 보고 정확한 import/사용법 파악
+- worktree 내에서 typecheck/lint가 monorepo 컨텍스트에서 실행되어 정확한 검증 가능
 
 ## 3-Repo 아키텍처
 
