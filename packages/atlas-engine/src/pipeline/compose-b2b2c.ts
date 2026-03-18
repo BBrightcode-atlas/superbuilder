@@ -1,0 +1,415 @@
+import { join } from "node:path";
+import { scaffoldB2B2C } from "../scaffold/scaffold-b2b2c";
+import { writeEnvFile } from "./env";
+import { pushToGitHub } from "./github";
+import { installFeatures } from "./install";
+import { createNeonProject } from "./neon";
+import { seedInitialData } from "./seed";
+import type {
+	ComposeCallbacks,
+	ComposeInput,
+	ComposeOptions,
+	ComposeProjectRecord,
+	ComposeResult,
+	GitHubResult,
+	NeonResult,
+	SeedResult,
+	VercelResult,
+} from "./types";
+import { deployToVercel } from "./vercel";
+
+const DEFAULT_OPTS: Required<
+	Pick<
+		ComposeOptions,
+		"neon" | "github" | "vercel" | "install" | "private" | "githubOrg"
+	>
+> = {
+	neon: true,
+	github: true,
+	vercel: true,
+	install: false,
+	private: true,
+	githubOrg: "BBrightcode-atlas",
+};
+
+/**
+ * Headless B2B2C compose pipeline orchestrator.
+ *
+ * B2B2C 모드는 SaaS composePipeline과 구조가 동일하지만 다음 점이 다르다:
+ * - scaffoldB2B2C 사용 (landing 슬롯 포함, client 슬롯 제외)
+ * - Vercel app(apps/app) 배포 없음 — landing이 공개 접점
+ * - CORS_ORIGINS: server + admin + landing (app URL 없음)
+ * - Landing env: API_URL + NEXT_PUBLIC_API_URL → server URL
+ * - .env: VERCEL_URL 없음 (app 미배포)
+ * - ComposeResult.vercel: undefined (app 없음)
+ *
+ * Fatal steps (resolve, scaffold) throw on failure.
+ * Non-fatal steps log errors and continue.
+ */
+export async function composePipelineB2B2C(
+	input: ComposeInput,
+	callbacks?: ComposeCallbacks,
+): Promise<ComposeResult> {
+	const opts = { ...DEFAULT_OPTS, ...input.options };
+	const cb = callbacks ?? input.callbacks;
+	const projectDir = join(input.targetPath, input.projectName);
+
+	// Project record for central DB persistence
+	const record: ComposeProjectRecord = {
+		name: input.projectName,
+		status: "scaffolding",
+		features: input.features,
+		ownerEmail: opts.ownerEmail,
+	};
+
+	const saveProject = async () => {
+		try {
+			await cb?.onProjectSave?.(record);
+		} catch {
+			// non-fatal — don't block pipeline for DB save failures
+		}
+	};
+
+	await saveProject();
+
+	// ── Step 1+2: resolve + scaffold (FATAL) ─────────────────────
+	// scaffoldB2B2C()가 내부에서 features source resolve → manifest scan → copy → transform → connections 수행
+	cb?.onStep?.("resolve", "start", "피처 의존성 해석 중...");
+	cb?.onStep?.("scaffold", "start", "B2B2C 프로젝트 스캐폴딩 중...");
+	const scaffoldResult = await scaffoldB2B2C({
+		projectName: input.projectName,
+		targetDir: projectDir,
+		featuresToKeep: input.features,
+		templateRepo: opts.boilerplateRepo,
+		featuresSourceDir: opts.featuresSourceDir,
+		featuresRepo: opts.featuresRepo,
+	});
+	cb?.onStep?.("resolve", "done", `${input.features.length}개 피처 요청`);
+	cb?.onStep?.(
+		"scaffold",
+		"done",
+		`${scaffoldResult.installedFeatures.length}개 피처 설치 완료`,
+	);
+	record.features = scaffoldResult.installedFeatures;
+	record.status = "provisioning";
+	await saveProject();
+
+	// ── Step 3: neon (NON-FATAL, opt-in) ─────────────────────────
+	let neonResult: NeonResult | undefined;
+	if (opts.neon) {
+		cb?.onStep?.("neon", "start", "Neon DB 프로젝트 생성 중...");
+		try {
+			neonResult = await createNeonProject({
+				projectName: input.projectName,
+				orgId: opts.neonOrgId,
+				apiKey: opts.neonApiKey,
+			});
+			record.neonProjectId = neonResult.projectId;
+			await saveProject();
+			cb?.onStep?.(
+				"neon",
+				"done",
+				`Neon DB 생성 완료: ${neonResult.projectId}`,
+			);
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			cb?.onStep?.("neon", "error", msg);
+			cb?.onLog?.("Neon DB 생성 실패 — DB 없이 계속 진행합니다");
+		}
+	} else {
+		cb?.onStep?.("neon", "skip");
+	}
+
+	// ── Step 4: github (NON-FATAL, opt-in) ───────────────────────
+	let githubResult: GitHubResult | undefined;
+	if (opts.github) {
+		cb?.onStep?.("github", "start", "GitHub 레포 생성 및 푸시 중...");
+		try {
+			githubResult = await pushToGitHub({
+				projectDir,
+				repoName: input.projectName,
+				org: opts.githubOrg,
+				private: opts.private,
+			});
+			record.githubRepoUrl = githubResult.repoUrl;
+			await saveProject();
+			cb?.onStep?.(
+				"github",
+				"done",
+				`GitHub 레포 생성 완료: ${githubResult.repoUrl}`,
+			);
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			cb?.onStep?.("github", "error", msg);
+			cb?.onLog?.("GitHub 레포 생성 실패 — 계속 진행합니다");
+		}
+	} else {
+		cb?.onStep?.("github", "skip");
+	}
+
+	// ── Step 5: vercel (NON-FATAL, opt-in, requires github) ──────
+	// B2B2C 배포: server (API) + admin + landing — app(SPA)은 없음
+	// BETTER_AUTH_SECRET을 미리 생성 (Vercel env + .env 양쪽에 동일 값 사용)
+	const { randomBytes } = await import("node:crypto");
+	const betterAuthSecret = randomBytes(32).toString("base64");
+
+	let vercelServerResult: VercelResult | undefined;
+	let vercelAdminResult: VercelResult | undefined;
+	let vercelLandingResult: VercelResult | undefined;
+
+	if (opts.vercel && githubResult) {
+		record.status = "deploying";
+		await saveProject();
+		cb?.onStep?.("vercel", "start", "Vercel 프로젝트 배포 중...");
+		try {
+			const envVars: Record<string, string> = {
+				BETTER_AUTH_SECRET: betterAuthSecret,
+			};
+			if (neonResult?.databaseUrl) {
+				envVars.DATABASE_URL = neonResult.databaseUrl;
+			}
+
+			// 1) Server (API) — apps/server, NestJS
+			const serverProjectName = `${input.projectName}-api`;
+			const serverUrl = `https://${serverProjectName}.vercel.app`;
+			const serverEnvVars: Record<string, string> = {
+				...envVars,
+				// CORS: server + admin + landing (app URL 없음)
+				CORS_ORIGINS: `${serverUrl},https://${input.projectName}-admin.vercel.app,https://${input.projectName}-landing.vercel.app`,
+				BETTER_AUTH_URL: serverUrl,
+				APP_NAME: input.projectName,
+				NODE_ENV: "production",
+			};
+			cb?.onLog?.("Vercel: 서버(API) 프로젝트 생성 중...");
+			vercelServerResult = await deployToVercel({
+				repoUrl: githubResult.repoUrl,
+				projectName: serverProjectName,
+				envVars: serverEnvVars,
+				token: opts.vercelToken,
+				teamId: opts.vercelTeamId,
+				framework: null,
+				rootDirectory: "apps/server",
+				buildCommand: "nest build",
+				outputDirectory: ".",
+			});
+			cb?.onLog?.(`서버 배포: ${vercelServerResult.deploymentUrl}`);
+
+			// 2) Admin — apps/admin, Vite
+			cb?.onLog?.("Vercel: 관리자(Admin) 프로젝트 생성 중...");
+			try {
+				const adminEnvVars: Record<string, string> = {
+					...envVars,
+					VITE_API_URL: vercelServerResult.deploymentUrl,
+					VITE_APP_NAME: input.projectName,
+				};
+				vercelAdminResult = await deployToVercel({
+					repoUrl: githubResult.repoUrl,
+					projectName: `${input.projectName}-admin`,
+					envVars: adminEnvVars,
+					token: opts.vercelToken,
+					teamId: opts.vercelTeamId,
+					rootDirectory: "apps/admin",
+				});
+				cb?.onLog?.(`Admin 배포: ${vercelAdminResult.deploymentUrl}`);
+			} catch (e) {
+				cb?.onLog?.(
+					`Admin 배포 실패 (non-fatal): ${e instanceof Error ? e.message : e}`,
+				);
+			}
+
+			// 3) Landing — apps/landing, Next.js
+			// B2B2C의 공개 접점: API_URL + NEXT_PUBLIC_API_URL → server URL
+			cb?.onLog?.("Vercel: 랜딩(Landing) 프로젝트 생성 중...");
+			try {
+				const landingEnvVars: Record<string, string> = {
+					NEXT_PUBLIC_APP_NAME: input.projectName,
+					API_URL: vercelServerResult.deploymentUrl,
+					NEXT_PUBLIC_API_URL: vercelServerResult.deploymentUrl,
+				};
+				vercelLandingResult = await deployToVercel({
+					repoUrl: githubResult.repoUrl,
+					projectName: `${input.projectName}-landing`,
+					envVars: landingEnvVars,
+					token: opts.vercelToken,
+					teamId: opts.vercelTeamId,
+					framework: "nextjs",
+					rootDirectory: "apps/landing",
+				});
+				cb?.onLog?.(`Landing 배포: ${vercelLandingResult.deploymentUrl}`);
+			} catch (e) {
+				cb?.onLog?.(
+					`Landing 배포 실패 (non-fatal): ${e instanceof Error ? e.message : e}`,
+				);
+			}
+
+			// Update CORS_ORIGINS on server with actual deployed URLs
+			if (vercelAdminResult || vercelLandingResult) {
+				const { vercelFetch } = await import("./vercel");
+				const serverToken =
+					opts.vercelToken ?? process.env.VERCEL_TOKEN ?? "";
+				const serverQuery = opts.vercelTeamId
+					? `?teamId=${opts.vercelTeamId}`
+					: "";
+				const corsOrigins = [
+					vercelServerResult.deploymentUrl,
+					vercelAdminResult?.deploymentUrl,
+					vercelLandingResult?.deploymentUrl,
+				]
+					.filter(Boolean)
+					.join(",");
+				try {
+					await vercelFetch(
+						`/v10/projects/${vercelServerResult.projectId}/env${serverQuery}`,
+						{
+							method: "POST",
+							body: JSON.stringify({
+								key: "CORS_ORIGINS",
+								value: corsOrigins,
+								target: ["production", "preview", "development"],
+								type: "encrypted",
+							}),
+						},
+						serverToken,
+					);
+				} catch {
+					// already exists 등 — non-fatal
+				}
+			}
+
+			record.vercelServerProjectId = vercelServerResult.projectId;
+			record.vercelServerUrl = vercelServerResult.deploymentUrl;
+			if (vercelAdminResult) {
+				record.vercelAdminProjectId = vercelAdminResult.projectId;
+				record.vercelAdminUrl = vercelAdminResult.deploymentUrl;
+			}
+			if (vercelLandingResult) {
+				record.vercelLandingProjectId = vercelLandingResult.projectId;
+				record.vercelLandingUrl = vercelLandingResult.deploymentUrl;
+			}
+			await saveProject();
+			cb?.onStep?.(
+				"vercel",
+				"done",
+				`API: ${vercelServerResult.deploymentUrl} | Admin: ${vercelAdminResult?.deploymentUrl ?? "skip"} | Landing: ${vercelLandingResult?.deploymentUrl ?? "skip"}`,
+			);
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			cb?.onStep?.("vercel", "error", msg);
+			cb?.onLog?.("Vercel 배포 실패 — 계속 진행합니다");
+			record.errorMessage = `vercel: ${msg}`;
+			await saveProject();
+		}
+	} else if (opts.vercel && !githubResult) {
+		cb?.onStep?.("vercel", "skip", "GitHub 레포가 없어 건너뜀");
+	} else {
+		cb?.onStep?.("vercel", "skip");
+	}
+
+	// ── Step 6: env (NON-FATAL) ──────────────────────────────────
+	// B2B2C: VERCEL_URL 없음 (app 미배포), NEXT_PUBLIC_API_URL 추가
+	cb?.onStep?.("env", "start", ".env 파일 생성 중...");
+	try {
+		await writeEnvFile(projectDir, {
+			DATABASE_URL: neonResult?.databaseUrl,
+			NEON_PROJECT_ID: neonResult?.projectId,
+			BETTER_AUTH_URL: vercelServerResult?.deploymentUrl,
+			BETTER_AUTH_SECRET: betterAuthSecret,
+			VITE_API_URL: vercelServerResult?.deploymentUrl,
+			API_URL: vercelServerResult?.deploymentUrl,
+			NEXT_PUBLIC_API_URL: vercelServerResult?.deploymentUrl,
+			VITE_APP_NAME: input.projectName,
+			APP_NAME: input.projectName,
+		});
+		cb?.onStep?.("env", "done", ".env 파일 생성 완료");
+	} catch (e) {
+		const msg = e instanceof Error ? e.message : String(e);
+		cb?.onStep?.("env", "error", msg);
+	}
+
+	// ── Step 7: install (NON-FATAL, opt-in) ──────────────────────
+	let installed = false;
+	if (opts.install) {
+		cb?.onStep?.("install", "start", "의존성 설치 중...");
+		try {
+			await installFeatures({ projectDir });
+			installed = true;
+			cb?.onStep?.("install", "done", "의존성 설치 완료");
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			cb?.onStep?.("install", "error", msg);
+			cb?.onLog?.(
+				"설치 실패 — pnpm install && pnpm exec drizzle-kit push 를 수동 실행하세요",
+			);
+		}
+	} else {
+		cb?.onStep?.("install", "skip");
+	}
+
+	// ── Step 7.5: dbMigrate (NON-FATAL, requires neon) ──────────
+	// drizzle-kit push로 DB 스키마 생성 — install 여부와 무관하게 neon이 있으면 실행
+	let dbMigrated = false;
+	if (neonResult?.databaseUrl) {
+		cb?.onStep?.("dbMigrate" as any, "start", "DB 스키마 마이그레이션 중...");
+		try {
+			const { execFile: execCb } = await import("node:child_process");
+			const { promisify } = await import("node:util");
+			const execAsync = promisify(execCb);
+			const drizzleDir = join(projectDir, "packages", "drizzle");
+			// pnpm exec for workspace resolution
+			await execAsync("pnpm", ["exec", "drizzle-kit", "push", "--force"], {
+				cwd: drizzleDir,
+				timeout: 60_000,
+				env: { ...process.env, DATABASE_URL: neonResult.databaseUrl },
+			});
+			dbMigrated = true;
+			cb?.onStep?.("dbMigrate" as any, "done", "DB 스키마 생성 완료");
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			cb?.onStep?.("dbMigrate" as any, "error", msg);
+			cb?.onLog?.("DB 마이그레이션 실패 — drizzle-kit push를 수동 실행하세요");
+		}
+	}
+
+	// ── Step 8: seed (NON-FATAL, requires neon + dbMigrate) ──────
+	let seedResult: SeedResult | undefined;
+	if (neonResult && dbMigrated) {
+		record.status = "seeding";
+		await saveProject();
+		cb?.onStep?.("seed", "start", "초기 데이터 시딩 중...");
+		try {
+			seedResult = await seedInitialData({
+				projectDir,
+				ownerEmail: opts.ownerEmail,
+				ownerPassword: opts.ownerPassword,
+			});
+			cb?.onStep?.("seed", "done", `시딩 완료: ${seedResult.ownerEmail}`);
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			cb?.onStep?.("seed", "error", msg);
+			cb?.onLog?.(
+				"시딩 실패 — 서버 실행 후 /api/auth/sign-up으로 수동 등록하세요",
+			);
+		}
+	} else {
+		cb?.onStep?.("seed", "skip");
+	}
+
+	// ── Done ─────────────────────────────────────────────────────
+	record.status = "deployed";
+	await saveProject();
+	cb?.onLog?.("B2B2C 파이프라인 완료");
+
+	return {
+		projectDir,
+		projectName: input.projectName,
+		installedFeatures: scaffoldResult.installedFeatures,
+		neon: neonResult,
+		github: githubResult,
+		vercel: undefined, // B2B2C: app(SPA) 미배포
+		vercelServer: vercelServerResult,
+		vercelAdmin: vercelAdminResult,
+		vercelLanding: vercelLandingResult,
+		installed,
+		seed: seedResult,
+	};
+}

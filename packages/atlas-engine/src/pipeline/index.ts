@@ -1,4 +1,5 @@
 export { composePipeline } from "./compose";
+export { composePipelineB2B2C } from "./compose-b2b2c";
 export { writeEnvFile } from "./env";
 export { pushToGitHub } from "./github";
 export { installFeatures } from "./install";
