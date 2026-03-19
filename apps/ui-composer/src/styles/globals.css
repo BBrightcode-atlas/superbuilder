@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Scan shadcn component source files for their Tailwind classes */
+@source "../../../../packages/ui-preview/src/**/*.tsx";
+/* Scan safelist for dynamic agent-generated classes */
+@source "./tailwind-safelist.html";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

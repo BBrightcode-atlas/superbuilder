@@ -1,13 +1,14 @@
+import * as LucideReact from "lucide-react";
 import * as React from "react";
 import * as AccordionMod from "@/components/ui/accordion";
-import * as AlertDialogMod from "@/components/ui/alert-dialog";
 import * as AlertMod from "@/components/ui/alert";
+import * as AlertDialogMod from "@/components/ui/alert-dialog";
 import * as AspectRatioMod from "@/components/ui/aspect-ratio";
 import * as AvatarMod from "@/components/ui/avatar";
 import * as BadgeMod from "@/components/ui/badge";
 import * as BreadcrumbMod from "@/components/ui/breadcrumb";
-import * as ButtonGroupMod from "@/components/ui/button-group";
 import * as ButtonMod from "@/components/ui/button";
+import * as ButtonGroupMod from "@/components/ui/button-group";
 import * as CalendarMod from "@/components/ui/calendar";
 import * as CardMod from "@/components/ui/card";
 import * as CarouselMod from "@/components/ui/carousel";
@@ -23,9 +24,9 @@ import * as EmptyMod from "@/components/ui/empty";
 import * as FieldMod from "@/components/ui/field";
 import * as FormMod from "@/components/ui/form";
 import * as HoverCardMod from "@/components/ui/hover-card";
+import * as InputMod from "@/components/ui/input";
 import * as InputGroupMod from "@/components/ui/input-group";
 import * as InputOtpMod from "@/components/ui/input-otp";
-import * as InputMod from "@/components/ui/input";
 import * as ItemMod from "@/components/ui/item";
 import * as KbdMod from "@/components/ui/kbd";
 import * as LabelMod from "@/components/ui/label";
@@ -40,8 +41,8 @@ import * as ScrollAreaMod from "@/components/ui/scroll-area";
 import * as SelectMod from "@/components/ui/select";
 import * as SeparatorMod from "@/components/ui/separator";
 import * as SheetMod from "@/components/ui/sheet";
-import * as SidebarCardMod from "@/components/ui/sidebar-card";
 import * as SidebarMod from "@/components/ui/sidebar";
+import * as SidebarCardMod from "@/components/ui/sidebar-card";
 import * as SkeletonMod from "@/components/ui/skeleton";
 import * as SliderMod from "@/components/ui/slider";
 import * as SonnerMod from "@/components/ui/sonner";
@@ -50,14 +51,15 @@ import * as SwitchMod from "@/components/ui/switch";
 import * as TableMod from "@/components/ui/table";
 import * as TabsMod from "@/components/ui/tabs";
 import * as TextareaMod from "@/components/ui/textarea";
-import * as ToggleGroupMod from "@/components/ui/toggle-group";
 import * as ToggleMod from "@/components/ui/toggle";
+import * as ToggleGroupMod from "@/components/ui/toggle-group";
 import * as TooltipMod from "@/components/ui/tooltip";
 
 type ModuleExports = Record<string, unknown>;
 
 const STATIC_MODULES: Record<string, ModuleExports> = {
 	react: React as unknown as ModuleExports,
+	"lucide-react": LucideReact as unknown as ModuleExports,
 	"@/components/ui/accordion": AccordionMod as unknown as ModuleExports,
 	"@/components/ui/alert-dialog": AlertDialogMod as unknown as ModuleExports,
 	"@/components/ui/alert": AlertMod as unknown as ModuleExports,
@@ -89,7 +91,8 @@ const STATIC_MODULES: Record<string, ModuleExports> = {
 	"@/components/ui/kbd": KbdMod as unknown as ModuleExports,
 	"@/components/ui/label": LabelMod as unknown as ModuleExports,
 	"@/components/ui/menubar": MenubarMod as unknown as ModuleExports,
-	"@/components/ui/navigation-menu": NavigationMenuMod as unknown as ModuleExports,
+	"@/components/ui/navigation-menu":
+		NavigationMenuMod as unknown as ModuleExports,
 	"@/components/ui/pagination": PaginationMod as unknown as ModuleExports,
 	"@/components/ui/popover": PopoverMod as unknown as ModuleExports,
 	"@/components/ui/progress": ProgressMod as unknown as ModuleExports,

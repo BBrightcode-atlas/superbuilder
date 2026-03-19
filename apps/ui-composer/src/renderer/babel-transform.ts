@@ -192,9 +192,9 @@ export interface TransformResult {
 export function transformJSX(jsxCode: string): TransformResult {
 	try {
 		const result = transform(jsxCode, {
-			presets: ["react"],
+			presets: ["react", "typescript"],
 			plugins: [importTransformPlugin],
-			filename: "preview.jsx",
+			filename: "preview.tsx",
 		});
 		return { code: result.code ?? "", error: null };
 	} catch (err) {
