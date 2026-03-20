@@ -11,47 +11,72 @@ function formatClasses(className: string): string {
 }
 
 /** Map HTML tags to readable labels (fallback when no data-component) */
-function tagLabel(tag: string): string {
-	const labels: Record<string, string> = {
-		div: "Frame",
-		section: "Section",
-		main: "Main",
-		header: "Header",
-		footer: "Footer",
-		nav: "Nav",
-		article: "Article",
-		aside: "Aside",
-		form: "Form",
-		button: "Button",
-		input: "Input",
-		textarea: "TextArea",
-		select: "Select",
-		label: "Label",
-		a: "Link",
-		img: "Image",
-		svg: "Icon",
-		table: "Table",
-		tr: "Row",
-		td: "Cell",
-		th: "Header Cell",
-		ul: "List",
-		ol: "OrderedList",
-		li: "ListItem",
-		span: "Text",
-		p: "Paragraph",
-		h1: "Heading 1",
-		h2: "Heading 2",
-		h3: "Heading 3",
-		h4: "Heading 4",
-		pre: "Code Block",
+function tagLabel(tag: string, node: ComponentTreeNode): string {
+	// Semantic HTML tags get readable names
+	const semantic: Record<string, string> = {
+		section: "section",
+		main: "main",
+		header: "header",
+		footer: "footer",
+		nav: "nav",
+		article: "article",
+		aside: "aside",
+		form: "form",
+		button: "button",
+		input: "input",
+		textarea: "textarea",
+		select: "select",
+		label: "label",
+		a: "a",
+		img: "img",
+		svg: "svg",
+		table: "table",
+		thead: "thead",
+		tbody: "tbody",
+		tr: "tr",
+		td: "td",
+		th: "th",
+		ul: "ul",
+		ol: "ol",
+		li: "li",
+		span: "span",
+		p: "p",
+		h1: "h1",
+		h2: "h2",
+		h3: "h3",
+		h4: "h4",
+		h5: "h5",
+		h6: "h6",
+		pre: "pre",
+		code: "code",
+		hr: "hr",
+		dialog: "dialog",
+		details: "details",
+		summary: "summary",
+		fieldset: "fieldset",
+		legend: "legend",
 	};
-	return labels[tag] || tag;
+	if (semantic[tag]) return semantic[tag];
+
+	// For div: try to infer a meaningful name from className or role
+	if (tag === "div") {
+		// Check for aria role
+		const cls = node.className;
+		// Infer from common Tailwind layout patterns
+		if (cls.includes("grid")) return "div.grid";
+		if (cls.includes("flex")) return "div.flex";
+		if (cls.includes("container")) return "div.container";
+		if (cls.includes("min-h-screen")) return "div.page";
+		return "div";
+	}
+
+	return tag;
 }
 
 /** Get display name: prefer data-component, fallback to HTML tag label */
 function nodeDisplayName(node: ComponentTreeNode): string {
 	if (node.component) return node.component;
-	return tagLabel(node.tag);
+	return tagLabel(node.tag, node);
 }
 
 /** Color coding: shadcn components get distinct colors */
