@@ -50,15 +50,11 @@ export async function installFeatures(opts: {
 				pm.cmd === "pnpm"
 					? ["exec", "drizzle-kit", "push", "--force"]
 					: ["drizzle-kit", "push", "--force"];
-			await execFileAsync(
-				pm.cmd === "pnpm" ? "pnpm" : pm.runner,
-				runnerArgs,
-				{
-					cwd: drizzleDir,
-					timeout: 60_000,
-					env: { ...process.env, DATABASE_URL: dbUrlMatch[1] },
-				},
-			);
+			await execFileAsync(pm.cmd === "pnpm" ? "pnpm" : pm.runner, runnerArgs, {
+				cwd: drizzleDir,
+				timeout: 60_000,
+				env: { ...process.env, DATABASE_URL: dbUrlMatch[1] },
+			});
 			migrated = true;
 		}
 	} catch {

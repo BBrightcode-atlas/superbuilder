@@ -3,14 +3,15 @@
  * These tools are injected into the agent runtime via `extraTools` in createMastraCode().
  * They reuse the same localDb and token storage as the existing tRPC routers.
  */
-import { createTool } from "@mastra/core/tools";
-import { eq } from "drizzle-orm";
-import { writeFile, readFile } from "node:fs/promises";
+
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { z } from "zod";
+import { createTool } from "@mastra/core/tools";
+import { atlasIntegrations, atlasProjects } from "@superset/local-db";
+import { eq } from "drizzle-orm";
 
 import { localDb } from "main/lib/local-db";
-import { atlasIntegrations, atlasProjects } from "@superset/local-db";
+import { z } from "zod";
 import { decrypt } from "./trpc/routers/auth/utils/crypto-storage";
 
 // ---------------------------------------------------------------------------
@@ -97,9 +98,7 @@ export const atlasNeonListOrgsTool = createTool({
 		"List all Neon organizations the user belongs to. Requires Neon API key to be configured.",
 	inputSchema: z.object({}),
 	outputSchema: z.object({
-		organizations: z.array(
-			z.object({ id: z.string(), name: z.string() }),
-		),
+		organizations: z.array(z.object({ id: z.string(), name: z.string() })),
 	}),
 	execute: async () => {
 		// Try /users/me/organizations first (personal API key)
@@ -261,14 +260,23 @@ export const atlasVercelCreateProjectTool = createTool({
 		"Create a new Vercel project. Optionally links to an Atlas project and a GitHub repository.",
 	inputSchema: z.object({
 		name: z.string().describe("Project name (kebab-case recommended)"),
-		teamId: z.string().optional().describe("Vercel team ID (optional, for personal account leave empty)"),
+		teamId: z
+			.string()
+			.optional()
+			.describe("Vercel team ID (optional, for personal account leave empty)"),
 		framework: z.string().default("vite").describe("Framework (default: vite)"),
 		atlasProjectId: z
 			.string()
 			.optional()
 			.describe("Atlas project ID to link (optional)"),
-		gitOwner: z.string().optional().describe("GitHub owner/org for Git integration (optional)"),
-		gitRepo: z.string().optional().describe("GitHub repo name for Git integration (optional)"),
+		gitOwner: z
+			.string()
+			.optional()
+			.describe("GitHub owner/org for Git integration (optional)"),
+		gitRepo: z
+			.string()
+			.optional()
+			.describe("GitHub repo name for Git integration (optional)"),
 	}),
 	outputSchema: z.object({
 		id: z.string(),

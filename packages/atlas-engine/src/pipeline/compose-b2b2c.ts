@@ -245,8 +245,7 @@ export async function composePipelineB2B2C(
 			// Update CORS_ORIGINS on server with actual deployed URLs
 			if (vercelAdminResult || vercelLandingResult) {
 				const { vercelFetch } = await import("./vercel");
-				const serverToken =
-					opts.vercelToken ?? process.env.VERCEL_TOKEN ?? "";
+				const serverToken = opts.vercelToken ?? process.env.VERCEL_TOKEN ?? "";
 				const serverQuery = opts.vercelTeamId
 					? `?teamId=${opts.vercelTeamId}`
 					: "";

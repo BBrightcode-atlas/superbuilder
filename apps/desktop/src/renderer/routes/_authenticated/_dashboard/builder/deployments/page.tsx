@@ -1,9 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@superset/ui/badge";
 import { Button } from "@superset/ui/button";
 import { Spinner } from "@superset/ui/spinner";
-import { LuPlus, LuExternalLink, LuGitBranch, LuTrash2 } from "react-icons/lu";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { LuExternalLink, LuGitBranch, LuPlus, LuTrash2 } from "react-icons/lu";
 import { apiTrpcClient } from "renderer/lib/api-trpc-client";
 
 export const Route = createFileRoute(
@@ -14,7 +14,10 @@ export const Route = createFileRoute(
 
 const STATUS_BADGE: Record<
 	string,
-	{ label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+	{
+		label: string;
+		variant: "default" | "secondary" | "destructive" | "outline";
+	}
 > = {
 	scaffolding: { label: "스캐폴딩", variant: "outline" },
 	provisioning: { label: "프로비저닝", variant: "outline" },
@@ -53,8 +56,7 @@ function DeploymentsPage() {
 					onClick={() => navigate({ to: "/builder/composer" as string })}
 					size="sm"
 				>
-					<LuPlus className="size-4 mr-1" />
-					새 프로젝트
+					<LuPlus className="size-4 mr-1" />새 프로젝트
 				</Button>
 			</div>
 
@@ -77,7 +79,8 @@ function DeploymentsPage() {
 			) : (
 				<div className="grid gap-4 md:grid-cols-2">
 					{projects.map((project) => {
-						const statusInfo = STATUS_BADGE[project.status] ?? STATUS_BADGE.deployed;
+						const statusInfo =
+							STATUS_BADGE[project.status] ?? STATUS_BADGE.deployed;
 						const features = (project.features as string[]) ?? [];
 
 						return (
@@ -102,7 +105,11 @@ function DeploymentsPage() {
 								{features.length > 0 ? (
 									<div className="flex flex-wrap gap-1">
 										{features.map((f) => (
-											<Badge key={f} variant="secondary" className="text-[10px] px-1.5 py-0">
+											<Badge
+												key={f}
+												variant="secondary"
+												className="text-[10px] px-1.5 py-0"
+											>
 												{f}
 											</Badge>
 										))}

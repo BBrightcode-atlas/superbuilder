@@ -7,8 +7,8 @@ import {
 	featureRequests,
 	featureRequestWorktrees,
 } from "@superset/db/schema";
-import { TRPCError } from "@trpc/server";
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { and, desc, eq, max } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
@@ -201,10 +201,7 @@ export const featureStudioRouter = {
 			}
 
 			// Save human QA notes as artifact if feedback provided
-			if (
-				approval.approvalType === "human_qa" &&
-				input.feedback?.trim()
-			) {
+			if (approval.approvalType === "human_qa" && input.feedback?.trim()) {
 				await db.insert(featureRequestArtifacts).values({
 					featureRequestId: approval.featureRequestId,
 					kind: "human_qa_notes",
@@ -332,7 +329,10 @@ export const featureStudioRouter = {
 					.from(featureRequestArtifacts)
 					.where(
 						and(
-							eq(featureRequestArtifacts.featureRequestId, input.featureRequestId),
+							eq(
+								featureRequestArtifacts.featureRequestId,
+								input.featureRequestId,
+							),
 							eq(featureRequestArtifacts.kind, input.kind),
 						),
 					);

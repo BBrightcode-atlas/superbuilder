@@ -31,11 +31,7 @@ export async function copyFeaturesB2B2C(opts: {
 			);
 			if (!existsSync(srcDir)) continue;
 
-			const tgtDir = resolveB2B2CTargetPath(
-				opts.templateDir,
-				featureId,
-				slot,
-			);
+			const tgtDir = resolveB2B2CTargetPath(opts.templateDir, featureId, slot);
 			await mkdir(dirname(tgtDir), { recursive: true });
 			await cp(srcDir, tgtDir, { recursive: true });
 		}

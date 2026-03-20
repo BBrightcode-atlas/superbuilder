@@ -33,11 +33,8 @@ export function deriveConnectionsB2B2C(
 		const imports = pages
 			.filter((p) => p.template === "widget-page" && p.widget)
 			.map((p) => {
-				const pkg = p.widget!.package.replace(
-					"@superbuilder/",
-					"@repo/",
-				);
-				return `import { ${p.widget!.component} } from "${pkg}";`;
+				const pkg = p.widget?.package.replace("@superbuilder/", "@repo/");
+				return `import { ${p.widget?.component} } from "${pkg}";`;
 			});
 		if (imports.length > 0) {
 			conn.landingImports = imports.join("\n");
@@ -56,7 +53,7 @@ export function deriveConnectionsB2B2C(
 			.filter((p) => p.metadata)
 			.map(
 				(p) =>
-					`  { title: "${p.metadata!.title}", url: "${p.path}", description: "${p.metadata!.description ?? ""}" },`,
+					`  { title: "${p.metadata?.title}", url: "${p.path}", description: "${p.metadata?.description ?? ""}" },`,
 			)
 			.join("\n");
 		if (llmsPages) {

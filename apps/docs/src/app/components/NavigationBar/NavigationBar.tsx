@@ -10,13 +10,7 @@ import {
 } from "./components/NavigationMobile";
 
 function SuperBuilderLogo() {
-	return (
-		<img
-			src="/logo-full.png"
-			alt="SuperBuilder"
-			className="h-5 w-auto"
-		/>
-	);
+	return <img src="/logo-full.png" alt="SuperBuilder" className="h-5 w-auto" />;
 }
 
 function SidebarTrigger() {

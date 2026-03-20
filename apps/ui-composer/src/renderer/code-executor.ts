@@ -1,5 +1,5 @@
-import { resolveModule } from "./module-registry";
 import { extractImportPaths, transformJSX } from "./babel-transform";
+import { resolveModule } from "./module-registry";
 
 export interface ExecutionResult {
 	Component: React.ComponentType | null;
@@ -43,7 +43,8 @@ export function executeCode(jsxCode: string): ExecutionResult {
 		if (!Component) {
 			return {
 				Component: null,
-				error: "No default export found. Code must have `export default function App()`.",
+				error:
+					"No default export found. Code must have `export default function App()`.",
 				unresolvedImports: [],
 			};
 		}

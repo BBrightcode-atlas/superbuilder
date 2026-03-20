@@ -1,7 +1,4 @@
-import { useState } from "react";
-import { Badge } from "@superset/ui/badge";
-import { Button } from "@superset/ui/button";
-import { Input } from "@superset/ui/input";
+import type { SelectAtlasProject } from "@superset/local-db";
 import {
 	AlertDialog,
 	AlertDialogContent,
@@ -10,15 +7,18 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@superset/ui/alert-dialog";
+import { Badge } from "@superset/ui/badge";
+import { Button } from "@superset/ui/button";
+import { Input } from "@superset/ui/input";
+import { useState } from "react";
 import {
-	LuFolder,
-	LuGitBranch,
 	LuExternalLink,
-	LuTrash2,
 	LuEye,
 	LuEyeOff,
+	LuFolder,
+	LuGitBranch,
+	LuTrash2,
 } from "react-icons/lu";
-import type { SelectAtlasProject } from "@superset/local-db";
 
 interface DeploymentCardProps {
 	project: SelectAtlasProject;
@@ -88,18 +88,18 @@ export function DeploymentCard({
 				</code>
 
 				{project.gitRemoteUrl ? (
-				<a
-					href={project.gitRemoteUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="flex items-center gap-1 text-xs text-primary hover:underline"
-				>
-					<LuGitBranch className="size-3" />
-					GitHub: {project.gitRemoteUrl}
-				</a>
-			) : null}
+					<a
+						href={project.gitRemoteUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="flex items-center gap-1 text-xs text-primary hover:underline"
+					>
+						<LuGitBranch className="size-3" />
+						GitHub: {project.gitRemoteUrl}
+					</a>
+				) : null}
 
-			{project.neonProjectId ? (
+				{project.neonProjectId ? (
 					<a
 						href={`https://console.neon.tech/app/projects/${project.neonProjectId}`}
 						target="_blank"
@@ -187,12 +187,9 @@ export function DeploymentCard({
 									<strong className="text-foreground">{project.name}</strong>{" "}
 									프로젝트를 삭제합니다.
 								</span>
-								{(hasNeon || hasVercel) ? (
+								{hasNeon || hasVercel ? (
 									<span className="block text-destructive">
-										{[
-											hasNeon ? "Neon" : null,
-											hasVercel ? "Vercel" : null,
-										]
+										{[hasNeon ? "Neon" : null, hasVercel ? "Vercel" : null]
 											.filter(Boolean)
 											.join(", ")}{" "}
 										프로젝트도 함께 삭제됩니다.

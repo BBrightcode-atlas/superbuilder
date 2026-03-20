@@ -23,7 +23,10 @@ export function WorkspaceSidebarHeader({
 	const isTasksOpen = !!matchRoute({ to: "/tasks", fuzzy: true });
 	const isUiOpen = !!matchRoute({ to: "/ui" as string, fuzzy: true });
 	const isAtlasOpen = !!matchRoute({ to: "/atlas", fuzzy: true });
-	const isBuildersOpen = !!matchRoute({ to: "/builder" as string, fuzzy: true });
+	const isBuildersOpen = !!matchRoute({
+		to: "/builder" as string,
+		fuzzy: true,
+	});
 
 	const handleWorkspacesClick = () => {
 		if (isWorkspacesListOpen) {

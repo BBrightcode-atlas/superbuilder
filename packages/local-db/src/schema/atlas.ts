@@ -19,7 +19,9 @@ export const atlasProjects = sqliteTable(
 		name: text("name").notNull(),
 		localPath: text("local_path").notNull(),
 		features: text("features", { mode: "json" }).$type<string[]>().notNull(),
-		gitInitialized: integer("git_initialized", { mode: "boolean" }).default(false),
+		gitInitialized: integer("git_initialized", { mode: "boolean" }).default(
+			false,
+		),
 		gitRemoteUrl: text("git_remote_url"),
 		neonProjectId: text("neon_project_id"),
 		neonConnectionString: text("neon_connection_string"),
@@ -28,7 +30,10 @@ export const atlasProjects = sqliteTable(
 		vercelDeploymentId: text("vercel_deployment_id"),
 		ownerEmail: text("owner_email"),
 		ownerPassword: text("owner_password"),
-		status: text("status").$type<"created" | "deployed" | "error">().notNull().default("created"),
+		status: text("status")
+			.$type<"created" | "deployed" | "error">()
+			.notNull()
+			.default("created"),
 		createdAt: integer("created_at")
 			.notNull()
 			.$defaultFn(() => Date.now()),

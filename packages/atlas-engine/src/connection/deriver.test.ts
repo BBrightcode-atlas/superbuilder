@@ -28,9 +28,7 @@ describe("deriveConnections", () => {
 			'import { blogRouter } from "@repo/features/blog";',
 		);
 		expect(result.trpcRouterKey).toBe("blog: blogRouter,");
-		expect(result.trpcTypeImport).toBe(
-			'import { blogRouter } from "./blog";',
-		);
+		expect(result.trpcTypeImport).toBe('import { blogRouter } from "./blog";');
 		expect(result.trpcTypeKey).toBe("blog: blogRouter,");
 	});
 
@@ -42,7 +40,9 @@ describe("deriveConnections", () => {
 		expect(result.clientRoutesImport).toBe(
 			'import { createBlogRoutes } from "@/features/blog";',
 		);
-		expect(result.clientRoutesSpread).toBe("...createBlogRoutes(appLayoutRoute),");
+		expect(result.clientRoutesSpread).toBe(
+			"...createBlogRoutes(appLayoutRoute),",
+		);
 	});
 
 	it("derives admin connections from admin provides", () => {
@@ -56,7 +56,9 @@ describe("deriveConnections", () => {
 		expect(result.adminRoutesImport).toBe(
 			'import { createBlogAdminRoutes } from "./features/blog";',
 		);
-		expect(result.adminRoutesSpread).toBe("...createBlogAdminRoutes(adminLayoutRoute),");
+		expect(result.adminRoutesSpread).toBe(
+			"...createBlogAdminRoutes(adminLayoutRoute),",
+		);
 		expect(result.adminMenu).toBe(
 			JSON.stringify({
 				id: "blog",

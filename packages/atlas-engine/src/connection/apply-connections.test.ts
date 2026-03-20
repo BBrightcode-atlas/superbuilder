@@ -221,7 +221,9 @@ describe("applyConnections", () => {
 		expect(adminRouter).toContain(
 			'import { createBlogAdminRoutes } from "./features/blog"',
 		);
-		expect(adminRouter).toContain("...createBlogAdminRoutes(adminLayoutRoute),");
+		expect(adminRouter).toContain(
+			"...createBlogAdminRoutes(adminLayoutRoute),",
+		);
 	});
 
 	it("handles widget feature with widget export", () => {

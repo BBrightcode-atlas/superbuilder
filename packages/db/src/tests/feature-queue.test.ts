@@ -2,8 +2,9 @@
  * Feature Queue E2E 테스트
  * DB에 직접 접근하여 queue 상태 관리를 검증한다.
  */
-import { and, asc, count, eq, inArray } from "drizzle-orm";
+
 import { describe, expect, test } from "bun:test";
+import { and, asc, count, eq, inArray } from "drizzle-orm";
 import { db } from "../client";
 import {
 	featureQueueBatches,
@@ -189,7 +190,9 @@ describe("Feature Queue E2E", () => {
 		expect(batch.concurrencyLimit).toBe(1);
 		expect(items).toHaveLength(3);
 
-		console.log(`✅ 배치 생성: ${batch.id} (${items.map((i) => i.title).join(", ")})`);
+		console.log(
+			`✅ 배치 생성: ${batch.id} (${items.map((i) => i.title).join(", ")})`,
+		);
 	});
 
 	test("all-light 배치 → concurrency = items.length", async () => {
@@ -221,7 +224,11 @@ describe("Feature Queue E2E", () => {
 		const { orgId, userId } = await getTestIds();
 
 		const { batch, items } = await createTestBatch(orgId, userId, [
-			{ rawPrompt: "lifecycle", title: "lifecycle", estimatedComplexity: "light" },
+			{
+				rawPrompt: "lifecycle",
+				title: "lifecycle",
+				estimatedComplexity: "light",
+			},
 		]);
 
 		const item = items[0]!;
@@ -257,8 +264,8 @@ describe("Feature Queue E2E", () => {
 			{ rawPrompt: "fail", title: "fail", estimatedComplexity: "light" },
 		]);
 
-		await updateItemStatus(items[0]!.id, "completed");
-		await updateItemStatus(items[1]!.id, "failed", { lastError: "typecheck" });
+		await updateItemStatus(items[0]?.id, "completed");
+		await updateItemStatus(items[1]?.id, "failed", { lastError: "typecheck" });
 		await syncBatchCounters(batch.id);
 
 		const b = await db.query.featureQueueBatches.findFirst({
@@ -274,11 +281,19 @@ describe("Feature Queue E2E", () => {
 		const { orgId, userId } = await getTestIds();
 
 		const { batch, items } = await createTestBatch(orgId, userId, [
-			{ rawPrompt: "done", title: "resume-done", estimatedComplexity: "medium" },
-			{ rawPrompt: "todo", title: "resume-todo", estimatedComplexity: "medium" },
+			{
+				rawPrompt: "done",
+				title: "resume-done",
+				estimatedComplexity: "medium",
+			},
+			{
+				rawPrompt: "todo",
+				title: "resume-todo",
+				estimatedComplexity: "medium",
+			},
 		]);
 
-		await updateItemStatus(items[0]!.id, "completed");
+		await updateItemStatus(items[0]?.id, "completed");
 		await syncBatchCounters(batch.id);
 
 		const next = await getNextItems(batch.id);

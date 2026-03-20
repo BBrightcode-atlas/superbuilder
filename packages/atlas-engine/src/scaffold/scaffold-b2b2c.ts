@@ -79,9 +79,7 @@ export async function scaffoldB2B2C(
 		join(input.targetDir, "packages/drizzle/src/schema/features"),
 	);
 	await transformDirectory(join(input.targetDir, "packages/widgets/src"));
-	await transformDirectory(
-		join(input.targetDir, "apps/landing/src/features"),
-	);
+	await transformDirectory(join(input.targetDir, "apps/landing/src/features"));
 
 	// 7. Apply connections (insert at [ATLAS:*] markers) — B2B2C variant
 	for (const manifest of selectedManifests) {

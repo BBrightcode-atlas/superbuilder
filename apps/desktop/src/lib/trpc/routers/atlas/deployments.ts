@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { atlasIntegrations, atlasProjects } from "@superset/local-db";
 import { desc, eq } from "drizzle-orm";
-import { atlasProjects, atlasIntegrations } from "@superset/local-db";
-import { publicProcedure, router } from "../..";
 import { localDb } from "main/lib/local-db";
+import { z } from "zod";
+import { publicProcedure, router } from "../..";
 import { decrypt } from "../auth/utils/crypto-storage";
 
 async function getTokenForService(
@@ -65,9 +65,7 @@ export const createAtlasDeploymentsRouter = () =>
 									},
 								);
 								if (!res.ok && res.status !== 404) {
-									console.warn(
-										`Neon 프로젝트 삭제 실패 (${res.status})`,
-									);
+									console.warn(`Neon 프로젝트 삭제 실패 (${res.status})`);
 								}
 							}
 						} catch {
@@ -90,9 +88,7 @@ export const createAtlasDeploymentsRouter = () =>
 									},
 								);
 								if (!res.ok && res.status !== 404) {
-									console.warn(
-										`Vercel 프로젝트 삭제 실패 (${res.status})`,
-									);
+									console.warn(`Vercel 프로젝트 삭제 실패 (${res.status})`);
 								}
 							}
 						} catch {

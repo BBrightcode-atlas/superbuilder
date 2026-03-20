@@ -30,7 +30,14 @@ async function main() {
 		},
 		{
 			onStep: (step, status, msg) => {
-				const icon = status === "done" ? "✅" : status === "error" ? "❌" : status === "skip" ? "⏭️" : "⏳";
+				const icon =
+					status === "done"
+						? "✅"
+						: status === "error"
+							? "❌"
+							: status === "skip"
+								? "⏭️"
+								: "⏳";
 				console.log(`  ${icon} [${step}] ${status}${msg ? `: ${msg}` : ""}`);
 			},
 			onLog: (msg) => console.log(`  💬 ${msg}`),
@@ -44,15 +51,29 @@ async function main() {
 	const { existsSync, readFileSync } = await import("node:fs");
 	const { join } = await import("node:path");
 	const { execSync } = await import("node:child_process");
-	const check = (name: string, ok: boolean) => console.log(`  ${ok ? "✅" : "❌"} ${name}`);
+	const check = (name: string, ok: boolean) =>
+		console.log(`  ${ok ? "✅" : "❌"} ${name}`);
 
-	check("scaffold 완료", existsSync(join(result.projectDir, "packages/features")));
-	check("hello-world 복사됨", existsSync(join(result.projectDir, "packages/features/hello-world")));
+	check(
+		"scaffold 완료",
+		existsSync(join(result.projectDir, "packages/features")),
+	);
+	check(
+		"hello-world 복사됨",
+		existsSync(join(result.projectDir, "packages/features/hello-world")),
+	);
 
-	const refs = execSync(`grep -rn 'from "@superbuilder' ${result.projectDir}/packages/features/ 2>/dev/null || true`).toString().trim();
+	const refs = execSync(
+		`grep -rn 'from "@superbuilder' ${result.projectDir}/packages/features/ 2>/dev/null || true`,
+	)
+		.toString()
+		.trim();
 	check("import 변환 완료", refs === "");
 
-	const appModule = readFileSync(join(result.projectDir, "apps/server/src/app.module.ts"), "utf-8");
+	const appModule = readFileSync(
+		join(result.projectDir, "apps/server/src/app.module.ts"),
+		"utf-8",
+	);
 	check("HelloWorldModule 마커 삽입", appModule.includes("HelloWorldModule"));
 
 	check("Neon DB 생성", !!result.neon?.projectId);
@@ -67,23 +88,42 @@ async function main() {
 	// ── Wait for all Vercel deployments ──
 	console.log("\n⏳ Vercel 배포 대기 중...");
 	const projects = [
-		{ name: "앱", id: result.vercel?.projectId, url: result.vercel?.deploymentUrl },
-		{ name: "서버", id: result.vercelServer?.projectId, url: result.vercelServer?.deploymentUrl },
-		{ name: "Admin", id: result.vercelAdmin?.projectId, url: result.vercelAdmin?.deploymentUrl },
-		{ name: "Landing", id: result.vercelLanding?.projectId, url: result.vercelLanding?.deploymentUrl },
-	].filter(p => p.id);
+		{
+			name: "앱",
+			id: result.vercel?.projectId,
+			url: result.vercel?.deploymentUrl,
+		},
+		{
+			name: "서버",
+			id: result.vercelServer?.projectId,
+			url: result.vercelServer?.deploymentUrl,
+		},
+		{
+			name: "Admin",
+			id: result.vercelAdmin?.projectId,
+			url: result.vercelAdmin?.deploymentUrl,
+		},
+		{
+			name: "Landing",
+			id: result.vercelLanding?.projectId,
+			url: result.vercelLanding?.deploymentUrl,
+		},
+	].filter((p) => p.id);
 
 	const VERCEL_TOKEN = process.env.VERCEL_TOKEN ?? "";
 	for (let attempt = 1; attempt <= 30; attempt++) {
-		await new Promise(r => setTimeout(r, 15000));
+		await new Promise((r) => setTimeout(r, 15000));
 		let allReady = true;
 		const statuses: string[] = [];
 		for (const p of projects) {
 			try {
-				const res = await fetch(`https://api.vercel.com/v6/deployments?projectId=${p.id}&limit=1`, {
-					headers: { Authorization: `Bearer ${VERCEL_TOKEN}` },
-				});
-				const data = await res.json() as any;
+				const res = await fetch(
+					`https://api.vercel.com/v6/deployments?projectId=${p.id}&limit=1`,
+					{
+						headers: { Authorization: `Bearer ${VERCEL_TOKEN}` },
+					},
+				);
+				const data = (await res.json()) as any;
 				const state = data.deployments?.[0]?.readyState ?? "?";
 				statuses.push(`${p.name}=${state}`);
 				if (state !== "READY") allReady = false;
@@ -102,13 +142,13 @@ async function main() {
 
 	// ── Verify each deployment ──
 	console.log("\n🌐 배포 확인:");
-	await new Promise(r => setTimeout(r, 5000));
+	await new Promise((r) => setTimeout(r, 5000));
 	for (const p of projects) {
 		if (!p.url) continue;
 		try {
 			const res = await fetch(p.url, { method: "GET" });
 			check(`${p.name} (${p.url}) HTTP ${res.status}`, res.status === 200);
-		} catch (e) {
+		} catch (_e) {
 			check(`${p.name} 접근 실패`, false);
 		}
 	}
@@ -117,15 +157,23 @@ async function main() {
 	if (result.vercelServer?.deploymentUrl) {
 		console.log("\n🔐 로그인 테스트:");
 		try {
-			const loginRes = await fetch(`${result.vercelServer.deploymentUrl}/api/auth/sign-in/email`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email: "admin@superbuilder.app", password: "changeme!!" }),
-			});
+			const loginRes = await fetch(
+				`${result.vercelServer.deploymentUrl}/api/auth/sign-in/email`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						email: "admin@superbuilder.app",
+						password: "changeme!!",
+					}),
+				},
+			);
 			check(`로그인 HTTP ${loginRes.status}`, loginRes.ok);
 			if (loginRes.ok) {
-				const body = await loginRes.json() as any;
-				console.log(`  🎉 로그인 성공! token: ${body.token?.slice(0, 10)}... email: ${body.user?.email}`);
+				const body = (await loginRes.json()) as any;
+				console.log(
+					`  🎉 로그인 성공! token: ${body.token?.slice(0, 10)}... email: ${body.user?.email}`,
+				);
 			} else {
 				const text = await loginRes.text();
 				console.log(`  ⚠️ 실패: ${text.slice(0, 200)}`);
@@ -137,10 +185,24 @@ async function main() {
 
 	// ── Cleanup commands ──
 	console.log("\n🧹 정리 명령어:");
-	if (result.neon?.projectId) console.log(`  curl -X DELETE "https://console.neon.tech/api/v2/projects/${result.neon.projectId}" -H "Authorization: Bearer $NEON_API_KEY"`);
-	if (result.github?.repoUrl) console.log(`  gh repo delete ${result.github.owner}/${result.github.repo} --yes`);
-	for (const p of [result.vercel, result.vercelServer, result.vercelAdmin, result.vercelLanding]) {
-		if (p?.projectId) console.log(`  curl -X DELETE "https://api.vercel.com/v9/projects/${p.projectId}" -H "Authorization: Bearer $VERCEL_TOKEN"`);
+	if (result.neon?.projectId)
+		console.log(
+			`  curl -X DELETE "https://console.neon.tech/api/v2/projects/${result.neon.projectId}" -H "Authorization: Bearer $NEON_API_KEY"`,
+		);
+	if (result.github?.repoUrl)
+		console.log(
+			`  gh repo delete ${result.github.owner}/${result.github.repo} --yes`,
+		);
+	for (const p of [
+		result.vercel,
+		result.vercelServer,
+		result.vercelAdmin,
+		result.vercelLanding,
+	]) {
+		if (p?.projectId)
+			console.log(
+				`  curl -X DELETE "https://api.vercel.com/v9/projects/${p.projectId}" -H "Authorization: Bearer $VERCEL_TOKEN"`,
+			);
 	}
 	console.log(`  rm -rf ${result.projectDir}`);
 }

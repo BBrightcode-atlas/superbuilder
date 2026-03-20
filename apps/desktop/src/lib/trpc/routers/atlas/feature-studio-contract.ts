@@ -122,11 +122,15 @@ const featureCatalogEntrySchema = z.object({
 export const featureStudioContractRouter = t.router({
 	createRequest: t.procedure
 		.input(createFeatureRequestSchema)
-		.mutation(() => Promise.resolve({} as z.infer<typeof featureRequestSchema>)),
+		.mutation(() =>
+			Promise.resolve({} as z.infer<typeof featureRequestSchema>),
+		),
 
 	getRequest: t.procedure
 		.input(z.object({ id: z.string().uuid() }))
-		.query(() => Promise.resolve({} as z.infer<typeof featureRequestDetailSchema>)),
+		.query(() =>
+			Promise.resolve({} as z.infer<typeof featureRequestDetailSchema>),
+		),
 
 	listQueue: t.procedure
 		.input(
@@ -136,7 +140,9 @@ export const featureStudioContractRouter = t.router({
 				})
 				.optional(),
 		)
-		.query(() => Promise.resolve({} as z.infer<typeof featureRequestQueueSchema>)),
+		.query(() =>
+			Promise.resolve({} as z.infer<typeof featureRequestQueueSchema>),
+		),
 
 	listReadyToRegister: t.procedure.query(() =>
 		Promise.resolve([] as Array<z.infer<typeof featureRequestSchema>>),
@@ -156,7 +162,9 @@ export const featureStudioContractRouter = t.router({
 
 	advance: t.procedure
 		.input(z.object({ featureRequestId: z.string().uuid() }))
-		.mutation(() => Promise.resolve({} as z.infer<typeof featureRequestDetailSchema>)),
+		.mutation(() =>
+			Promise.resolve({} as z.infer<typeof featureRequestDetailSchema>),
+		),
 
 	requestRegistrationApproval: t.procedure
 		.input(z.object({ featureRequestId: z.string().uuid() }))

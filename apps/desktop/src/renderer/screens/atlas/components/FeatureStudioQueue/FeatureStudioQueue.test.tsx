@@ -6,7 +6,9 @@ mock.module("@tanstack/react-router", () => ({
 	Link: ({
 		children,
 		...props
-	}: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props}>{children}</a>,
+	}: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+		<a {...props}>{children}</a>
+	),
 }));
 
 describe("FeatureStudioQueue", () => {

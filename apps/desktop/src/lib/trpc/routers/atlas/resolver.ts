@@ -1,11 +1,11 @@
-import { z } from "zod";
-import { publicProcedure, router } from "../..";
-import {
-	scanFeatureManifests,
-	resolveFeatures,
-} from "@superbuilder/atlas-engine";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import {
+	resolveFeatures,
+	scanFeatureManifests,
+} from "@superbuilder/atlas-engine";
+import { z } from "zod";
+import { publicProcedure, router } from "../..";
 
 /**
  * Resolve features source directory (shared logic with registry.ts).
@@ -21,7 +21,14 @@ function getFeaturesDir(): string {
 	try {
 		const { app } = require("electron");
 		const appPath = app.getAppPath();
-		const sibling = join(appPath, "..", "..", "..", "superbuilder-features", "features");
+		const sibling = join(
+			appPath,
+			"..",
+			"..",
+			"..",
+			"superbuilder-features",
+			"features",
+		);
 		if (existsSync(sibling)) return sibling;
 	} catch {}
 
@@ -35,7 +42,10 @@ function getManifest() {
 	const manifests = scanFeatureManifests(featuresDir);
 	// resolveFeatures expects BoilerplateManifest shape
 	// Build it from scanned manifests
-	const features: Record<string, { group: string; dependencies: string[]; optionalDependencies: string[] }> = {};
+	const features: Record<
+		string,
+		{ group: string; dependencies: string[]; optionalDependencies: string[] }
+	> = {};
 	for (const m of manifests) {
 		features[m.id] = {
 			group: m.group ?? "extension",

@@ -40,10 +40,9 @@ const qstash = new Client({ token: env.QSTASH_TOKEN });
 const NOTIFY_SLACK_URL = `${env.NEXT_PUBLIC_API_URL}/api/integrations/stripe/jobs/notify-slack`;
 const HAS_STRIPE_CUSTOMER_PROVISIONING =
 	!env.STRIPE_SECRET_KEY.includes("dummy");
-const ENABLE_CROSS_SUBDOMAIN_COOKIES = ![
-	"localhost",
-	"127.0.0.1",
-].includes(env.NEXT_PUBLIC_COOKIE_DOMAIN);
+const ENABLE_CROSS_SUBDOMAIN_COOKIES = !["localhost", "127.0.0.1"].includes(
+	env.NEXT_PUBLIC_COOKIE_DOMAIN,
+);
 const desktopDevPort = process.env.DESKTOP_VITE_PORT || "5173";
 const desktopDevOrigins =
 	process.env.NODE_ENV === "development"

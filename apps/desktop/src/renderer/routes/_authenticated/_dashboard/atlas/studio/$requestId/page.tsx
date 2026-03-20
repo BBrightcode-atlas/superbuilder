@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@superset/ui/button";
 import { Spinner } from "@superset/ui/spinner";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { FeatureStudioRequestDetail } from "renderer/screens/atlas/components/FeatureStudioRequestDetail";
 
@@ -58,7 +58,9 @@ function FeatureStudioRequestDetailPage() {
 
 			<FeatureStudioRequestDetail
 				request={request}
-				onAdvance={() => advanceMutation.mutate({ featureRequestId: requestId })}
+				onAdvance={() =>
+					advanceMutation.mutate({ featureRequestId: requestId })
+				}
 				onRequestRegistrationApproval={() =>
 					requestRegistrationApprovalMutation.mutate({
 						featureRequestId: requestId,

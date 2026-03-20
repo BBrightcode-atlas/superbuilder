@@ -248,7 +248,9 @@ export async function composePipeline(
 				});
 				cb?.onLog?.(`Admin 배포: ${vercelAdminResult.deploymentUrl}`);
 			} catch (e) {
-				cb?.onLog?.(`Admin 배포 실패 (non-fatal): ${e instanceof Error ? e.message : e}`);
+				cb?.onLog?.(
+					`Admin 배포 실패 (non-fatal): ${e instanceof Error ? e.message : e}`,
+				);
 			}
 
 			// 5) Landing — apps/landing, Next.js
@@ -270,7 +272,9 @@ export async function composePipeline(
 				});
 				cb?.onLog?.(`Landing 배포: ${vercelLandingResult.deploymentUrl}`);
 			} catch (e) {
-				cb?.onLog?.(`Landing 배포 실패 (non-fatal): ${e instanceof Error ? e.message : e}`);
+				cb?.onLog?.(
+					`Landing 배포 실패 (non-fatal): ${e instanceof Error ? e.message : e}`,
+				);
 			}
 
 			record.vercelProjectId = vercelResult.projectId;

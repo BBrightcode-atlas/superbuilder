@@ -1,19 +1,33 @@
-import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { cn } from "@superset/ui/utils";
+import {
+	createFileRoute,
+	Link,
+	Outlet,
+	useLocation,
+} from "@tanstack/react-router";
 import type { IconType } from "react-icons";
 import {
-	HiOutlineWrenchScrewdriver,
 	HiOutlineRocketLaunch,
+	HiOutlineWrenchScrewdriver,
 } from "react-icons/hi2";
 
 export const Route = createFileRoute("/_authenticated/_dashboard/builder")({
 	component: BuilderLayout,
 });
 
-const NAV_ITEMS: ReadonlyArray<{ to: string; label: string; icon: IconType }> = [
-	{ to: "/builder/composer", label: "Composer", icon: HiOutlineWrenchScrewdriver as IconType },
-	{ to: "/builder/deployments", label: "Deployments", icon: HiOutlineRocketLaunch as IconType },
-];
+const NAV_ITEMS: ReadonlyArray<{ to: string; label: string; icon: IconType }> =
+	[
+		{
+			to: "/builder/composer",
+			label: "Composer",
+			icon: HiOutlineWrenchScrewdriver as IconType,
+		},
+		{
+			to: "/builder/deployments",
+			label: "Deployments",
+			icon: HiOutlineRocketLaunch as IconType,
+		},
+	];
 
 function BuilderLayout() {
 	const location = useLocation();

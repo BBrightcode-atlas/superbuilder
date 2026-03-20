@@ -32,6 +32,10 @@
 		"desktop-automation": {
 			"command": "bun",
 			"args": ["run", "packages/desktop-mcp/src/bin.ts"]
+		},
+		"superbuilder-mcp": {
+			"type": "http",
+			"url": "https://superbuilder-ui.vercel.app/mcp"
 		}
 	}
 }

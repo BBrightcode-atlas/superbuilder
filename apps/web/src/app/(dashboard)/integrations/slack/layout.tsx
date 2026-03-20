@@ -25,7 +25,10 @@ export default async function SlackIntegrationLayout({
 					host: env.NEXT_PUBLIC_POSTHOG_HOST,
 					flushAt: 1,
 					flushInterval: 0,
-				}).getFeatureFlag(FEATURE_FLAGS.SLACK_INTEGRATION_ACCESS, session.user.id)
+				}).getFeatureFlag(
+					FEATURE_FLAGS.SLACK_INTEGRATION_ACCESS,
+					session.user.id,
+				)
 			: false;
 
 	if (!hasAccess) {

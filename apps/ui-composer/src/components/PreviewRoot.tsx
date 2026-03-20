@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ErrorBoundary } from "../renderer/error-boundary";
-import { executeCode } from "../renderer/code-executor";
-import { extractComponentTree } from "../tree/dom-walker";
 import { sendToParent } from "../messaging/protocol";
+import { executeCode } from "../renderer/code-executor";
+import { ErrorBoundary } from "../renderer/error-boundary";
+import { extractComponentTree } from "../tree/dom-walker";
 import { ErrorOverlay } from "./ErrorOverlay";
 
 interface PreviewRootProps {
@@ -59,7 +59,7 @@ export function PreviewRoot({ code }: PreviewRootProps) {
 		}, 300);
 
 		return () => clearTimeout(timer);
-	}, [result.Component, renderKey]);
+	}, [result.Component]);
 
 	const handleRenderError = useCallback((error: Error) => {
 		sendToParent({
@@ -72,9 +72,7 @@ export function PreviewRoot({ code }: PreviewRootProps) {
 	if (!code) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
-				<p className="text-muted-foreground text-sm">
-					Waiting for code...
-				</p>
+				<p className="text-muted-foreground text-sm">Waiting for code...</p>
 			</div>
 		);
 	}

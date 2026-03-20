@@ -2,10 +2,7 @@ import type { ComponentTreeNode } from "../messaging/protocol";
 
 const MAX_DEPTH = 20;
 
-export function walkDom(
-	element: Element,
-	depth = 0,
-): ComponentTreeNode | null {
+export function walkDom(element: Element, depth = 0): ComponentTreeNode | null {
 	if (!element || depth > MAX_DEPTH) return null;
 
 	const component = element.getAttribute?.("data-component") ?? "";

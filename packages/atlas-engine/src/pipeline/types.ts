@@ -1,4 +1,3 @@
-
 // ─────────────────────────────────────────────────────────────
 // Pipeline Step tracking
 // ─────────────────────────────────────────────────────────────
@@ -19,7 +18,13 @@ export type ComposeStep =
 
 export interface ComposeProjectRecord {
 	name: string;
-	status: "scaffolding" | "provisioning" | "deploying" | "seeding" | "deployed" | "error";
+	status:
+		| "scaffolding"
+		| "provisioning"
+		| "deploying"
+		| "seeding"
+		| "deployed"
+		| "error";
 	features: string[];
 	githubRepoUrl?: string;
 	neonProjectId?: string;
@@ -43,7 +48,7 @@ export interface ComposeCallbacks {
 	) => void;
 	onLog?: (message: string) => void;
 	/** Called to persist project state to central DB. Return project ID on first call. */
-	onProjectSave?: (record: ComposeProjectRecord) => Promise<string | void>;
+	onProjectSave?: (record: ComposeProjectRecord) => Promise<string | undefined>;
 }
 
 // ─────────────────────────────────────────────────────────────

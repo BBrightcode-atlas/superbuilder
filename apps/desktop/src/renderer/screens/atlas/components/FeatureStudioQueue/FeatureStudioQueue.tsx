@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
 import { Badge } from "@superset/ui/badge";
 import { Button } from "@superset/ui/button";
+import { Link } from "@tanstack/react-router";
 import { FeaturePipelineIndicator } from "./FeaturePipelineIndicator";
 
 export interface FeatureStudioQueueData {
@@ -44,10 +44,7 @@ export function FeatureStudioQueue({
 		<div className="space-y-4">
 			<div className="grid gap-3 md:grid-cols-3">
 				<SummaryCard label="전체 요청" value={queue.requests.length} />
-				<SummaryCard
-					label="승인 대기"
-					value={queue.pendingApprovals.length}
-				/>
+				<SummaryCard label="승인 대기" value={queue.pendingApprovals.length} />
 				<SummaryCard label="등록 대기" value={readyToRegisterCount} />
 			</div>
 
@@ -76,14 +73,10 @@ export function FeatureStudioQueue({
 											{formatStatus(request.status)}
 										</Badge>
 										{pendingCount > 0 ? (
-											<Badge variant="secondary">
-												승인 {pendingCount}건
-											</Badge>
+											<Badge variant="secondary">승인 {pendingCount}건</Badge>
 										) : null}
 									</div>
-									<FeaturePipelineIndicator
-										status={request.status}
-									/>
+									<FeaturePipelineIndicator status={request.status} />
 									<p className="text-sm text-muted-foreground">
 										{request.summary ?? "요약이 아직 없습니다."}
 									</p>
@@ -115,13 +108,7 @@ export function FeatureStudioQueue({
 	);
 }
 
-function SummaryCard({
-	label,
-	value,
-}: {
-	label: string;
-	value: number;
-}) {
+function SummaryCard({ label, value }: { label: string; value: number }) {
 	return (
 		<div className="rounded-xl border border-border bg-muted/30 p-4">
 			<p className="text-xs text-muted-foreground">{label}</p>

@@ -19,7 +19,11 @@ import {
 
 // override: true ensures .env values take precedence over inherited env vars
 config({ path: resolve(__dirname, "../../.env"), override: true, quiet: true });
-config({ path: resolve(__dirname, "../../.env.local"), override: true, quiet: true });
+config({
+	path: resolve(__dirname, "../../.env.local"),
+	override: true,
+	quiet: true,
+});
 
 const DEV_SERVER_PORT = Number(process.env.DESKTOP_VITE_PORT);
 
@@ -109,9 +113,7 @@ export default defineConfig({
 			"process.env.SUPERBUILDER_FEATURES_PATH": defineEnv(
 				process.env.SUPERBUILDER_FEATURES_PATH,
 			),
-			"process.env.SUPERBUILDER_PATH": defineEnv(
-				process.env.SUPERBUILDER_PATH,
-			),
+			"process.env.SUPERBUILDER_PATH": defineEnv(process.env.SUPERBUILDER_PATH),
 		},
 
 		build: {

@@ -2,9 +2,9 @@ import { StrictMode, useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { PreviewRoot } from "./components/PreviewRoot";
 import { startListening, stopListening } from "./messaging/handler";
-import { registerModule } from "./renderer/module-registry";
-import { sendToParent } from "./messaging/protocol";
 import type { ParentMessage } from "./messaging/protocol";
+import { sendToParent } from "./messaging/protocol";
+import { registerModule } from "./renderer/module-registry";
 import "./styles/globals.css";
 
 function App() {

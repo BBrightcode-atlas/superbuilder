@@ -1,12 +1,12 @@
-import { z } from "zod";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { publicProcedure, router } from "../..";
 import {
-	scanFeatureManifests,
-	manifestsToRegistry,
 	type FeatureRegistry,
+	manifestsToRegistry,
+	scanFeatureManifests,
 } from "@superbuilder/atlas-engine";
+import { z } from "zod";
+import { publicProcedure, router } from "../..";
 
 /**
  * Resolve features source directory.
@@ -29,7 +29,14 @@ function getFeaturesDir(): string {
 		const { app } = require("electron");
 		const appPath = app.getAppPath();
 		// superbuilder/apps/desktop → superbuilder → ../superbuilder-features/features
-		const sibling = join(appPath, "..", "..", "..", "superbuilder-features", "features");
+		const sibling = join(
+			appPath,
+			"..",
+			"..",
+			"..",
+			"superbuilder-features",
+			"features",
+		);
 		if (existsSync(sibling)) return sibling;
 	} catch {}
 
@@ -45,7 +52,12 @@ function getRegistry(): FeatureRegistry {
 	const featuresDir = getFeaturesDir();
 	console.log("[registry] Scanning features from:", featuresDir);
 	const manifests = scanFeatureManifests(featuresDir);
-	console.log("[registry] Found", manifests.length, "features:", manifests.map(m => m.id).join(", "));
+	console.log(
+		"[registry] Found",
+		manifests.length,
+		"features:",
+		manifests.map((m) => m.id).join(", "),
+	);
 	cachedRegistry = manifestsToRegistry(manifests);
 	return cachedRegistry;
 }

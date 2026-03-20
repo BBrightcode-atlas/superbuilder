@@ -3,7 +3,7 @@ import {
 	processQueue,
 	type QueueApi,
 	type QueueProcessorCallbacks,
-} from "@superset/atlas-engine";
+} from "@superbuilder/atlas-engine";
 import type { AppRouter } from "@superset/trpc";
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import { observable } from "@trpc/server/observable";

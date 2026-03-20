@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@superset/ui/button";
 import { Input } from "@superset/ui/input";
 import { Spinner } from "@superset/ui/spinner";
 import { Textarea } from "@superset/ui/textarea";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { FeatureStudioQueue } from "renderer/screens/atlas/components/FeatureStudioQueue";
 
-export const Route = createFileRoute("/_authenticated/_dashboard/atlas/studio/")({
+export const Route = createFileRoute(
+	"/_authenticated/_dashboard/atlas/studio/",
+)({
 	component: FeatureStudioStudioPage,
 });
 
@@ -16,10 +18,13 @@ function FeatureStudioStudioPage() {
 	const [title, setTitle] = useState("");
 	const [rawPrompt, setRawPrompt] = useState("");
 
-	const { data: queue, isLoading, isError } =
-		electronTrpc.atlas.featureStudio.listQueue.useQuery(undefined, {
-			retry: 1,
-		});
+	const {
+		data: queue,
+		isLoading,
+		isError,
+	} = electronTrpc.atlas.featureStudio.listQueue.useQuery(undefined, {
+		retry: 1,
+	});
 	const { data: readyToRegister } =
 		electronTrpc.atlas.featureStudio.listReadyToRegister.useQuery(undefined, {
 			retry: 1,

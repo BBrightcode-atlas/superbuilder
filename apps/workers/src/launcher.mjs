@@ -16,30 +16,34 @@
  */
 
 import { spawn } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
-import { parseArgs } from "node:util";
-import { fileURLToPath } from "node:url";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const { values: args } = parseArgs({
-  options: {
-    group: { type: "string", short: "g", default: "" },
-    key: { type: "string", short: "k", default: "" },
-    webhook: { type: "boolean", short: "w", default: false },
-    "webhook-port": { type: "string", default: "9500" },
-    "signing-secret": { type: "string", short: "s", default: "" },
-    tunnel: { type: "boolean", short: "t", default: false },
-    "ngrok-domain": { type: "string", default: "" },
-    list: { type: "boolean", short: "l", default: false },
-    config: { type: "string", short: "c", default: join(__dirname, "..", "instances.json") },
-    help: { type: "boolean", short: "h", default: false },
-  },
+	options: {
+		group: { type: "string", short: "g", default: "" },
+		key: { type: "string", short: "k", default: "" },
+		webhook: { type: "boolean", short: "w", default: false },
+		"webhook-port": { type: "string", default: "9500" },
+		"signing-secret": { type: "string", short: "s", default: "" },
+		tunnel: { type: "boolean", short: "t", default: false },
+		"ngrok-domain": { type: "string", default: "" },
+		list: { type: "boolean", short: "l", default: false },
+		config: {
+			type: "string",
+			short: "c",
+			default: join(__dirname, "..", "instances.json"),
+		},
+		help: { type: "boolean", short: "h", default: false },
+	},
 });
 
 if (args.help) {
-  console.log(`
+	console.log(`
 Antigravity Remote Control — Launcher
 
 Usage:
@@ -57,7 +61,7 @@ Options:
   -c, --config <path>          설정 파일 경로 (default: instances.json)
   -h, --help                   도움말
 `);
-  process.exit(0);
+	process.exit(0);
 }
 
 // ---------------------------------------------------------------------------
@@ -66,15 +70,15 @@ Options:
 
 const envPath = join(__dirname, "..", ".env");
 if (existsSync(envPath)) {
-  for (const line of readFileSync(envPath, "utf-8").split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eqIdx = trimmed.indexOf("=");
-    if (eqIdx === -1) continue;
-    const key = trimmed.slice(0, eqIdx).trim();
-    const val = trimmed.slice(eqIdx + 1).trim();
-    if (!process.env[key]) process.env[key] = val;
-  }
+	for (const line of readFileSync(envPath, "utf-8").split("\n")) {
+		const trimmed = line.trim();
+		if (!trimmed || trimmed.startsWith("#")) continue;
+		const eqIdx = trimmed.indexOf("=");
+		if (eqIdx === -1) continue;
+		const key = trimmed.slice(0, eqIdx).trim();
+		const val = trimmed.slice(eqIdx + 1).trim();
+		if (!process.env[key]) process.env[key] = val;
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -85,7 +89,7 @@ const config = JSON.parse(readFileSync(args.config, "utf-8"));
 let instances = config.instances;
 
 if (args.group) {
-  instances = instances.filter((i) => i.group === args.group);
+	instances = instances.filter((i) => i.group === args.group);
 }
 
 // ---------------------------------------------------------------------------
@@ -93,18 +97,18 @@ if (args.group) {
 // ---------------------------------------------------------------------------
 
 if (args.list) {
-  console.log("Instances:");
-  console.log();
-  console.log("  Name        Group        CDP Port   API Port");
-  console.log("  " + "-".repeat(52));
-  for (const inst of config.instances) {
-    const mark = args.group && inst.group !== args.group ? "  (skip)" : "";
-    console.log(
-      `  ${inst.name.padEnd(12)}${inst.group.padEnd(13)}${String(inst.cdpPort).padEnd(11)}${inst.apiPort}${mark}`,
-    );
-  }
-  console.log();
-  process.exit(0);
+	console.log("Instances:");
+	console.log();
+	console.log("  Name        Group        CDP Port   API Port");
+	console.log(`  ${"-".repeat(52)}`);
+	for (const inst of config.instances) {
+		const mark = args.group && inst.group !== args.group ? "  (skip)" : "";
+		console.log(
+			`  ${inst.name.padEnd(12)}${inst.group.padEnd(13)}${String(inst.cdpPort).padEnd(11)}${inst.apiPort}${mark}`,
+		);
+	}
+	console.log();
+	process.exit(0);
 }
 
 // ---------------------------------------------------------------------------
@@ -112,53 +116,61 @@ if (args.list) {
 // ---------------------------------------------------------------------------
 
 if (instances.length === 0) {
-  console.error(`No instances found${args.group ? ` for group "${args.group}"` : ""}`);
-  process.exit(1);
+	console.error(
+		`No instances found${args.group ? ` for group "${args.group}"` : ""}`,
+	);
+	process.exit(1);
 }
 
 console.log(`Antigravity Remote Control — Launcher`);
 console.log(`  Instances: ${instances.length}`);
 console.log(`  Auth:      ${args.key ? "enabled" : "disabled"}`);
-console.log(`  Webhook:   ${args.webhook ? `enabled (port ${args["webhook-port"]})` : "disabled"}`);
+console.log(
+	`  Webhook:   ${args.webhook ? `enabled (port ${args["webhook-port"]})` : "disabled"}`,
+);
 console.log(`  Tunnel:    ${args.tunnel ? "enabled (ngrok)" : "disabled"}`);
 console.log();
 
 const children = [];
 
 for (const inst of instances) {
-  const cmdArgs = [
-    join(__dirname, "cdp-server.mjs"),
-    "--port", String(inst.apiPort),
-    "--cdp-port", String(inst.cdpPort),
-  ];
-  if (args.key) {
-    cmdArgs.push("--key", args.key);
-  }
+	const cmdArgs = [
+		join(__dirname, "cdp-server.mjs"),
+		"--port",
+		String(inst.apiPort),
+		"--cdp-port",
+		String(inst.cdpPort),
+	];
+	if (args.key) {
+		cmdArgs.push("--key", args.key);
+	}
 
-  const child = spawn("node", cmdArgs, {
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+	const child = spawn("node", cmdArgs, {
+		stdio: ["ignore", "pipe", "pipe"],
+	});
 
-  const prefix = `[${inst.name}]`;
+	const prefix = `[${inst.name}]`;
 
-  child.stdout.on("data", (data) => {
-    for (const line of data.toString().trimEnd().split("\n")) {
-      console.log(`${prefix} ${line}`);
-    }
-  });
+	child.stdout.on("data", (data) => {
+		for (const line of data.toString().trimEnd().split("\n")) {
+			console.log(`${prefix} ${line}`);
+		}
+	});
 
-  child.stderr.on("data", (data) => {
-    for (const line of data.toString().trimEnd().split("\n")) {
-      console.error(`${prefix} ${line}`);
-    }
-  });
+	child.stderr.on("data", (data) => {
+		for (const line of data.toString().trimEnd().split("\n")) {
+			console.error(`${prefix} ${line}`);
+		}
+	});
 
-  child.on("exit", (code) => {
-    console.log(`${prefix} exited (code ${code})`);
-  });
+	child.on("exit", (code) => {
+		console.log(`${prefix} exited (code ${code})`);
+	});
 
-  children.push({ inst, child });
-  console.log(`  Starting ${inst.name}: CDP ${inst.cdpPort} → API ${inst.apiPort}`);
+	children.push({ inst, child });
+	console.log(
+		`  Starting ${inst.name}: CDP ${inst.cdpPort} → API ${inst.apiPort}`,
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -166,42 +178,44 @@ for (const inst of instances) {
 // ---------------------------------------------------------------------------
 
 if (args.webhook) {
-  const webhookArgs = [
-    join(__dirname, "linear-webhook.mjs"),
-    "--port", args["webhook-port"],
-    "--config", args.config,
-  ];
-  if (args.key) {
-    webhookArgs.push("--api-key", args.key);
-  }
-  if (args["signing-secret"]) {
-    webhookArgs.push("--signing-secret", args["signing-secret"]);
-  }
+	const webhookArgs = [
+		join(__dirname, "linear-webhook.mjs"),
+		"--port",
+		args["webhook-port"],
+		"--config",
+		args.config,
+	];
+	if (args.key) {
+		webhookArgs.push("--api-key", args.key);
+	}
+	if (args["signing-secret"]) {
+		webhookArgs.push("--signing-secret", args["signing-secret"]);
+	}
 
-  const webhookChild = spawn("node", webhookArgs, {
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+	const webhookChild = spawn("node", webhookArgs, {
+		stdio: ["ignore", "pipe", "pipe"],
+	});
 
-  const webhookPrefix = "[webhook]";
+	const webhookPrefix = "[webhook]";
 
-  webhookChild.stdout.on("data", (data) => {
-    for (const line of data.toString().trimEnd().split("\n")) {
-      console.log(`${webhookPrefix} ${line}`);
-    }
-  });
+	webhookChild.stdout.on("data", (data) => {
+		for (const line of data.toString().trimEnd().split("\n")) {
+			console.log(`${webhookPrefix} ${line}`);
+		}
+	});
 
-  webhookChild.stderr.on("data", (data) => {
-    for (const line of data.toString().trimEnd().split("\n")) {
-      console.error(`${webhookPrefix} ${line}`);
-    }
-  });
+	webhookChild.stderr.on("data", (data) => {
+		for (const line of data.toString().trimEnd().split("\n")) {
+			console.error(`${webhookPrefix} ${line}`);
+		}
+	});
 
-  webhookChild.on("exit", (code) => {
-    console.log(`${webhookPrefix} exited (code ${code})`);
-  });
+	webhookChild.on("exit", (code) => {
+		console.log(`${webhookPrefix} exited (code ${code})`);
+	});
 
-  children.push({ inst: { name: "webhook" }, child: webhookChild });
-  console.log(`  Starting Linear webhook: port ${args["webhook-port"]}`);
+	children.push({ inst: { name: "webhook" }, child: webhookChild });
+	console.log(`  Starting Linear webhook: port ${args["webhook-port"]}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -209,78 +223,91 @@ if (args.webhook) {
 // ---------------------------------------------------------------------------
 
 if (args.tunnel) {
-  if (!args.webhook) {
-    console.error("--tunnel requires --webhook (터널을 열 웹훅 서버가 필요합니다)");
-    process.exit(1);
-  }
+	if (!args.webhook) {
+		console.error(
+			"--tunnel requires --webhook (터널을 열 웹훅 서버가 필요합니다)",
+		);
+		process.exit(1);
+	}
 
-  const ngrokArgs = ["http", args["webhook-port"]];
+	const ngrokArgs = ["http", args["webhook-port"]];
 
-  // 고정 도메인이 있으면 사용 (env 또는 CLI)
-  const ngrokDomain = args["ngrok-domain"] || process.env.NGROK_DOMAIN || "";
-  if (ngrokDomain) {
-    ngrokArgs.push("--domain", ngrokDomain);
-  }
+	// 고정 도메인이 있으면 사용 (env 또는 CLI)
+	const ngrokDomain = args["ngrok-domain"] || process.env.NGROK_DOMAIN || "";
+	if (ngrokDomain) {
+		ngrokArgs.push("--domain", ngrokDomain);
+	}
 
-  const ngrokChild = spawn("ngrok", ngrokArgs, {
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+	const ngrokChild = spawn("ngrok", ngrokArgs, {
+		stdio: ["ignore", "pipe", "pipe"],
+	});
 
-  const ngrokPrefix = "[ngrok]";
+	const ngrokPrefix = "[ngrok]";
 
-  ngrokChild.stdout.on("data", (data) => {
-    for (const line of data.toString().trimEnd().split("\n")) {
-      console.log(`${ngrokPrefix} ${line}`);
-    }
-  });
+	ngrokChild.stdout.on("data", (data) => {
+		for (const line of data.toString().trimEnd().split("\n")) {
+			console.log(`${ngrokPrefix} ${line}`);
+		}
+	});
 
-  ngrokChild.stderr.on("data", (data) => {
-    for (const line of data.toString().trimEnd().split("\n")) {
-      console.error(`${ngrokPrefix} ${line}`);
-    }
-  });
+	ngrokChild.stderr.on("data", (data) => {
+		for (const line of data.toString().trimEnd().split("\n")) {
+			console.error(`${ngrokPrefix} ${line}`);
+		}
+	});
 
-  ngrokChild.on("exit", (code) => {
-    console.log(`${ngrokPrefix} exited (code ${code})`);
-  });
+	ngrokChild.on("exit", (code) => {
+		console.log(`${ngrokPrefix} exited (code ${code})`);
+	});
 
-  children.push({ inst: { name: "ngrok" }, child: ngrokChild });
-  console.log(`  Starting ngrok tunnel: port ${args["webhook-port"]}`);
+	children.push({ inst: { name: "ngrok" }, child: ngrokChild });
+	console.log(`  Starting ngrok tunnel: port ${args["webhook-port"]}`);
 
-  // ngrok API에서 public URL 가져오기 (잠시 대기 후)
-  setTimeout(async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:4040/api/tunnels");
-      const data = await res.json();
-      const tunnel = data.tunnels?.find((t) => t.proto === "https") || data.tunnels?.[0];
-      if (tunnel) {
-        const publicUrl = tunnel.public_url;
-        console.log();
-        console.log(`  ╔══════════════════════════════════════════════════════╗`);
-        console.log(`  ║  Linear Webhook URL (이 URL을 Linear에 등록):       ║`);
-        console.log(`  ║  POST ${publicUrl}/webhook/linear`);
-        console.log(`  ╚══════════════════════════════════════════════════════╝`);
-        console.log();
-      }
-    } catch {
-      console.log(`${ngrokPrefix} ngrok API 응답 대기 중... (http://127.0.0.1:4040 에서 확인 가능)`);
-    }
-  }, 3000);
+	// ngrok API에서 public URL 가져오기 (잠시 대기 후)
+	setTimeout(async () => {
+		try {
+			const res = await fetch("http://127.0.0.1:4040/api/tunnels");
+			const data = await res.json();
+			const tunnel =
+				data.tunnels?.find((t) => t.proto === "https") || data.tunnels?.[0];
+			if (tunnel) {
+				const publicUrl = tunnel.public_url;
+				console.log();
+				console.log(
+					`  ╔══════════════════════════════════════════════════════╗`,
+				);
+				console.log(
+					`  ║  Linear Webhook URL (이 URL을 Linear에 등록):       ║`,
+				);
+				console.log(`  ║  POST ${publicUrl}/webhook/linear`);
+				console.log(
+					`  ╚══════════════════════════════════════════════════════╝`,
+				);
+				console.log();
+			}
+		} catch {
+			console.log(
+				`${ngrokPrefix} ngrok API 응답 대기 중... (http://127.0.0.1:4040 에서 확인 가능)`,
+			);
+		}
+	}, 3000);
 }
 
 console.log();
-console.log(`All ${instances.length} servers${args.webhook ? " + webhook" : ""}${args.tunnel ? " + ngrok" : ""} starting...`);
+console.log(
+	`All ${instances.length} servers${args.webhook ? " + webhook" : ""}${args.tunnel ? " + ngrok" : ""} starting...`,
+);
 console.log(`Press Ctrl+C to stop all.`);
 console.log();
 
 // Graceful shutdown
 function shutdown() {
-  console.log("\nShutting down all servers...");
-  for (const { inst, child } of children) {
-    child.kill("SIGTERM");
-    console.log(`  Stopped ${inst.name}`);
-  }
-  process.exit(0);
+	console.log("\nShutting down all servers...");
+	for (const { inst, child } of children) {
+		child.kill("SIGTERM");
+		console.log(`  Stopped ${inst.name}`);
+	}
+	process.exit(0);
 }
 
 process.on("SIGINT", shutdown);

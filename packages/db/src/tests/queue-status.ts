@@ -39,18 +39,23 @@ async function showStatus(batchId: string) {
 
 	console.log(`\n📦 배치: "${batch.title}" (${batch.id})`);
 	console.log(`   상태: ${statusIcon[batch.status] ?? "?"} ${batch.status}`);
-	console.log(`   진행: ${batch.completedItems}/${batch.totalItems} 완료, ${batch.failedItems} 실패`);
+	console.log(
+		`   진행: ${batch.completedItems}/${batch.totalItems} 완료, ${batch.failedItems} 실패`,
+	);
 	console.log(`   동시성: ${batch.concurrencyLimit}`);
 	console.log("");
 
 	for (const item of batch.items) {
 		const icon = statusIcon[item.status] ?? "?";
-		const elapsed = item.startedAt && item.completedAt
-			? ` (${Math.round((item.completedAt.getTime() - item.startedAt.getTime()) / 1000)}s)`
-			: item.startedAt
-				? " (진행중)"
-				: "";
-		console.log(`  [${item.position}] ${icon} ${item.title ?? "?"} — ${item.status}${elapsed}`);
+		const elapsed =
+			item.startedAt && item.completedAt
+				? ` (${Math.round((item.completedAt.getTime() - item.startedAt.getTime()) / 1000)}s)`
+				: item.startedAt
+					? " (진행중)"
+					: "";
+		console.log(
+			`  [${item.position}] ${icon} ${item.title ?? "?"} — ${item.status}${elapsed}`,
+		);
 		if (item.lastError) console.log(`      에러: ${item.lastError}`);
 		if (item.sessionId) console.log(`      세션: ${item.sessionId}`);
 	}
@@ -60,7 +65,11 @@ async function showStatus(batchId: string) {
 async function startItem(itemId: string) {
 	await db
 		.update(featureQueueItems)
-		.set({ status: "processing", startedAt: new Date(), sessionId: `cli-${Date.now()}` })
+		.set({
+			status: "processing",
+			startedAt: new Date(),
+			sessionId: `cli-${Date.now()}`,
+		})
 		.where(eq(featureQueueItems.id, itemId));
 	console.log(`🔄 아이템 ${itemId} → processing`);
 }
@@ -85,14 +94,26 @@ async function syncBatch(batchId: string) {
 	const [completed] = await db
 		.select({ count: count() })
 		.from(featureQueueItems)
-		.where(and(eq(featureQueueItems.batchId, batchId), eq(featureQueueItems.status, "completed")));
+		.where(
+			and(
+				eq(featureQueueItems.batchId, batchId),
+				eq(featureQueueItems.status, "completed"),
+			),
+		);
 
 	const [failed] = await db
 		.select({ count: count() })
 		.from(featureQueueItems)
-		.where(and(eq(featureQueueItems.batchId, batchId), inArray(featureQueueItems.status, ["failed", "cancelled"])));
+		.where(
+			and(
+				eq(featureQueueItems.batchId, batchId),
+				inArray(featureQueueItems.status, ["failed", "cancelled"]),
+			),
+		);
 
-	const batch = await db.query.featureQueueBatches.findFirst({ where: eq(featureQueueBatches.id, batchId) });
+	const batch = await db.query.featureQueueBatches.findFirst({
+		where: eq(featureQueueBatches.id, batchId),
+	});
 	if (!batch) return;
 
 	const c = completed?.count ?? 0;
@@ -130,7 +151,9 @@ async function main() {
 			await syncBatch(args[0]!);
 			break;
 		default:
-			console.log("Usage: queue-status.ts <status|start|complete|fail|sync> [args]");
+			console.log(
+				"Usage: queue-status.ts <status|start|complete|fail|sync> [args]",
+			);
 	}
 	process.exit(0);
 }

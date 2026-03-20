@@ -81,7 +81,8 @@ export function FeatureStudioRequestDetail({
 }: FeatureStudioRequestDetailProps) {
 	const latestWorktree = request.worktrees?.[0] ?? null;
 	const pendingApprovals =
-		request.approvals?.filter((approval) => approval.status === "pending") ?? [];
+		request.approvals?.filter((approval) => approval.status === "pending") ??
+		[];
 	const humanQaApproval =
 		pendingApprovals.find((approval) => approval.approvalType === "human_qa") ??
 		null;
@@ -90,7 +91,10 @@ export function FeatureStudioRequestDetail({
 	);
 	const specArtifact = getLatestArtifact(request.artifacts, "spec");
 	const planArtifact = getLatestArtifact(request.artifacts, "plan");
-	const humanQaNotesArtifact = getLatestArtifact(request.artifacts, "human_qa_notes");
+	const humanQaNotesArtifact = getLatestArtifact(
+		request.artifacts,
+		"human_qa_notes",
+	);
 	const agentQaReport = parseAgentQaReport(
 		getLatestArtifact(request.artifacts, "agent_qa_report")?.content,
 	);
@@ -120,9 +124,7 @@ export function FeatureStudioRequestDetail({
 				<div className="flex flex-wrap items-center gap-2">
 					{showAdvanceButton ? (
 						<Button variant="outline" size="sm" onClick={onAdvance}>
-							{request.status === "customization"
-								? "다음 단계 진행"
-								: "진행"}
+							{request.status === "customization" ? "다음 단계 진행" : "진행"}
 						</Button>
 					) : null}
 					{canRequestRegistration ? (
@@ -164,9 +166,7 @@ export function FeatureStudioRequestDetail({
 					}
 					agentQaSummary={agentQaReport?.summary ?? null}
 					agentQaChecks={agentQaReport?.checks}
-					primaryActionLabel={
-						humanQaApproval ? "커스터마이징 진행" : undefined
-					}
+					primaryActionLabel={humanQaApproval ? "커스터마이징 진행" : undefined}
 					secondaryActionLabel={humanQaApproval ? "수정 요청" : undefined}
 					onPrimaryAction={
 						humanQaApproval
@@ -275,13 +275,7 @@ export function FeatureStudioRequestDetail({
 	);
 }
 
-function ArtifactCard({
-	title,
-	content,
-}: {
-	title: string;
-	content: string;
-}) {
+function ArtifactCard({ title, content }: { title: string; content: string }) {
 	return (
 		<div className="space-y-2">
 			<h2 className="text-sm font-medium">{title}</h2>
@@ -293,7 +287,9 @@ function ArtifactCard({
 }
 
 function getLatestArtifact(
-	artifacts: FeatureStudioRequestDetailProps["request"]["artifacts"] | undefined,
+	artifacts:
+		| FeatureStudioRequestDetailProps["request"]["artifacts"]
+		| undefined,
 	kind: ArtifactKind,
 ) {
 	return artifacts?.find((artifact) => artifact.kind === kind) ?? null;
@@ -311,7 +307,9 @@ function parseAgentQaReport(content?: string): AgentQaReport | null {
 	}
 }
 
-function mapApprovalMode(approvalType: string): "spec_plan" | "human_qa" | "registration" {
+function mapApprovalMode(
+	approvalType: string,
+): "spec_plan" | "human_qa" | "registration" {
 	if (approvalType === "human_qa") {
 		return "human_qa";
 	}

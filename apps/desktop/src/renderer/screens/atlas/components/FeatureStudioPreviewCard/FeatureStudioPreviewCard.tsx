@@ -40,7 +40,9 @@ export function FeatureStudioPreviewCard({
 							<Badge variant="outline">{previewStatus}</Badge>
 						) : null}
 					</div>
-					<p className="text-xs text-muted-foreground break-all">{previewUrl}</p>
+					<p className="text-xs text-muted-foreground break-all">
+						{previewUrl}
+					</p>
 					<div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
 						{branchName ? <span>Branch: {branchName}</span> : null}
 						{commitSha ? <span>Commit: {commitSha.slice(0, 12)}</span> : null}

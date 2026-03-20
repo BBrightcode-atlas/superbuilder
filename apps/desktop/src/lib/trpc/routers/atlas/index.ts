@@ -6,6 +6,7 @@ import { createAtlasFeatureStudioRouter } from "./feature-studio";
 import { createAtlasNeonRouter } from "./neon";
 import { createAtlasRegistryRouter } from "./registry";
 import { createAtlasResolverRouter } from "./resolver";
+import { createAtlasUIComposerRouter } from "./ui-composer";
 import { createAtlasVercelRouter } from "./vercel";
 
 export const createAtlasRouter = () =>
@@ -18,4 +19,5 @@ export const createAtlasRouter = () =>
 		deployments: createAtlasDeploymentsRouter(),
 		neon: createAtlasNeonRouter(),
 		vercel: createAtlasVercelRouter(),
+		uiComposer: createAtlasUIComposerRouter(),
 	});

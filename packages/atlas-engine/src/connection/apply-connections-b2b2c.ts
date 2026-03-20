@@ -2,8 +2,8 @@ import { join } from "node:path";
 import type { FeatureManifest } from "../manifest/types";
 import { insertAtMarker } from "./applier";
 import {
-	deriveConnectionsB2B2C,
 	type B2B2CDerivedConnections,
+	deriveConnectionsB2B2C,
 } from "./deriver-b2b2c";
 import { registerWidgetExport } from "./widget-export";
 

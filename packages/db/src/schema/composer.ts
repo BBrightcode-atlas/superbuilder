@@ -53,7 +53,9 @@ export const composerProjects = pgTable(
 		vercelAdminUrl: text("vercel_admin_url"),
 
 		// Vercel — landing
-		vercelLandingProjectId: varchar("vercel_landing_project_id", { length: 100 }),
+		vercelLandingProjectId: varchar("vercel_landing_project_id", {
+			length: 100,
+		}),
 		vercelLandingUrl: text("vercel_landing_url"),
 
 		// Owner

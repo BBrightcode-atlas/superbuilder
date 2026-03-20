@@ -1,10 +1,10 @@
 import type { AppRouter } from "@superset/trpc";
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
+import { env } from "main/env.main";
 import superjson from "superjson";
 import { z } from "zod";
-import { env } from "main/env.main";
-import { loadToken } from "../auth/utils/auth-functions";
 import { publicProcedure, router } from "../..";
+import { loadToken } from "../auth/utils/auth-functions";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
 	const { token } = await loadToken();
@@ -110,113 +110,113 @@ export const createAtlasFeatureStudioRouter = () =>
 				return apiClient.featureStudio.registerRequest.mutate(input);
 			}),
 
-			appendMessage: publicProcedure
-				.input(
-					z.object({
-						featureRequestId: z.string().uuid(),
-						role: z.enum(["system", "assistant", "user"]),
-						content: z.string(),
-						kind: z.enum(["conversation", "event", "note"]).optional(),
-						metadata: z.record(z.unknown()).optional(),
-					}),
-				)
-				.mutation(async ({ input }) => {
-					return apiClient.featureStudio.appendMessage.mutate(input);
+		appendMessage: publicProcedure
+			.input(
+				z.object({
+					featureRequestId: z.string().uuid(),
+					role: z.enum(["system", "assistant", "user"]),
+					content: z.string(),
+					kind: z.enum(["conversation", "event", "note"]).optional(),
+					metadata: z.record(z.unknown()).optional(),
 				}),
+			)
+			.mutation(async ({ input }) => {
+				return apiClient.featureStudio.appendMessage.mutate(input);
+			}),
 
-			saveArtifact: publicProcedure
-				.input(
-					z.object({
-						featureRequestId: z.string().uuid(),
-						kind: z.enum([
-							"spec",
-							"plan",
-							"implementation_summary",
-							"verification_report",
-							"agent_qa_report",
-							"human_qa_notes",
-							"registration_manifest",
-							"preview_metadata",
-						]),
-						content: z.string(),
-						version: z.number().optional(),
-						metadata: z.record(z.unknown()).optional(),
-					}),
-				)
-				.mutation(async ({ input }) => {
-					return apiClient.featureStudio.saveArtifact.mutate(input);
+		saveArtifact: publicProcedure
+			.input(
+				z.object({
+					featureRequestId: z.string().uuid(),
+					kind: z.enum([
+						"spec",
+						"plan",
+						"implementation_summary",
+						"verification_report",
+						"agent_qa_report",
+						"human_qa_notes",
+						"registration_manifest",
+						"preview_metadata",
+					]),
+					content: z.string(),
+					version: z.number().optional(),
+					metadata: z.record(z.unknown()).optional(),
 				}),
+			)
+			.mutation(async ({ input }) => {
+				return apiClient.featureStudio.saveArtifact.mutate(input);
+			}),
 
-			updateStatus: publicProcedure
-				.input(
-					z.object({
-						featureRequestId: z.string().uuid(),
-						status: z.enum([
-							"draft",
-							"spec_ready",
-							"pending_spec_approval",
-							"plan_approved",
-							"implementing",
-							"verifying",
-							"preview_deploying",
-							"agent_qa",
-							"pending_human_qa",
-							"customization",
-							"pending_registration",
-							"registered",
-							"failed",
-							"discarded",
-						]),
-						errorMessage: z.string().optional(),
-					}),
-				)
-				.mutation(async ({ input }) => {
-					return apiClient.featureStudio.updateStatus.mutate(input);
+		updateStatus: publicProcedure
+			.input(
+				z.object({
+					featureRequestId: z.string().uuid(),
+					status: z.enum([
+						"draft",
+						"spec_ready",
+						"pending_spec_approval",
+						"plan_approved",
+						"implementing",
+						"verifying",
+						"preview_deploying",
+						"agent_qa",
+						"pending_human_qa",
+						"customization",
+						"pending_registration",
+						"registered",
+						"failed",
+						"discarded",
+					]),
+					errorMessage: z.string().optional(),
 				}),
+			)
+			.mutation(async ({ input }) => {
+				return apiClient.featureStudio.updateStatus.mutate(input);
+			}),
 
-			saveWorktree: publicProcedure
-				.input(
-					z.object({
-						featureRequestId: z.string().uuid(),
-						worktreePath: z.string(),
-						branchName: z.string(),
-						baseBranch: z.string().default("develop"),
-					}),
-				)
-				.mutation(async ({ input }) => {
-					return apiClient.featureStudio.saveWorktree.mutate(input);
+		saveWorktree: publicProcedure
+			.input(
+				z.object({
+					featureRequestId: z.string().uuid(),
+					worktreePath: z.string(),
+					branchName: z.string(),
+					baseBranch: z.string().default("develop"),
 				}),
+			)
+			.mutation(async ({ input }) => {
+				return apiClient.featureStudio.saveWorktree.mutate(input);
+			}),
 
-			createRun: publicProcedure
-				.input(
-					z.object({
-						featureRequestId: z.string().uuid(),
-						workflowName: z.string(),
-						workflowStep: z.string(),
-					}),
-				)
-				.mutation(async ({ input }) => {
-					return apiClient.featureStudio.createRun.mutate(input);
+		createRun: publicProcedure
+			.input(
+				z.object({
+					featureRequestId: z.string().uuid(),
+					workflowName: z.string(),
+					workflowStep: z.string(),
 				}),
+			)
+			.mutation(async ({ input }) => {
+				return apiClient.featureStudio.createRun.mutate(input);
+			}),
 
-			updateRun: publicProcedure
-				.input(
-					z.object({
-						runId: z.string().uuid(),
-						status: z.enum([
-							"queued",
-							"running",
-							"paused",
-							"completed",
-							"failed",
-							"cancelled",
-						]),
-						lastError: z.string().optional(),
-					}),
-				)
-				.mutation(async ({ input }) => {
-					return apiClient.featureStudio.updateRun.mutate(input);
+		updateRun: publicProcedure
+			.input(
+				z.object({
+					runId: z.string().uuid(),
+					status: z.enum([
+						"queued",
+						"running",
+						"paused",
+						"completed",
+						"failed",
+						"cancelled",
+					]),
+					lastError: z.string().optional(),
 				}),
+			)
+			.mutation(async ({ input }) => {
+				return apiClient.featureStudio.updateRun.mutate(input);
+			}),
 	});
 
 export type AtlasFeatureStudioRouter = ReturnType<

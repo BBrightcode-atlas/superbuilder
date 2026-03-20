@@ -1,5 +1,5 @@
-import { cn } from "@superset/ui/utils";
 import { COMPANY } from "@superset/shared/constants";
+import { cn } from "@superset/ui/utils";
 
 interface SupersetLogoProps {
 	className?: string;

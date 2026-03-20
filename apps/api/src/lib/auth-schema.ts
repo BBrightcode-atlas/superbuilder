@@ -29,7 +29,8 @@ export async function getAuthSchemaReadiness(): Promise<AuthSchemaReadiness> {
 	const result = await db.execute(
 		sql`select table_name from information_schema.tables where table_schema = ${AUTH_SCHEMA_NAME}`,
 	);
-	const rows = ((result as unknown as { rows?: TableRow[] }).rows ?? []) as TableRow[];
+	const rows = ((result as unknown as { rows?: TableRow[] }).rows ??
+		[]) as TableRow[];
 	const existingTables = new Set(rows.map((row) => row.table_name));
 	const missingTables = REQUIRED_BETTER_AUTH_TABLES.filter(
 		(tableName) => !existingTables.has(tableName),
