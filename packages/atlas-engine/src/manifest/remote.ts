@@ -4,7 +4,7 @@ import type { BoilerplateManifest } from "./types";
 
 const execFile = promisify(execFileCb);
 
-const DEFAULT_REPO = "BBrightcode-atlas/superbuilder-app-boilerplate";
+const DEFAULT_REPO = "BBrightcode-atlas/feature-atlas-template";
 const MANIFEST_PATH = "superbuilder.json";
 
 export interface FetchOptions {

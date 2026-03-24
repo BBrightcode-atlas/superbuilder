@@ -8,7 +8,7 @@ export interface ScaffoldInput {
 	targetDir: string;
 	/** 유지할 피처 목록 (나머지 제거) */
 	featuresToKeep: string[];
-	/** Template repo override (default: superbuilder-app-boilerplate) */
+	/** Template repo override (default: feature-atlas-template) */
 	templateRepo?: string;
 	/** Local path to features/ directory */
 	featuresSourceDir?: string;

@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 
 const execFile = promisify(execFileCb);
 
-const DEFAULT_REPO = "BBrightcode-atlas/superbuilder-app-boilerplate";
+const DEFAULT_REPO = "BBrightcode-atlas/feature-atlas-template";
 const DEFAULT_BRANCH = "develop";
 const DEFAULT_BASE_PATH = join(homedir(), ".superbuilder");
 

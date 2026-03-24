@@ -8,7 +8,7 @@ import type { FeatureConnection, ManifestFeature } from "../manifest/types";
 const execFile = promisify(execFileCb);
 
 const DEFAULT_BOILERPLATE_REPO =
-	"BBrightcode-atlas/superbuilder-app-boilerplate";
+	"BBrightcode-atlas/feature-atlas-template";
 
 export interface RegisterInput {
 	/** 피처 이름 (key) */
@@ -19,7 +19,7 @@ export interface RegisterInput {
 	sourceDir: string;
 	/** Boilerplate repo의 로컬 clone 경로 */
 	boilerplatePath: string;
-	/** Boilerplate GitHub repo (default: superbuilder-app-boilerplate) */
+	/** Boilerplate GitHub repo (default: feature-atlas-template) */
 	boilerplateRepo?: string;
 	/** PR 생성 여부 (default: true) */
 	createPR?: boolean;
