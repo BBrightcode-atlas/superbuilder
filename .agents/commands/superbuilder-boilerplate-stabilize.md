@@ -7,7 +7,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent
 
 ## 목표
 
-superbuilder-app-boilerplate의 서버(`apps/server`)를 Vercel serverless에 안정적으로 배포하고, 로그인이 성공하는 상태를 만든다.
+superbuilder-app-template의 서버(`apps/server`)를 Vercel serverless에 안정적으로 배포하고, 로그인이 성공하는 상태를 만든다.
 
 ## 배경
 
@@ -31,7 +31,7 @@ gh auth status
 
 1. **boilerplate repo로 이동**
    ```bash
-   cd /Users/bbright/Projects/superbuilder-app-boilerplate
+   cd /Users/bbright/Projects/superbuilder-app-template
    git log --oneline -20  # 최근 변경 확인
    ```
 

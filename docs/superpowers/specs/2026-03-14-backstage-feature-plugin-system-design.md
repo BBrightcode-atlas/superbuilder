@@ -11,7 +11,7 @@
 
 ### 현재 상태
 
-- `feature-atlas-template`(boilerplate)에 30개+ feature가 4곳에 분산되어 있음
+- `superbuilder-app-template`(boilerplate)에 30개+ feature가 4곳에 분산되어 있음
   - `packages/features/{name}/` — server (NestJS Module, tRPC, Service)
   - `apps/app/src/features/{name}/` — client UI
   - `apps/system-admin/src/features/{name}/` — admin UI
@@ -56,7 +56,7 @@
 ```
 BBrightcode-atlas/superbuilder               # 빌더 도구
 BBrightcode-atlas/superbuilder-features       # feature 패키지들 (git submodule)
-BBrightcode-atlas/feature-atlas-template      # 빈 앱 template
+BBrightcode-atlas/superbuilder-app-template      # 빈 앱 template
 ```
 
 ### 역할 분리
@@ -65,9 +65,9 @@ BBrightcode-atlas/feature-atlas-template      # 빈 앱 template
 |------|------|-----------|
 | **superbuilder** | 빌더 도구 | Composer UI (Desktop), Scaffold Engine, Registry Scanner, Resolver |
 | **superbuilder-features** | feature 저장소 | 개별 feature 패키지, Core Contract, Dev Kit |
-| **feature-atlas-template** | 앱 template | 빈 셸 + `[ATLAS:*]` 마커, Core 구현체 |
+| **superbuilder-app-template** | 앱 template | 빈 셸 + `[ATLAS:*]` 마커, Core 구현체 |
 
-> **용어 정리**: 기존 스펙에서 `superbuilder-app-boilerplate`으로 불리던 repo는 Composer Scaffold 스펙에 맞춰 `feature-atlas-template`으로 통일한다.
+> **용어 정리**: 기존 스펙에서 `superbuilder-app-template`으로 불리던 repo는 Composer Scaffold 스펙에 맞춰 `superbuilder-app-template`으로 통일한다.
 
 ### Submodule 연결
 
@@ -635,7 +635,7 @@ bun test          # 단위 테스트
    선택된 features → 의존성 해결 → 토폴로지 정렬 (기존과 동일)
 
 3. Template Clone
-   feature-atlas-template clone → 빈 셸
+   superbuilder-app-template clone → 빈 셸
 
 4. Feature 설치
    각 feature에 대해:
@@ -908,7 +908,7 @@ boilerplate에서 수집:
 3. **Connection 도출 방식 전환**: `superbuilder.json > connections` 참조 → `feature.json > provides` 자동 도출
 
 ```
-feature-atlas-template/ (마이그레이션 완료 후)
+superbuilder-app-template/ (마이그레이션 완료 후)
 ├── apps/
 │   ├── app/src/
 │   │   ├── features/           # 빈 디렉토리
@@ -1004,7 +1004,7 @@ Phase 2에서 `extensionPoints` + `extends` 기반 자동 바인딩 구현. Scaf
 | 기존 스펙 항목 | 이 설계에서의 상태 |
 |--------------|-----------------|
 | Scaffold Engine | 유지, path mapping 자동화 + connection 자동 도출로 개선 |
-| Template Repo (`feature-atlas-template`) | 빈 셸로 전환하여 대체. 이름 통일 |
+| Template Repo (`superbuilder-app-template`) | 빈 셸로 전환하여 대체. 이름 통일 |
 | ProjectSpec (superbuilder.json) | 유지, feature 메타는 feature.json으로 이동 |
 | FeatureRegistry (registry/features.json) | `feature.json` 자동 스캔으로 대체 |
 | Resolver | 유지 (의존성 해결, 토폴로지 정렬) |

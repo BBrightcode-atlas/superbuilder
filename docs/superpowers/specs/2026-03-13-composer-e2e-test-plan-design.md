@@ -41,7 +41,7 @@ These changes MUST be implemented before E2E testing can pass. Each item is a co
 
 #### P-3: Verify Template Better Auth Compatibility
 
-**Current state:** Template at `/tmp/feature-atlas-template/` has Better Auth server + client setup. Must verify:
+**Current state:** Template at `/tmp/superbuilder-app-template/` has Better Auth server + client setup. Must verify:
 
 1. `packages/core/auth/server.ts` reads `API_URL` env var for `baseURL`
 2. `apps/app/src/lib/auth-client.ts` reads `VITE_API_URL` env var

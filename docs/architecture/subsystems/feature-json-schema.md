@@ -319,7 +319,7 @@ provides.widget        →  widgetExport
 | **경로 정보** | 코드에서 자동 매핑 (`path-mapping.ts`) | `paths` 객체에 명시 |
 | **dependents** | Resolver가 런타임에 계산 | 수동으로 `dependents` 배열에 명시 |
 | **타입** | `FeatureManifest` | `ManifestFeature` (in `BoilerplateManifest`) |
-| **소스 레포** | superbuilder-features | superbuilder-app-boilerplate |
+| **소스 레포** | superbuilder-features | superbuilder-app-template |
 
 ### 마이그레이션 방향
 

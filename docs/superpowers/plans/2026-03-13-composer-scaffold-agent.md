@@ -20,7 +20,7 @@ This is a manual/semi-automated task: fork `BBrightcodeDev/feature-atlas` into `
 
 **Context:**
 - Source: `BBrightcodeDev/feature-atlas` develop branch
-- Target: `BBrightcode-atlas/feature-atlas-template`
+- Target: `BBrightcode-atlas/superbuilder-app-template`
 - The template must be a clean shell with NO feature code and NO Supabase references
 - All connection files must have `[ATLAS:*]` markers where features get inserted
 
@@ -29,9 +29,9 @@ This is a manual/semi-automated task: fork `BBrightcodeDev/feature-atlas` into `
 ```bash
 gh repo fork BBrightcodeDev/feature-atlas \
   --org BBrightcode-atlas \
-  --fork-name feature-atlas-template \
+  --fork-name superbuilder-app-template \
   --clone
-cd feature-atlas-template
+cd superbuilder-app-template
 git checkout develop
 ```
 
@@ -528,7 +528,7 @@ describe("buildProjectSpec", () => {
     expect(spec.pathMapping).toEqual(DEFAULT_PATH_MAPPING);
     expect(spec.source.type).toBe("superbuilder");
     expect(spec.source.templateRepo).toBe(
-      "BBrightcode-atlas/feature-atlas-template",
+      "BBrightcode-atlas/superbuilder-app-template",
     );
   });
 });
@@ -549,7 +549,7 @@ import { join } from "node:path";
 import type { PathMapping, ProjectConfig, ProjectSpec } from "./types";
 import type { ResolvedFeatures } from "../resolver/types";
 
-const TEMPLATE_REPO = "BBrightcode-atlas/feature-atlas-template";
+const TEMPLATE_REPO = "BBrightcode-atlas/superbuilder-app-template";
 const TEMPLATE_VERSION = "1.0.0";
 const SOURCE_REPO = "BBrightcode-atlas/superbuilder";
 
@@ -624,7 +624,7 @@ import { readFile, writeFile } from "node:fs/promises";
 
 const execFile = promisify(execFileCb);
 
-const TEMPLATE_REPO = "BBrightcode-atlas/feature-atlas-template";
+const TEMPLATE_REPO = "BBrightcode-atlas/superbuilder-app-template";
 
 export interface CloneOptions {
   templateRepo?: string;
@@ -1394,7 +1394,7 @@ git commit -m "feat(desktop): wire agent launcher for feature installation"
 
 Add notes about:
 - Extractor replaced by Scaffold Engine
-- Template repo (BBrightcode-atlas/feature-atlas-template)
+- Template repo (BBrightcode-atlas/superbuilder-app-template)
 - CLI agent-based feature installation (Step 4.5)
 - Supabase fully removed, Neon + Better Auth only
 

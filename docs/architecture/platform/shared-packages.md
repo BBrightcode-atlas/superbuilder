@@ -160,7 +160,7 @@ In the current 3-repo model:
   resolution, scaffold, and deployment pipeline
 - feature code (server, client, DB, UI) lives in `superbuilder-features` and is
   discovered at runtime by `atlas-engine`
-- the empty app template in `superbuilder-app-boilerplate` receives scaffolded
+- the empty app template in `superbuilder-app-template` receives scaffolded
   feature code via `[ATLAS:*]` markers
 
 Understanding the packages and the 3-repo split usually tells you more about

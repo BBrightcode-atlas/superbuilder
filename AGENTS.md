@@ -2,6 +2,43 @@
 
 Guidelines for agents and developers working in this repository.
 
+## Superbuilder 목적 & 라이프사이클
+
+Superbuilder는 **SaaS 프로젝트 빌더**이다. 단순한 scaffold 도구가 아니라, 재사용 가능한 feature를 축적하고 순환시키는 플랫폼.
+
+```
+SB Compose (feature 선택 + 프로젝트 생성)
+  → 기본 틀 생성 (auth, DB, 인프라 + 선택한 SB feature)
+    → 그 위에서 비즈니스 로직 직접 구현
+      → 재사용 가능한 패턴 발견 시
+        → SB Feature로 역추출 (superbuilder-features에 등록)
+          → 다음 프로젝트에서 재사용
+```
+
+생성된 프로젝트에서 SB feature와 비즈니스 코드가 공존하는 구조 (Flotter 예시):
+
+```
+flotter-project/
+├── apps/
+│   ├── app/src/features/
+│   │   ├── lore-builder/            ← 비즈니스 (직접 구현)
+│   │   ├── story-canvas/            ← 비즈니스 (직접 구현)
+│   │   └── (blog, comment, ...)     ← compose 시 설치된 SB feature
+│   ├── admin/                       ← 관리자
+│   ├── landing/                     ← 랜딩페이지
+│   └── server/                      ← NestJS API
+├── packages/
+│   ├── features/
+│   │   ├── lore-builder/            ← 비즈니스 API (직접 구현)
+│   │   ├── story-canvas/            ← 비즈니스 API (직접 구현)
+│   │   └── (blog, comment, ...)     ← SB feature
+│   ├── drizzle/src/schema/
+│   │   ├── core/                    ← SB 기본 (auth, user, org)
+│   │   └── features/                ← 비즈니스 스키마 (직접 구현)
+│   └── core/                        ← SB 인프라 (그대로 사용)
+└── ...
+```
+
 ## Structure
 
 Bun + Turbo monorepo with:
@@ -71,7 +108,7 @@ bun run clean:workspaces   # Clean all workspace node_modules
 ## Agent Rules
 1. **Type safety** - avoid `any` unless necessary
 2. **Prefer `gh` CLI** - when performing git operations (PRs, issues, checkout, etc.), prefer the GitHub CLI (`gh`) over raw `git` commands where possible
-7. **GitHub repo 삭제 금지** — `gh repo delete`는 **이 세션에서 직접 생성한 테스트용 임시 repo**(`compose-e2e-*` 등)만 삭제 가능하다. `superbuilder`, `superbuilder-features`, `superbuilder-app-boilerplate` 및 **그 외 모든 기존 repo는 절대 삭제하지 않는다.** 연관 없는 repo, 모르는 repo, 확인되지 않은 repo는 삭제 대상이 아니다.
+7. **GitHub repo 삭제 금지** — `gh repo delete`는 **이 세션에서 직접 생성한 테스트용 임시 repo**(`compose-e2e-*` 등)만 삭제 가능하다. `superbuilder`, `superbuilder-features`, `superbuilder-app-template` 및 **그 외 모든 기존 repo는 절대 삭제하지 않는다.** 연관 없는 repo, 모르는 repo, 확인되지 않은 repo는 삭제 대상이 아니다.
 3. **Shared command source** - keep command definitions in `.agents/commands/` only. `.claude/commands` and `.cursor/commands` should be symlinks to `../.agents/commands`. (`packages/chat` discovers slash commands from `.claude/commands`.)
 4. **Workspace MCP config** - keep shared MCP servers in `.mcp.json`; `.cursor/mcp.json` should link to `../.mcp.json`. Codex uses `.codex/config.toml` (run with `CODEX_HOME=.codex codex ...`). OpenCode uses `opencode.json` and should mirror the same MCP set using OpenCode's `remote`/`local` schema.
 5. **Mastracode fork workflow** - for Superset's internal `mastracode` fork bundle and release process, follow `docs/mastracode-fork-workflow.md`.
@@ -176,7 +213,7 @@ import { BlogModule } from "@repo/features/blog";
 |------|------|-----------|-----------|
 | `BBrightcode-atlas/superbuilder` | 빌더 도구 (Desktop, atlas-engine, Registry) | `develop` | `main` |
 | `BBrightcode-atlas/superbuilder-features` | Feature 코드 저장소 (feature 패키지, Core Contract, Dev Kit) | `main` | `main` |
-| `BBrightcode-atlas/superbuilder-app-boilerplate` | 앱 템플릿 (빈 셸 + `[ATLAS:*]` 마커) | `develop` | `develop` |
+| `BBrightcode-atlas/superbuilder-app-template` | 앱 템플릿 (빈 셸 + `[ATLAS:*]` 마커) | `develop` | `develop` |
 
 ### 브랜치 구조 (superbuilder)
 

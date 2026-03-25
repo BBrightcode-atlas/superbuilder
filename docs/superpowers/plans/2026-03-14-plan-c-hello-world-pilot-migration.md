@@ -24,7 +24,7 @@
 | **사전 조건** | **Plan A 완료 필수** — `superbuilder-features` 레포가 존재하고 core contract 스텁 + dev-kit이 설치되어 있어야 함. Plan B는 불필요 (hello-world 코드 작성은 엔진과 독립) |
 | **병렬 실행** | Plan B와 **병렬 가능** (서로 다른 레포, 다른 관심사). Plan A 완료 후에만 실행 가능 |
 | **완료 기준** | `features/hello-world/` 패키지가 typecheck + test 통과, `bun install` 성공, submodule 포인터 업데이트됨 |
-| **참조할 boilerplate 원본 위치** | `/Users/bright/Projects/superbuilder-app-boilerplate` (읽기 전용 참조, 수정하지 않음) |
+| **참조할 boilerplate 원본 위치** | `/Users/bright/Projects/superbuilder-app-template` (읽기 전용 참조, 수정하지 않음) |
 
 ### boilerplate → feature 패키지 매핑 (참조용)
 

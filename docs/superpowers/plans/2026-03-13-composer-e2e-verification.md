@@ -13,7 +13,7 @@
 | `SUPERBUILDER_PATH` | `/Users/bright/Projects/superbuilder` | .env에 설정됨 |
 | `ATLAS_PATH` | `/Users/bright/Projects/feature-atlas` | .env에 설정됨 |
 | Registry | `{ATLAS_PATH}/registry/features.json` | 존재 확인됨 |
-| Template repo | `BBrightcode-atlas/feature-atlas-template` | GitHub에 존재 |
+| Template repo | `BBrightcode-atlas/superbuilder-app-template` | GitHub에 존재 |
 | `gh` CLI | 인증 완료 | 확인 필요 |
 | Neon API Key | encrypted in local-db 또는 env | 확인 필요 |
 | Vercel Token | encrypted in local-db 또는 env | 확인 필요 |
@@ -46,7 +46,7 @@
 
 ### Step 5: Project Creation — Scaffold (스텝 4/6)
 - Compose 버튼 클릭 → scaffold 파이프라인 실행
-  1. Template Clone (`gh repo clone BBrightcode-atlas/feature-atlas-template`)
+  1. Template Clone (`gh repo clone BBrightcode-atlas/superbuilder-app-template`)
   2. Spec Write (superbuilder.json)
   3. Workflow Write (INSTALL_FEATURES.md)
   4. Git Init (main branch, initial commit)

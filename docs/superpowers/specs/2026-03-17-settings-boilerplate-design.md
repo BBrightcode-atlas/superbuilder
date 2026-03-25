@@ -1,7 +1,7 @@
 # Settings Boilerplate 이식 설계
 
 ## 개요
-superbuilder desktop app의 settings 기능을 superbuilder-app-boilerplate에 100% 동일 UI/레이아웃으로 이식.
+superbuilder desktop app의 settings 기능을 superbuilder-app-template에 100% 동일 UI/레이아웃으로 이식.
 
 ## 대상 페이지
 
@@ -283,7 +283,7 @@ Feature는 서버 부트 시 `registerIntegration()`을 호출. Settings > Integ
 `superbuilder-features/features/payment/` (전체)
 
 ### 타겟
-`superbuilder-app-boilerplate/packages/payment/` (독립 패키지, `packages/features/`와 분리)
+`superbuilder-app-template/packages/payment/` (독립 패키지, `packages/features/`와 분리)
 
 > `packages/features/`는 atlas-engine이 동적으로 채우는 feature 호스트이므로, 항상 포함되는 payment는 별도 top-level 패키지로 둔다.
 

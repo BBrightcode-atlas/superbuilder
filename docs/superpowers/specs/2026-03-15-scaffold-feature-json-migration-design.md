@@ -42,7 +42,7 @@ boilerplate (30+ features 내장) → clone → removeFeatures() → 프로젝�
 scaffoldFromFeatures(input)
   │
   ├── 1. Clone 빈 템플릿
-  │     gh repo clone superbuilder-app-boilerplate → targetDir (shallow)
+  │     gh repo clone superbuilder-app-template → targetDir (shallow)
   │     .git 삭제, package.json name 변경
   │
   ├── 2. Feature 소스 준비
@@ -86,7 +86,7 @@ interface ScaffoldInput {
   targetDir: string;
   /** 유지할 feature ID 목록 (resolved, 토폴로지 순서) */
   featuresToKeep: string[];
-  /** 빈 템플릿 repo (default: superbuilder-app-boilerplate) */
+  /** 빈 템플릿 repo (default: superbuilder-app-template) */
   templateRepo?: string;
   /** feature 소스 경로 (로컬 superbuilder-features/features/) */
   featuresSourceDir?: string;
@@ -221,7 +221,7 @@ export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
 
 ## 6. Boilerplate 정리
 
-superbuilder-app-boilerplate에서 feature 코드를 제거하고 마커만 남긴다.
+superbuilder-app-template에서 feature 코드를 제거하고 마커만 남긴다.
 
 ### 제거 대상
 

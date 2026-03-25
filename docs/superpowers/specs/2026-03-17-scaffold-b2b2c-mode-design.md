@@ -287,8 +287,8 @@ export interface ScaffoldB2B2CInput {
 
 ## 참조 문서
 
-- 전체 B2B2C 설계: `superbuilder-app-boilerplate/docs/superpowers/specs/2026-03-17-b2b2c-architecture-design.md`
-- Landing 품질 규칙: `superbuilder-app-boilerplate/.claude/rules/frontend/landing-quality.md`
+- 전체 B2B2C 설계: `superbuilder-app-template/docs/superpowers/specs/2026-03-17-b2b2c-architecture-design.md`
+- Landing 품질 규칙: `superbuilder-app-template/.claude/rules/frontend/landing-quality.md`
 - Feature provides.landing 스펙: `superbuilder-features/AGENTS.md`
 - 기존 scaffold 코드: `packages/atlas-engine/src/scaffold/scaffold.ts`
 - 기존 connection 코드: `packages/atlas-engine/src/connection/`

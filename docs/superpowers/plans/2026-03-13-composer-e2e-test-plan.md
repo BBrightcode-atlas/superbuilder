@@ -87,7 +87,7 @@ Check: GitHub CLI (`gh auth status`) authenticated
 
 - [ ] **Step 3: Verify template exists**
 
-Check: `/tmp/feature-atlas-template/` exists and is a valid git repo with Better Auth setup
+Check: `/tmp/superbuilder-app-template/` exists and is a valid git repo with Better Auth setup
 
 - [ ] **Step 4: Verify current user session**
 

@@ -11,7 +11,7 @@ describe("BoilerplateManager", () => {
 
 			expect(mgr.barePath).toBe(join(defaultBase, "boilerplate"));
 			expect(mgr.worktreesPath).toBe(join(defaultBase, "worktrees"));
-			expect(mgr.repo).toBe("BBrightcode-atlas/feature-atlas-template");
+			expect(mgr.repo).toBe("BBrightcode-atlas/superbuilder-app-template");
 			expect(mgr.branch).toBe("develop");
 		});
 

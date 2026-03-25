@@ -16,7 +16,7 @@ boundaries:
 |------|------|---------------|---------------|
 | `BBrightcode-atlas/superbuilder` | Builder tool (Desktop, atlas-engine, Registry) | `develop` | `main` |
 | `BBrightcode-atlas/superbuilder-features` | Feature code (each feature in `features/{name}/`) | `main` | `main` |
-| `BBrightcode-atlas/superbuilder-app-boilerplate` | Empty app template with `[ATLAS:*]` markers | `develop` | `develop` |
+| `BBrightcode-atlas/superbuilder-app-template` | Empty app template with `[ATLAS:*]` markers | `develop` | `develop` |
 
 **Feature code lives exclusively in `superbuilder-features`.** This repo
 (superbuilder) contains only the tooling that queries, composes, and deploys
@@ -31,7 +31,7 @@ At a product level, the superbuilder platform is a combined creation system:
 
 - start from code and workspace context
 - discover and manage reusable features (via `superbuilder-features`)
-- compose those features into new project surfaces (via `superbuilder-app-boilerplate`)
+- compose those features into new project surfaces (via `superbuilder-app-template`)
 - support that flow with Desktop tooling, agent workflows, atlas-engine, and
   shared infrastructure
 
@@ -70,13 +70,13 @@ At a product level, the superbuilder platform is a combined creation system:
 > **Legacy (삭제됨):** The following apps were part of an earlier single-repo
 > architecture where feature code lived inside `superbuilder`. They have been
 > deleted as the platform migrated to the 3-repo model. Their responsibilities
-> now live in `superbuilder-features` and `superbuilder-app-boilerplate`.
+> now live in `superbuilder-features` and `superbuilder-app-template`.
 
 | Deleted app | Current equivalent |
 |-------------|-------------------|
-| `apps/features-app` | `superbuilder-app-boilerplate/apps/app` |
-| `apps/features-landing` / `apps/features-landing/landing` | `superbuilder-app-boilerplate/apps/landing` |
-| `apps/feature-admin` | `superbuilder-app-boilerplate/apps/admin` |
+| `apps/features-app` | `superbuilder-app-template/apps/app` |
+| `apps/features-landing` / `apps/features-landing/landing` | `superbuilder-app-template/apps/landing` |
+| `apps/feature-admin` | `superbuilder-app-template/apps/admin` |
 | `apps/features-server` | Feature modules in `superbuilder-features/features/*/` |
 | `apps/agent-server` | Replaced by Mastra-based agent runtime in Desktop |
 
@@ -133,7 +133,7 @@ redefining infrastructure locally.
 
 Feature code (server modules, client pages, DB schema, UI components per
 feature) lives in `superbuilder-features`. This repo contains only the tooling
-to discover, resolve, and scaffold those features. The `superbuilder-app-boilerplate`
+to discover, resolve, and scaffold those features. The `superbuilder-app-template`
 repo contains the empty app template that receives scaffolded feature code.
 
 ### C. Auth and identity are a cross-platform concern
@@ -190,7 +190,7 @@ Treat the platform as three connected repos, each with a clear job:
    The catalog of reusable features. Each feature owns its server, client, DB
    schema, and UI code. Features are discovered by atlas-engine via `feature.json`.
 
-3. **`superbuilder-app-boilerplate`** — app template
+3. **`superbuilder-app-template`** — app template
    An empty shell with `[ATLAS:*]` markers. scaffold() clones this and fills it
    with the selected features from `superbuilder-features`.
 

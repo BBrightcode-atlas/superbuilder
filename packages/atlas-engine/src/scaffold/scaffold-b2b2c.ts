@@ -13,7 +13,7 @@ import type { ScaffoldInput, ScaffoldResult } from "./types";
 import { updateFeatureExports } from "./update-package-exports";
 
 const execFile = promisify(execFileCb);
-const DEFAULT_TEMPLATE = "BBrightcode-atlas/feature-atlas-template";
+const DEFAULT_TEMPLATE = "BBrightcode-atlas/superbuilder-app-template";
 const DEFAULT_FEATURES_REPO = "BBrightcode-atlas/superbuilder-features";
 
 /**

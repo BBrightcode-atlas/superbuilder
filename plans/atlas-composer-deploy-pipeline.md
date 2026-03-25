@@ -90,7 +90,7 @@ Extractor를 Scaffold Engine으로 교체:
 | 변경 | 이전 | 이후 |
 |------|------|------|
 | 프로젝트 생성 방식 | Subtractive (파일 추출/삭제) | Additive (template clone + agent install) |
-| Template 소스 | feature-atlas monorepo 직접 | `BBrightcode-atlas/feature-atlas-template` |
+| Template 소스 | feature-atlas monorepo 직접 | `BBrightcode-atlas/superbuilder-app-template` |
 | Feature 설치 | 추출 시 일괄 처리 | CLI Agent (`/install-features`) 단계적 설치 |
 | DB/Auth 스택 | Supabase | Neon + Better Auth |
 | 프로젝트 명세 | 없음 | `superbuilder.json` (ProjectSpec) |

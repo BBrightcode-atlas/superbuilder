@@ -18,9 +18,9 @@
 
 | 항목 | 값 |
 |------|-----|
-| **작업 레포** | `superbuilder` (Task 1-15, 20-22) + `superbuilder-app-boilerplate` (Task 16-19) |
-| **작업 디렉토리** | Task 1-15, 20-22: `/Users/bright/Projects/superbuilder/packages/atlas-engine`, Task 16-19: `/Users/bright/Projects/superbuilder-app-boilerplate` |
-| **브랜치** | `superbuilder`: `develop`, `superbuilder-app-boilerplate`: `main` |
+| **작업 레포** | `superbuilder` (Task 1-15, 20-22) + `superbuilder-app-template` (Task 16-19) |
+| **작업 디렉토리** | Task 1-15, 20-22: `/Users/bright/Projects/superbuilder/packages/atlas-engine`, Task 16-19: `/Users/bright/Projects/superbuilder-app-template` |
+| **브랜치** | `superbuilder`: `develop`, `superbuilder-app-template`: `main` |
 | **사전 조건** | Plan A 완료 필요 (scanner가 `superbuilder-features/features/*/feature.json`을 읽으므로). 단, **Task 1-15 (순수 엔진 코드)는 Plan A 없이도 단위 테스트 실행 가능** — 테스트가 자체 fixture를 생성하기 때문 |
 | **병렬 실행** | Plan A와 **병렬 가능** (Task 1-15는 독립적). Task 16-19 (boilerplate 마커)도 독립적. Task 20-22 (통합 테스트)만 Plan A 완료 필요 |
 | **완료 기준** | `packages/atlas-engine`에 scanner/adapter/deriver/transformer/applier/applyConnections 모듈 추가, boilerplate에 `[ATLAS:*]` 마커 삽입, 통합 테스트 통과 |
@@ -33,7 +33,7 @@ superbuilder (packages/atlas-engine/)
 ├── Task 20-21: 통합 테스트 + 배럴 export
 └── Task 22:    최종 빌드 검증
 
-superbuilder-app-boilerplate
+superbuilder-app-template
 └── Task 16-19: [ATLAS:*] 마커 삽입 (app.module.ts, router.ts 등 6개 파일)
 ```
 

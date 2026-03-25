@@ -113,7 +113,7 @@ composer.ts (Desktop tRPC router)
         │  atlas-engine/scaffold/scaffold.ts
         │
         ├── (a) gh repo clone (shallow, depth=1)
-        │     BBrightcode-atlas/superbuilder-app-boilerplate → targetDir
+        │     BBrightcode-atlas/superbuilder-app-template → targetDir
         │
         ├── (b) .git 삭제
         │     rm -rf targetDir/.git

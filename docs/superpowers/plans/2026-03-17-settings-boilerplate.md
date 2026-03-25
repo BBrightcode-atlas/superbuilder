@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** superbuilder desktop의 settings 6개 페이지(Account, Appearance, Notifications, Organization, Integrations, Billing)를 superbuilder-app-boilerplate에 100% 동일 UI로 이식
+**Goal:** superbuilder desktop의 settings 6개 페이지(Account, Appearance, Notifications, Organization, Integrations, Billing)를 superbuilder-app-template에 100% 동일 UI로 이식
 
 **Architecture:** boilerplate `apps/app/`에 TanStack Router 서브라우트로 settings 레이아웃 + 6페이지 구현. 서버 API는 `packages/core/trpc/`에 라우터 추가. Payment는 `packages/payment/`로 이동. Integration은 `packages/core/integrations/`에 범용 프레임워크 구축.
 
 **Tech Stack:** TanStack Router, tRPC, Drizzle ORM, shadcn/ui, superbuilder-ui MCP, Jotai, lucide-react, Web Notification API, Web Audio API
 
-**Target repo:** `superbuilder-app-boilerplate` (`/Users/bbright/Projects/superbuilder-app-boilerplate/`)
+**Target repo:** `superbuilder-app-template` (`/Users/bbright/Projects/superbuilder-app-template/`)
 
 **Spec:** `docs/superpowers/specs/2026-03-17-settings-boilerplate-design.md`
 
@@ -64,7 +64,7 @@ export const schema = {
 - [ ] **Step 4: migration 생성**
 
 ```bash
-cd /Users/bbright/Projects/superbuilder-app-boilerplate
+cd /Users/bbright/Projects/superbuilder-app-template
 pnpm db:generate --name="add_user_preferences"
 ```
 
@@ -241,7 +241,7 @@ export type { StorageProvider, StorageConfig } from "./types";
 - [ ] **Step 5: @aws-sdk 의존성 설치**
 
 ```bash
-cd /Users/bbright/Projects/superbuilder-app-boilerplate
+cd /Users/bbright/Projects/superbuilder-app-template
 pnpm add @aws-sdk/client-s3 @aws-sdk/s3-request-presigner --filter @repo/core
 ```
 
@@ -265,9 +265,9 @@ git commit -m "feat(core): add storage service with S3/R2/local providers"
 - [ ] **Step 1: 현재 라우터 구조 확인 + _common/routers/ 디렉토리 생성**
 
 ```bash
-cat /Users/bbright/Projects/superbuilder-app-boilerplate/packages/features/app-router.ts
-ls /Users/bbright/Projects/superbuilder-app-boilerplate/packages/features/_common/
-mkdir -p /Users/bbright/Projects/superbuilder-app-boilerplate/packages/features/_common/routers
+cat /Users/bbright/Projects/superbuilder-app-template/packages/features/app-router.ts
+ls /Users/bbright/Projects/superbuilder-app-template/packages/features/_common/
+mkdir -p /Users/bbright/Projects/superbuilder-app-template/packages/features/_common/routers
 ```
 
 - [ ] **Step 2: userPreference 라우터 생성**
@@ -355,7 +355,7 @@ git commit -m "feat(trpc): add userPreference router for settings persistence"
 - [ ] **Step 1: 기존 user 라우터 확인**
 
 ```bash
-find /Users/bbright/Projects/superbuilder-app-boilerplate/packages/features -name "*.ts" | xargs grep -l "user" 2>/dev/null
+find /Users/bbright/Projects/superbuilder-app-template/packages/features -name "*.ts" | xargs grep -l "user" 2>/dev/null
 ```
 
 - [ ] **Step 2: user profile 라우터 생성**
@@ -420,7 +420,7 @@ git commit -m "feat(trpc): add user profile router with name update and avatar u
 - [ ] **Step 1: 기존 organization 관련 코드 확인**
 
 ```bash
-find /Users/bbright/Projects/superbuilder-app-boilerplate/packages -name "*.ts" | xargs grep -l "organization" 2>/dev/null
+find /Users/bbright/Projects/superbuilder-app-template/packages -name "*.ts" | xargs grep -l "organization" 2>/dev/null
 ```
 
 - [ ] **Step 2: organization settings 라우터 생성**
@@ -897,7 +897,7 @@ settingsLayoutRoute.addChildren([
 - [ ] **Step 5: dev server로 확인**
 
 ```bash
-cd /Users/bbright/Projects/superbuilder-app-boilerplate && pnpm dev
+cd /Users/bbright/Projects/superbuilder-app-template && pnpm dev
 ```
 브라우저에서 `/settings` → `/settings/account`로 리다이렉트되는지, 사이드바가 보이는지 확인.
 
@@ -1201,7 +1201,7 @@ git commit -m "feat(settings): add Billing page with plan card, upgrade card, an
 - [ ] **Step 1: superbuilder-features에서 payment 복사**
 
 ```bash
-cp -r /Users/bbright/Projects/superbuilder-features/features/payment /Users/bbright/Projects/superbuilder-app-boilerplate/packages/payment
+cp -r /Users/bbright/Projects/superbuilder-features/features/payment /Users/bbright/Projects/superbuilder-app-template/packages/payment
 ```
 
 - [ ] **Step 2: package.json 수정**
@@ -1250,7 +1250,7 @@ find packages/payment/src -type f \( -name "*.ts" -o -name "*.tsx" \) -exec sed 
 - [ ] **Step 6: 소비 패키지에 @repo/payment 의존성 추가**
 
 ```bash
-cd /Users/bbright/Projects/superbuilder-app-boilerplate
+cd /Users/bbright/Projects/superbuilder-app-template
 pnpm add @repo/payment@workspace:* --filter @repo/drizzle
 pnpm add @repo/payment@workspace:* --filter @repo/server
 pnpm add @repo/payment@workspace:* --filter @repo/app
@@ -1310,7 +1310,7 @@ export const trpcRouter = router({
 - [ ] **Step 11: pnpm install + typecheck**
 
 ```bash
-cd /Users/bbright/Projects/superbuilder-app-boilerplate
+cd /Users/bbright/Projects/superbuilder-app-template
 pnpm install
 pnpm check-types
 ```
@@ -1398,7 +1398,7 @@ git commit -m "chore: remove payment feature (moved to boilerplate core)"
 - [ ] **Step 1: typecheck**
 
 ```bash
-cd /Users/bbright/Projects/superbuilder-app-boilerplate
+cd /Users/bbright/Projects/superbuilder-app-template
 pnpm check-types
 ```
 

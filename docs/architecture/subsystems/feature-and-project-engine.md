@@ -18,7 +18,7 @@ repos:
 |------|----------------------|
 | `superbuilder` (this repo) | Houses `atlas-engine`, Desktop orchestration, registry scan |
 | `superbuilder-features` | Source of all feature code; scanned via `feature.json` manifests |
-| `superbuilder-app-boilerplate` | Scaffold target; receives feature code at `[ATLAS:*]` markers |
+| `superbuilder-app-template` | Scaffold target; receives feature code at `[ATLAS:*]` markers |
 
 ## Why it matters
 
@@ -96,7 +96,7 @@ used by the resolver and scaffold pipeline.
 1. **Discover** — `scanFeatureManifests(featuresDir)` → `FeatureManifest[]`
 2. **Resolve** — dependency resolution + topological sort
 3. **Studio** — spec/plan generation → approval workflow (Feature Studio)
-4. **Scaffold** — `scaffold()` clones `superbuilder-app-boilerplate`, copies
+4. **Scaffold** — `scaffold()` clones `superbuilder-app-template`, copies
    selected feature code from `superbuilder-features`, transforms imports,
    inserts `[ATLAS:*]` marker blocks
 5. **Deploy** — `composePipeline()` → Neon DB + GitHub repo + Vercel
@@ -124,8 +124,8 @@ only a normal multi-app product.
 | `packages/features-server/features/feature-catalog/` | `scanFeatureManifests()` in `atlas-engine` reading `superbuilder-features` |
 | `packages/features-cli/src/commands/` | `atlas-engine` scaffold + pipeline; Desktop Atlas routers |
 | `packages/atlas-engine/src/registry/` `extractor/` | `packages/atlas-engine/src/manifest/` (current module layout) |
-| `apps/features-app/src/features/` | `superbuilder-app-boilerplate/apps/app/` (post-scaffold) |
-| `apps/feature-admin/src/features/` | `superbuilder-app-boilerplate/apps/admin/` (post-scaffold) |
+| `apps/features-app/src/features/` | `superbuilder-app-template/apps/app/` (post-scaffold) |
+| `apps/feature-admin/src/features/` | `superbuilder-app-template/apps/admin/` (post-scaffold) |
 
 ## Connected subsystems
 

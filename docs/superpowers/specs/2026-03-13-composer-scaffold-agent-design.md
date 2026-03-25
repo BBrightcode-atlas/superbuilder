@@ -27,7 +27,7 @@
 | Spec 구조 | 기존 FeatureSpec + ProjectRegistry 확장 |
 | 실행 환경 | CLI Agent (Claude Code, Codex) — superset의 agent launcher 활용 |
 | 접근법 | Scaffold + Agent Delegation (하이브리드) |
-| Template 소스 | `BBrightcode-atlas/feature-atlas-template` (feature-atlas 복제 + 정리) |
+| Template 소스 | `BBrightcode-atlas/superbuilder-app-template` (feature-atlas 복제 + 정리) |
 | DB/Auth 스택 | Neon + Better Auth 단일 스택 (Supabase 완전 폐기) |
 
 ---
@@ -44,7 +44,7 @@
 ┌─────────────────────────────────────────────────────┐
 │              Scaffold Engine (atlas-engine)           │
 │  1. Template repo clone                              │
-│     (BBrightcode-atlas/feature-atlas-template)       │
+│     (BBrightcode-atlas/superbuilder-app-template)       │
 │  2. ProjectSpec → superbuilder.json 주입             │
 │  3. 설치 워크플로우 파일 생성                         │
 │  4. .claude/rules + AGENTS.md 주입                   │
@@ -75,7 +75,7 @@
 | 레포 | 역할 |
 |------|------|
 | **superbuilder** (이 모노레포) | Feature 소스 코드 + Composer UI + Scaffold Engine |
-| **BBrightcode-atlas/feature-atlas-template** | 빈 프로젝트 뼈대 (apps/app, apps/atlas-server, packages/\*, configs, markers) |
+| **BBrightcode-atlas/superbuilder-app-template** | 빈 프로젝트 뼈대 (apps/app, apps/atlas-server, packages/\*, configs, markers) |
 | **BBrightcode-atlas/sb-gen-{name}** | 생성된 프로젝트들 |
 
 ### 분업 원칙
@@ -97,7 +97,7 @@
 ### Template 구조 (feature-atlas에서 features 제거 + Supabase 정리)
 
 ```
-feature-atlas-template/
+superbuilder-app-template/
 ├── apps/
 │   ├── app/                        # Vite + React 프론트엔드 셸
 │   │   ├── src/
@@ -207,7 +207,7 @@ feature-atlas-template/
     "type": "superbuilder",
     "repo": "BBrightcode-atlas/superbuilder",
     "branch": "develop",
-    "templateRepo": "BBrightcode-atlas/feature-atlas-template",
+    "templateRepo": "BBrightcode-atlas/superbuilder-app-template",
     "templateVersion": "1.0.0",
     "createdAt": "2026-03-13T..."
   },
@@ -346,7 +346,7 @@ interface ScaffoldResult {
 async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
   // 1. Template clone
   const projectDir = await cloneTemplate({
-    templateRepo: "BBrightcode-atlas/feature-atlas-template",
+    templateRepo: "BBrightcode-atlas/superbuilder-app-template",
     targetDir: input.targetDir,
     projectName: input.projectName,
   });

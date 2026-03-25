@@ -69,7 +69,7 @@ Desktop UI 없이 CLI에서 직접 프로젝트를 생성한다. `@superbuilder/
 
 | 커맨드 | 설명 |
 |--------|------|
-| `/superbuilder-cross-repo-check` | superbuilder, superbuilder-features, superbuilder-app-boilerplate 3개 repo 간 정합성 검증 |
+| `/superbuilder-cross-repo-check` | superbuilder, superbuilder-features, superbuilder-app-template 3개 repo 간 정합성 검증 |
 | `/superbuilder-sync-upstream` | superset upstream 변경을 develop 브랜치에 안전하게 병합 (superbuilder 커스텀 보존) |
 
 ---

@@ -12,7 +12,7 @@
 
 | 항목 | 값 |
 |------|-----|
-| **작업 레포** | superbuilder (Task 1-8, 10-11) + superbuilder-app-boilerplate (Task 9) |
+| **작업 레포** | superbuilder (Task 1-8, 10-11) + superbuilder-app-template (Task 9) |
 | **브랜치** | develop |
 | **사전 조건** | atlas-engine의 manifest/connection/transform 모듈 구현 완료 |
 | **완료 기준** | E2E: hello-world + comment scaffold → Vercel 배포 → 로그인 성공, `/superbuilder-spec-verify` 통과 |
@@ -31,7 +31,7 @@ superbuilder (packages/atlas-engine/)
 ├── Task 10:    spec-verify + 빌드 검증
 └── Task 11:    E2E 테스트
 
-superbuilder-app-boilerplate
+superbuilder-app-template
 └── Task 9:     feature 코드 제거, 빈 템플릿 마커만 남기기
 ```
 
@@ -150,7 +150,7 @@ packages/atlas-engine/src/
     projectName: string;
     targetDir: string;
     featuresToKeep: string[];
-    /** 빈 템플릿 repo (default: superbuilder-app-boilerplate) */
+    /** 빈 템플릿 repo (default: superbuilder-app-template) */
     templateRepo?: string;
     /** feature 소스 경로 (로컬 superbuilder-features/features/) */
     featuresSourceDir?: string;
@@ -242,11 +242,11 @@ packages/atlas-engine/src/
 
 ## Chunk 4: Boilerplate 정리 (Task 9)
 
-### Task 9: superbuilder-app-boilerplate 정리
+### Task 9: superbuilder-app-template 정리
 
 > Boilerplate에서 모든 feature 코드를 제거하고, 마커만 남긴 빈 템플릿으로 만들기
 
-- [ ] 작업 레포: `/Users/bbright/Projects/superbuilder-app-boilerplate`
+- [ ] 작업 레포: `/Users/bbright/Projects/superbuilder-app-template`
 - [ ] 브랜치: `develop`
 - [ ] Feature 코드 제거:
   - `packages/features/*` (app-router.ts 제외)
@@ -274,7 +274,7 @@ packages/atlas-engine/src/
   }
   ```
 - [ ] `packages/features/package.json` exports: 빈 상태 (app-router만)
-- [ ] 빌드 통과 확인: `cd /Users/bbright/Projects/superbuilder-app-boilerplate && bun install && bun run typecheck`
+- [ ] 빌드 통과 확인: `cd /Users/bbright/Projects/superbuilder-app-template && bun install && bun run typecheck`
 - [ ] 커밋: `refactor: strip feature code, keep empty template with markers`
 
 ---
