@@ -1,14 +1,15 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 /**
  * Insert content before the closing [/ATLAS:{marker}] tag in a file.
- * Does nothing if the marker is not found.
+ * Does nothing if the file does not exist or the marker is not found.
  */
 export function insertAtMarker(
 	filePath: string,
 	marker: string,
 	content: string,
 ): void {
+	if (!existsSync(filePath)) return;
 	const text = readFileSync(filePath, "utf-8");
 	const closingTag = `[/ATLAS:${marker}]`;
 	const idx = text.indexOf(closingTag);

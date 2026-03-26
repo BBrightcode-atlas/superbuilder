@@ -43,35 +43,41 @@ import postgres from "postgres";
 
 const sql = postgres(process.env.DATABASE_URL, { ssl: "require" });
 
-const userId = crypto.randomUUID();
-const orgId = crypto.randomUUID();
+const newUserId = crypto.randomUUID();
+const newOrgId = crypto.randomUUID();
 const now = new Date();
 
 try {
-  // Insert owner user
-  await sql\`
-    INSERT INTO "user" (id, name, email, email_verified, created_at, updated_at)
-    VALUES (\${userId}, \${process.env.SEED_NAME}, \${process.env.SEED_EMAIL}, true, \${now}, \${now})
-    ON CONFLICT (email) DO NOTHING
+  // Upsert owner user — return existing id if already present
+  const [user] = await sql\`
+    INSERT INTO "users" (id, name, email, email_verified, created_at, updated_at)
+    VALUES (\${newUserId}, \${process.env.SEED_NAME}, \${process.env.SEED_EMAIL}, true, \${now}, \${now})
+    ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+    RETURNING id
   \`;
+  const userId = user.id;
 
-  // Insert credential account
+  // Delete existing credential account for this user, then insert fresh
   await sql\`
-    INSERT INTO account (id, account_id, provider_id, user_id, password, created_at, updated_at)
+    DELETE FROM accounts WHERE user_id = \${userId} AND provider_id = 'credential'
+  \`;
+  await sql\`
+    INSERT INTO accounts (id, account_id, provider_id, user_id, password, created_at, updated_at)
     VALUES (\${crypto.randomUUID()}, \${process.env.SEED_EMAIL}, 'credential', \${userId}, \${process.env.SEED_PASSWORD_HASH}, \${now}, \${now})
-    ON CONFLICT DO NOTHING
   \`;
 
-  // Insert organization
-  await sql\`
-    INSERT INTO organization (id, name, slug, created_at)
-    VALUES (\${orgId}, \${process.env.SEED_PROJECT_SLUG}, \${process.env.SEED_PROJECT_SLUG}, \${now})
-    ON CONFLICT (slug) DO NOTHING
+  // Upsert organization
+  const [org] = await sql\`
+    INSERT INTO organizations (id, name, slug, created_at)
+    VALUES (\${newOrgId}, \${process.env.SEED_PROJECT_SLUG}, \${process.env.SEED_PROJECT_SLUG}, \${now})
+    ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+    RETURNING id
   \`;
+  const orgId = org.id;
 
-  // Insert owner membership
+  // Upsert owner membership
   await sql\`
-    INSERT INTO member (id, organization_id, user_id, role, created_at)
+    INSERT INTO members (id, organization_id, user_id, role, created_at)
     VALUES (\${crypto.randomUUID()}, \${orgId}, \${userId}, 'owner', \${now})
     ON CONFLICT DO NOTHING
   \`;

@@ -82,10 +82,16 @@ export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
 		selectedManifests,
 	);
 
-	// 8. Write .claude/settings.json
+	// 8. Remove migration history (new project uses drizzle-kit push, not migrate)
+	await rm(join(input.targetDir, "packages", "drizzle", "migrations"), {
+		recursive: true,
+		force: true,
+	});
+
+	// 9. Write .claude/settings.json
 	await writeClaudeSettings(input.targetDir);
 
-	// 9. Git init + commit
+	// 10. Git init + commit
 	await execFile("git", ["init", "--initial-branch=main"], {
 		cwd: input.targetDir,
 	});

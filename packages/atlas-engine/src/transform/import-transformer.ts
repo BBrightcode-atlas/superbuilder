@@ -1,8 +1,15 @@
 import { DYNAMIC_IMPORT_PATTERNS, STATIC_IMPORT_MAP } from "./import-map";
 
 export function transformImportPath(importPath: string): string | null {
+	// Exact match first
 	if (STATIC_IMPORT_MAP[importPath]) {
 		return STATIC_IMPORT_MAP[importPath];
+	}
+	// Prefix match for subpaths (e.g. @superbuilder/core-ui/shadcn/card → @repo/ui/shadcn/card)
+	for (const [from, to] of Object.entries(STATIC_IMPORT_MAP)) {
+		if (importPath.startsWith(`${from}/`)) {
+			return `${to}${importPath.slice(from.length)}`;
+		}
 	}
 	for (const { pattern, replacement } of DYNAMIC_IMPORT_PATTERNS) {
 		const match = importPath.match(pattern);
