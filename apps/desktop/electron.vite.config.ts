@@ -105,9 +105,6 @@ export default defineConfig({
 				process.env.FEATURES_SERVER_URL,
 				"http://localhost:3002",
 			),
-			"process.env.SUPABASE_ACCESS_TOKEN": defineEnv(
-				process.env.SUPABASE_ACCESS_TOKEN,
-			),
 			"process.env.VERCEL_TOKEN": defineEnv(process.env.VERCEL_TOKEN),
 			"process.env.NEON_API_KEY": defineEnv(process.env.NEON_API_KEY),
 			"process.env.SUPERBUILDER_FEATURES_PATH": defineEnv(

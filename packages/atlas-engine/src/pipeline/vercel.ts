@@ -41,7 +41,7 @@ export async function deployToVercel(opts: {
 	}
 
 	const queryParams = opts.teamId ? `?teamId=${opts.teamId}` : "";
-	const framework = opts.framework ?? "vite";
+	const framework = opts.framework === undefined ? "vite" : opts.framework;
 
 	// Parse gitOwner/gitRepo from repoUrl (e.g., "https://github.com/org/repo")
 	const urlMatch = opts.repoUrl.match(/github\.com\/([^/]+)\/([^/.]+)/);

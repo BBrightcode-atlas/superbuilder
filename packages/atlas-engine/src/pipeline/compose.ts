@@ -144,7 +144,7 @@ export async function composePipeline(
 	}
 
 	// ── Step 5: vercel (NON-FATAL, opt-in, requires github) ──────
-	// Monorepo 배포: app (프론트엔드) + server (API) 2개 프로젝트
+	// 배포 순서: server → app/admin (server URL 필요) → landing (독립)
 	let vercelResult: VercelResult | undefined;
 	let vercelServerResult: VercelResult | undefined;
 	let vercelAdminResult: VercelResult | undefined;
@@ -158,37 +158,27 @@ export async function composePipeline(
 		await saveProject();
 		cb?.onStep?.("vercel", "start", "Vercel 프로젝트 배포 중...");
 		try {
-			const envVars: Record<string, string> = {
+			const sharedEnvVars: Record<string, string> = {
 				BETTER_AUTH_SECRET: betterAuthSecret,
 			};
 			if (neonResult?.databaseUrl) {
-				envVars.DATABASE_URL = neonResult.databaseUrl;
+				sharedEnvVars.DATABASE_URL = neonResult.databaseUrl;
 			}
 
-			// 1) App (프론트엔드) — apps/app, Vite (먼저 생성하여 URL 확보)
-			cb?.onLog?.("Vercel: 앱(프론트엔드) 프로젝트 생성 중...");
-			vercelResult = await deployToVercel({
-				repoUrl: githubResult.repoUrl,
-				projectName: input.projectName,
-				envVars,
-				token: opts.vercelToken,
-				teamId: opts.vercelTeamId,
-				rootDirectory: "apps/app",
-			});
-			cb?.onLog?.(`앱 배포: ${vercelResult.deploymentUrl}`);
-
-			// 2) Server (API) — apps/server, NestJS
-			// 서버에 앱 URL을 CORS, 서버 자신 URL을 AUTH URL로 전달
+			// URL 관례 (CORS 사전 설정용 — 실제 URL은 배포 후 확인)
+			const appUrl = `https://${input.projectName}.vercel.app`;
+			const adminUrl = `https://${input.projectName}-admin.vercel.app`;
 			const serverProjectName = `${input.projectName}-api`;
-			const serverUrl = `https://${serverProjectName}.vercel.app`;
+
+			// 1) Server (API) — 먼저 배포하여 실제 URL 확보
+			cb?.onLog?.("Vercel: 서버(API) 프로젝트 생성 중...");
 			const serverEnvVars: Record<string, string> = {
-				...envVars,
-				CORS_ORIGINS: `${vercelResult.deploymentUrl},${serverUrl},https://${input.projectName}-admin.vercel.app`,
-				BETTER_AUTH_URL: serverUrl,
+				...sharedEnvVars,
+				CORS_ORIGINS: `${appUrl},${adminUrl}`,
+				BETTER_AUTH_URL: `https://${serverProjectName}.vercel.app`,
 				APP_NAME: input.projectName,
 				NODE_ENV: "production",
 			};
-			cb?.onLog?.("Vercel: 서버(API) 프로젝트 생성 중...");
 			vercelServerResult = await deployToVercel({
 				repoUrl: githubResult.repoUrl,
 				projectName: serverProjectName,
@@ -202,39 +192,28 @@ export async function composePipeline(
 			});
 			cb?.onLog?.(`서버 배포: ${vercelServerResult.deploymentUrl}`);
 
-			// 3) App에 서버 URL 환경변수 추가 (서버 생성 후에야 URL을 알 수 있음)
-			cb?.onLog?.("Vercel: 앱에 API URL 환경변수 설정 중...");
-			const { vercelFetch } = await import("./vercel");
-			const appToken = opts.vercelToken ?? process.env.VERCEL_TOKEN ?? "";
-			const appQuery = opts.vercelTeamId ? `?teamId=${opts.vercelTeamId}` : "";
-			for (const ev of [
-				{ key: "VITE_API_URL", value: vercelServerResult.deploymentUrl },
-				{ key: "VITE_APP_NAME", value: input.projectName },
-			]) {
-				try {
-					await vercelFetch(
-						`/v10/projects/${vercelResult.projectId}/env${appQuery}`,
-						{
-							method: "POST",
-							body: JSON.stringify({
-								key: ev.key,
-								value: ev.value,
-								target: ["production", "preview", "development"],
-								type: "encrypted",
-							}),
-						},
-						appToken,
-					);
-				} catch {
-					// already exists 등 — non-fatal
-				}
-			}
+			// 2) App (프론트엔드) — server URL을 env에 포함하여 생성
+			cb?.onLog?.("Vercel: 앱(프론트엔드) 프로젝트 생성 중...");
+			const appEnvVars: Record<string, string> = {
+				...sharedEnvVars,
+				VITE_API_URL: vercelServerResult.deploymentUrl,
+				VITE_APP_NAME: input.projectName,
+			};
+			vercelResult = await deployToVercel({
+				repoUrl: githubResult.repoUrl,
+				projectName: input.projectName,
+				envVars: appEnvVars,
+				token: opts.vercelToken,
+				teamId: opts.vercelTeamId,
+				rootDirectory: "apps/app",
+			});
+			cb?.onLog?.(`앱 배포: ${vercelResult.deploymentUrl}`);
 
-			// 4) Admin — apps/admin, Vite
+			// 3) Admin — server URL을 env에 포함하여 생성
 			cb?.onLog?.("Vercel: 관리자(Admin) 프로젝트 생성 중...");
 			try {
 				const adminEnvVars: Record<string, string> = {
-					...envVars,
+					...sharedEnvVars,
 					VITE_API_URL: vercelServerResult.deploymentUrl,
 					VITE_APP_NAME: input.projectName,
 				};
@@ -253,11 +232,10 @@ export async function composePipeline(
 				);
 			}
 
-			// 5) Landing — apps/landing, Next.js
+			// 4) Landing — 독립적, 순서 무관
 			cb?.onLog?.("Vercel: 랜딩(Landing) 프로젝트 생성 중...");
 			try {
 				const landingEnvVars: Record<string, string> = {
-					VITE_APP_NAME: input.projectName,
 					NEXT_PUBLIC_APP_NAME: input.projectName,
 					NEXT_PUBLIC_APP_URL: vercelResult.deploymentUrl,
 				};
@@ -277,6 +255,40 @@ export async function composePipeline(
 				);
 			}
 
+			// 5) Server CORS에 실제 app/admin URL 반영 (관례 URL과 다를 경우 대비)
+			if (
+				vercelResult.deploymentUrl !== appUrl ||
+				(vercelAdminResult && vercelAdminResult.deploymentUrl !== adminUrl)
+			) {
+				const { vercelFetch } = await import("./vercel");
+				const token = opts.vercelToken ?? process.env.VERCEL_TOKEN ?? "";
+				const query = opts.vercelTeamId
+					? `?teamId=${opts.vercelTeamId}`
+					: "";
+				const actualCors = [
+					vercelResult.deploymentUrl,
+					vercelAdminResult?.deploymentUrl ?? adminUrl,
+				].join(",");
+				try {
+					// CORS_ORIGINS를 실제 URL로 갱신
+					await vercelFetch(
+						`/v10/projects/${vercelServerResult.projectId}/env${query}`,
+						{
+							method: "POST",
+							body: JSON.stringify({
+								key: "CORS_ORIGINS",
+								value: actualCors,
+								target: ["production", "preview", "development"],
+								type: "encrypted",
+							}),
+						},
+						token,
+					);
+				} catch {
+					// already exists — 사전 설정된 관례 URL이 유효하면 문제 없음
+				}
+			}
+
 			record.vercelProjectId = vercelResult.projectId;
 			record.vercelUrl = vercelResult.deploymentUrl;
 			record.vercelServerProjectId = vercelServerResult.projectId;
@@ -293,7 +305,7 @@ export async function composePipeline(
 			cb?.onStep?.(
 				"vercel",
 				"done",
-				`앱: ${vercelResult.deploymentUrl} | API: ${vercelServerResult.deploymentUrl} | Admin: ${vercelAdminResult?.deploymentUrl ?? "skip"} | Landing: ${vercelLandingResult?.deploymentUrl ?? "skip"}`,
+				`API: ${vercelServerResult.deploymentUrl} | 앱: ${vercelResult.deploymentUrl} | Admin: ${vercelAdminResult?.deploymentUrl ?? "skip"} | Landing: ${vercelLandingResult?.deploymentUrl ?? "skip"}`,
 			);
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);

@@ -88,3 +88,4 @@ superset-dev-data/
 !.codex/config.toml
 !.codex/commands
 !.codex/prompts
+.gstack/

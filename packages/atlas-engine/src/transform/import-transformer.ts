@@ -21,7 +21,7 @@ export function transformImportPath(importPath: string): string | null {
 }
 
 export function transformImports(source: string): string {
-	return source.replace(
+	let result = source.replace(
 		/(?:from\s+|import\s*\()(['"])(@superbuilder\/[^'"]+)\1/g,
 		(match, quote, importPath) => {
 			const transformed = transformImportPath(importPath);
@@ -34,4 +34,20 @@ export function transformImports(source: string): string {
 			return match;
 		},
 	);
+
+	// Rewrite relative schema imports (../schema, ../../schema, etc.)
+	// In feature-json layout, server code lives in packages/features/{name}/
+	// but schema lives in packages/drizzle/src/schema/features/{name}/
+	// So relative ../schema or ../../schema imports must become @repo/drizzle
+	result = result.replace(
+		/(?:from\s+|import\s*\()(['"])(\.\.\/(?:\.\.\/)*schema(?:\/[^'"]*)?)\1/g,
+		(match, quote, importPath) => {
+			return match.replace(
+				`${quote}${importPath}${quote}`,
+				`${quote}@repo/drizzle${quote}`,
+			);
+		},
+	);
+
+	return result;
 }

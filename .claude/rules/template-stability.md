@@ -104,10 +104,16 @@ export const schema = {
 
 **적용 시점:** Better Auth 스키마 수정 시, 새 Better Auth 플러그인 추가 시.
 
-## 6. Compose Pipeline — 환경변수 타이밍
+## 6. Compose Pipeline — 배포 순서
 
-**규칙:** compose pipeline에서 app 프로젝트에 `VITE_API_URL` 등 환경변수를 추가한 후, 반드시 재배포를 트리거해야 한다. 초기 배포는 env var 없이 시작되므로 env 설정만으로는 반영되지 않는다.
+**규칙:** Vercel 배포 순서는 server → app → admin → landing. server를 먼저 배포하여 실제 API URL을 확보한 뒤, app/admin 생성 시 `VITE_API_URL`을 env에 포함시킨다. 이렇게 하면 첫 빌드부터 API 연결이 정상 동작한다.
 
-**미해결:** 현재 pipeline은 env var 설정 후 재배포를 트리거하지 않음. git push가 발생하면 자연 해결되지만, compose만으로는 첫 배포에 env var가 누락됨.
+**배포 순서:**
+1. **server** (API) — 먼저 배포, 실제 URL 확보
+2. **app** (프론트엔드) — server URL을 `VITE_API_URL`로 포함하여 생성
+3. **admin** — server URL을 `VITE_API_URL`로 포함하여 생성
+4. **landing** — 독립적, 순서 무관
+
+**CORS 처리:** server 생성 시 app/admin URL을 관례(`{name}.vercel.app`)로 사전 설정. 실제 배포 URL이 관례와 다르면 CORS_ORIGINS를 사후 갱신.
 
 **적용 시점:** compose pipeline 수정 시, Vercel 환경변수 관련 코드 변경 시.

@@ -1,14 +1,15 @@
 {
-	"attribution": {
-		"commit": "",
-		"pr": ""
-	},
-	"enabledPlugins": {
-		"superpowers@claude-plugins-official": true,
-		"context7@claude-plugins-official": true,
-		"typescript-lsp@claude-plugins-official": true,
-		"skill-creator@claude-plugins-official": true,
-		"chrome-devtools-mcp@claude-plugins-official": true,
-		"document-skills@anthropic-agent-skills": true
-	}
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "document-skills@anthropic-agent-skills": true,
+    "context-mode@context-mode": true
+  }
 }
