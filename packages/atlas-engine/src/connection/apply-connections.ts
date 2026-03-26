@@ -53,7 +53,11 @@ const MARKER_MAP: Record<string, MarkerTarget> = {
 	},
 	schemaExport: {
 		file: "packages/drizzle/src/schema/index.ts",
-		marker: "SCHEMA_EXPORTS",
+		marker: "SCHEMAS",
+	},
+	tablesFilter: {
+		file: "packages/drizzle/drizzle.config.ts",
+		marker: "TABLES",
 	},
 };
 

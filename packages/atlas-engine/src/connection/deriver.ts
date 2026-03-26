@@ -39,7 +39,7 @@ export function deriveConnections(
 	if (provides.schema) {
 		const { tables } = provides.schema;
 		conn.schemaExport = `export * from "./features/${featureId}";`;
-		conn.tablesFilter = tables.map((t) => `"${t}"`).join(", ");
+		conn.tablesFilter = tables.map((t) => `"${t}",`).join("\n    ");
 	}
 
 	if (provides.widget) {

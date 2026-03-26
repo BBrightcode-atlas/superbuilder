@@ -54,7 +54,11 @@ const B2B2C_MARKER_MAP: Record<string, MarkerTarget> = {
 	// Schema (동일)
 	schemaExport: {
 		file: "packages/drizzle/src/schema/index.ts",
-		marker: "SCHEMA_EXPORTS",
+		marker: "SCHEMAS",
+	},
+	tablesFilter: {
+		file: "packages/drizzle/drizzle.config.ts",
+		marker: "TABLES",
 	},
 	// Landing (신규)
 	landingImports: {

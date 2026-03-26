@@ -4,7 +4,7 @@ export const STATIC_IMPORT_MAP: Record<string, string> = {
 	"@superbuilder/core-trpc/client": "@/lib/trpc",
 	"@superbuilder/core-trpc": "@repo/core/trpc",
 	"@superbuilder/core-db": "@repo/drizzle",
-	"@superbuilder/core-schema": "@repo/drizzle",
+	"@superbuilder/core-schema": "@repo/drizzle/schema",
 	"@superbuilder/core-logger": "@repo/core/logger",
 	"@superbuilder/core-ui": "@repo/ui",
 };
@@ -19,7 +19,7 @@ export const DYNAMIC_IMPORT_PATTERNS: Array<{
 	},
 	{
 		pattern: /^@superbuilder\/feature-([^/]+)\/schema$/,
-		replacement: "@repo/drizzle",
+		replacement: "@repo/drizzle/schema",
 	},
 	{
 		pattern: /^@superbuilder\/feature-([^/]+)\/common$/,
