@@ -111,15 +111,7 @@ function DashboardLayout() {
 							setWorkspaceSidebarWidth(DEFAULT_WORKSPACE_SIDEBAR_WIDTH)
 						}
 					>
-						{isV2CloudEnabled ? (
-							<V2WorkspaceSidebar isCollapsed={isWorkspaceSidebarCollapsed()} />
-						) : (
-							<WorkspaceSidebar
-								isCollapsed={isWorkspaceSidebarCollapsed()}
-								activeProjectId={currentWorkspace?.projectId ?? null}
-								activeProjectName={currentWorkspace?.project?.name ?? null}
-							/>
-						)}
+						<V2WorkspaceSidebar isCollapsed={isWorkspaceSidebarCollapsed()} />
 					</ResizablePanel>
 				)}
 				<Outlet />

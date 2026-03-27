@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { SectionNav } from "./components/SectionNav";
 import { V2ProjectSection } from "./components/V2ProjectSection";
 import { V2SidebarEmptyState } from "./components/V2SidebarEmptyState";
 import { V2SidebarFooter } from "./components/V2SidebarFooter";
@@ -36,6 +37,20 @@ export function V2WorkspaceSidebar({
 			<V2SidebarHeader isCollapsed={isCollapsed} />
 
 			<div className="flex-1 overflow-y-auto hide-scrollbar">
+				{/* Superbuilder sections */}
+				<SectionNav isCollapsed={isCollapsed} />
+
+				{/* Divider */}
+				<div className="mx-3 border-t border-border" />
+
+				{/* Workspaces */}
+				{!isCollapsed && (
+					<div className="px-2 py-1">
+						<span className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+							Workspaces
+						</span>
+					</div>
+				)}
 				{isEmpty && !isCollapsed ? (
 					<V2SidebarEmptyState />
 				) : (

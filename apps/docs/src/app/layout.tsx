@@ -67,6 +67,14 @@ export default function Layout({ children }: LayoutProps<"/">) {
 			className={`${inter.className} overscroll-none`}
 			suppressHydrationWarning
 		>
+			<head>
+				{/* Apply theme from URL param before paint to prevent white flash in iframe embeds */}
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `(function(){var t=new URLSearchParams(location.search).get("theme");if(t==="dark")document.documentElement.classList.add("dark");else if(t==="light")document.documentElement.classList.remove("dark")})()`,
+					}}
+				/>
+			</head>
 			<body className="flex flex-col min-h-screen overscroll-none">
 				<OutlitProviderWrapper>
 					<RootProvider>
