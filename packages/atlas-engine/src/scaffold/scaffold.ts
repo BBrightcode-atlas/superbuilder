@@ -8,6 +8,8 @@ import { applyConnections } from "../connection/apply-connections";
 import { scanFeatureManifests } from "../manifest/scanner";
 import { copyFeaturesToTemplate } from "./copy-features";
 import { transformDirectory } from "./transform-files";
+import { generateClaudeMd } from "./generate-claude-md";
+import { generateMcpJson } from "./generate-mcp-json";
 import type { ScaffoldInput, ScaffoldResult } from "./types";
 import { updateFeatureExports } from "./update-package-exports";
 
@@ -25,8 +27,11 @@ const DEFAULT_FEATURES_REPO = "BBrightcode-atlas/superbuilder-features";
  * 5. Import 변환 (@superbuilder/* → @repo/*)
  * 6. Connection 적용 ([ATLAS:*] markers)
  * 7. Package exports 업데이트
- * 8. .claude/settings.json 생성
- * 9. git init + commit
+ * 8. Remove migration history
+ * 9. .claude/settings.json 생성
+ * 10. CLAUDE.md 동적 생성 (feature 기반)
+ * 11. .mcp.json 생성
+ * 12. git init + commit
  */
 export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
 	const templateRepo = input.templateRepo ?? DEFAULT_TEMPLATE;
@@ -91,7 +96,22 @@ export async function scaffold(input: ScaffoldInput): Promise<ScaffoldResult> {
 	// 9. Write .claude/settings.json
 	await writeClaudeSettings(input.targetDir);
 
-	// 10. Git init + commit
+	// 10. Generate CLAUDE.md (dynamic, feature-based)
+	const claudeMd = generateClaudeMd({
+		projectName: input.projectName,
+		features: selectedManifests,
+	});
+	await writeFile(join(input.targetDir, "CLAUDE.md"), claudeMd, "utf-8");
+
+	// 11. Generate .mcp.json
+	const mcpJson = generateMcpJson();
+	await writeFile(
+		join(input.targetDir, ".mcp.json"),
+		`${JSON.stringify(mcpJson, null, "\t")}\n`,
+		"utf-8",
+	);
+
+	// 12. Git init + commit
 	await execFile("git", ["init", "--initial-branch=main"], {
 		cwd: input.targetDir,
 	});
