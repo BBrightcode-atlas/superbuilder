@@ -76,7 +76,7 @@ describe("deriveConnections", () => {
 		};
 		const result = deriveConnections("blog", provides);
 		expect(result.schemaExport).toBe('export * from "./features/blog";');
-		expect(result.tablesFilter).toBe('"posts", "post_tags"');
+		expect(result.tablesFilter).toBe('"posts",\n    "post_tags",');
 	});
 
 	it("derives widget export from widget provides", () => {
@@ -105,7 +105,7 @@ describe("deriveConnections", () => {
 			schema: { tables: ["users"] },
 		};
 		const result = deriveConnections("profile", provides);
-		expect(result.tablesFilter).toBe('"users"');
+		expect(result.tablesFilter).toBe('"users",');
 	});
 
 	it("handles kebab-case feature ids", () => {

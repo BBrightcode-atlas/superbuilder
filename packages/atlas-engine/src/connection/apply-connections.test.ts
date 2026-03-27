@@ -85,8 +85,8 @@ function setupTemplateFiles() {
 		].join("\n"),
 	);
 
-	// apps/admin/src/router.tsx
-	const adminDir = join(TEST_DIR, "apps", "admin", "src");
+	// apps/system-admin/src/router.tsx
+	const adminDir = join(TEST_DIR, "apps", "system-admin", "src");
 	mkdirSync(adminDir, { recursive: true });
 	writeFileSync(
 		join(adminDir, "router.tsx"),
@@ -105,7 +105,7 @@ function setupTemplateFiles() {
 	mkdirSync(schemaDir, { recursive: true });
 	writeFileSync(
 		join(schemaDir, "index.ts"),
-		["// [ATLAS:SCHEMA_EXPORTS]", "// [/ATLAS:SCHEMA_EXPORTS]"].join("\n"),
+		["// [ATLAS:SCHEMAS]", "// [/ATLAS:SCHEMAS]"].join("\n"),
 	);
 
 	// packages/widgets/package.json
@@ -215,7 +215,7 @@ describe("applyConnections", () => {
 		applyConnections(TEST_DIR, manifest);
 
 		const adminRouter = readFileSync(
-			join(TEST_DIR, "apps", "admin", "src", "router.tsx"),
+			join(TEST_DIR, "apps", "system-admin", "src", "router.tsx"),
 			"utf-8",
 		);
 		expect(adminRouter).toContain(

@@ -44,11 +44,11 @@ const B2B2C_MARKER_MAP: Record<string, MarkerTarget> = {
 	},
 	// Admin (동일)
 	adminRoutesImport: {
-		file: "apps/admin/src/router.tsx",
+		file: "apps/system-admin/src/router.tsx",
 		marker: "IMPORTS",
 	},
 	adminRoutesSpread: {
-		file: "apps/admin/src/router.tsx",
+		file: "apps/system-admin/src/router.tsx",
 		marker: "ADMIN_ROUTES",
 	},
 	// Schema (동일)

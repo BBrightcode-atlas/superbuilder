@@ -13,26 +13,26 @@ afterEach(() => {
 });
 
 describe("transformDirectory", () => {
-	it("transforms @superbuilder imports in .ts files", async () => {
+	it("transforms relative schema imports in .ts files", async () => {
 		writeFileSync(
 			join(TEST_DIR, "test.ts"),
-			'import { auth } from "@superbuilder/core-auth";',
+			'import { posts } from "../../schema";',
 		);
 		const count = await transformDirectory(TEST_DIR);
 		expect(readFileSync(join(TEST_DIR, "test.ts"), "utf-8")).toBe(
-			'import { auth } from "@repo/core/auth";',
+			'import { posts } from "@repo/drizzle/schema";',
 		);
 		expect(count).toBe(1);
 	});
 
-	it("transforms .tsx files", async () => {
+	it("transforms relative schema imports in .tsx files", async () => {
 		writeFileSync(
 			join(TEST_DIR, "comp.tsx"),
-			'import { Feature } from "@superbuilder/core-ui";',
+			'import { users } from "../../../schema/core";',
 		);
 		const count = await transformDirectory(TEST_DIR);
 		expect(readFileSync(join(TEST_DIR, "comp.tsx"), "utf-8")).toBe(
-			'import { Feature } from "@repo/ui";',
+			'import { users } from "@repo/drizzle/schema";',
 		);
 		expect(count).toBe(1);
 	});
@@ -40,11 +40,11 @@ describe("transformDirectory", () => {
 	it("skips non-ts files", async () => {
 		writeFileSync(
 			join(TEST_DIR, "data.json"),
-			'{"from": "@superbuilder/core-auth"}',
+			'{"from": "../../schema"}',
 		);
 		const count = await transformDirectory(TEST_DIR);
 		expect(readFileSync(join(TEST_DIR, "data.json"), "utf-8")).toBe(
-			'{"from": "@superbuilder/core-auth"}',
+			'{"from": "../../schema"}',
 		);
 		expect(count).toBe(0);
 	});
@@ -53,18 +53,30 @@ describe("transformDirectory", () => {
 		mkdirSync(join(TEST_DIR, "sub"), { recursive: true });
 		writeFileSync(
 			join(TEST_DIR, "sub/nested.ts"),
-			'import { db } from "@superbuilder/core-db";',
+			'import { db } from "../../../schema";',
 		);
 		const count = await transformDirectory(TEST_DIR);
 		expect(readFileSync(join(TEST_DIR, "sub/nested.ts"), "utf-8")).toBe(
-			'import { db } from "@repo/drizzle";',
+			'import { db } from "@repo/drizzle/schema";',
 		);
 		expect(count).toBe(1);
 	});
 
-	it("skips files without @superbuilder imports", async () => {
+	it("skips files without relative schema imports", async () => {
 		writeFileSync(join(TEST_DIR, "clean.ts"), 'import React from "react";');
 		const count = await transformDirectory(TEST_DIR);
+		expect(count).toBe(0);
+	});
+
+	it("does not transform @repo imports (already correct)", async () => {
+		writeFileSync(
+			join(TEST_DIR, "already.ts"),
+			'import { auth } from "@repo/core/auth";',
+		);
+		const count = await transformDirectory(TEST_DIR);
+		expect(readFileSync(join(TEST_DIR, "already.ts"), "utf-8")).toBe(
+			'import { auth } from "@repo/core/auth";',
+		);
 		expect(count).toBe(0);
 	});
 
