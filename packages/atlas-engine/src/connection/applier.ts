@@ -2,19 +2,29 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 /**
  * Insert content before the closing [/ATLAS:{marker}] tag in a file.
- * Does nothing if the file does not exist or the marker is not found.
+ * Warns if file or marker is missing instead of silently skipping.
  */
 export function insertAtMarker(
 	filePath: string,
 	marker: string,
 	content: string,
 ): void {
-	if (!existsSync(filePath)) return;
+	if (!existsSync(filePath)) {
+		console.warn(
+			`[atlas] marker target file not found: ${filePath} (marker: ${marker})`,
+		);
+		return;
+	}
 	const text = readFileSync(filePath, "utf-8");
 	const closingTag = `[/ATLAS:${marker}]`;
 	const idx = text.indexOf(closingTag);
 
-	if (idx === -1) return;
+	if (idx === -1) {
+		console.warn(
+			`[atlas] marker [ATLAS:${marker}] not found in ${filePath}`,
+		);
+		return;
+	}
 
 	// Find the start of the line containing the closing tag to preserve indentation
 	let lineStart = idx;
