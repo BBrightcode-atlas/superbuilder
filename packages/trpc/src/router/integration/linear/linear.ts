@@ -108,7 +108,7 @@ export const linearRouter = {
 							eq(integrationConnections.provider, "linear"),
 						),
 					)
-					.returning({ id: integrationConnections.id });
+					.returning();
 			});
 
 			if (result.length === 0) {

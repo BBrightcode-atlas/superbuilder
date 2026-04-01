@@ -7,7 +7,7 @@ import { cache } from "react";
 
 import { env } from "@/env";
 
-const posthog = new PostHog(env.NEXT_PUBLIC_POSTHOG_KEY, {
+const posthog = new PostHog(env.NEXT_PUBLIC_POSTHOG_KEY!, {
 	host: env.NEXT_PUBLIC_POSTHOG_HOST,
 	flushAt: 1,
 	flushInterval: 0,

@@ -410,10 +410,7 @@ export const taskRouter = {
 					.update(tasks)
 					.set({ deletedAt: new Date() })
 					.where(and(eq(tasks.id, input), isNull(tasks.deletedAt)))
-					.returning({
-						externalProvider: tasks.externalProvider,
-						externalId: tasks.externalId,
-					});
+					.returning();
 
 				const txid = await getCurrentTxid(tx);
 

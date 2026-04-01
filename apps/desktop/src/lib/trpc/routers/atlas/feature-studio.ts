@@ -117,7 +117,7 @@ export const createAtlasFeatureStudioRouter = () =>
 					role: z.enum(["system", "assistant", "user"]),
 					content: z.string(),
 					kind: z.enum(["conversation", "event", "note"]).optional(),
-					metadata: z.record(z.unknown()).optional(),
+					metadata: z.record(z.string(), z.unknown()).optional(),
 				}),
 			)
 			.mutation(async ({ input }) => {
@@ -140,7 +140,7 @@ export const createAtlasFeatureStudioRouter = () =>
 					]),
 					content: z.string(),
 					version: z.number().optional(),
-					metadata: z.record(z.unknown()).optional(),
+					metadata: z.record(z.string(), z.unknown()).optional(),
 				}),
 			)
 			.mutation(async ({ input }) => {

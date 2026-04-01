@@ -39,7 +39,7 @@ const defaultResolveSessionOrganizationDeps: ResolveSessionOrganizationDeps = {
 					sql`${authSchema.sessions.activeOrganizationId} is not distinct from ${previousActiveOrganizationId}`,
 				),
 			)
-			.returning({ id: authSchema.sessions.id });
+			.returning();
 
 		return updatedSessions.length > 0;
 	},

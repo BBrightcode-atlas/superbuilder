@@ -108,7 +108,7 @@ export const chatRouter = {
 						eq(chatSessions.createdBy, ctx.session.user.id),
 					),
 				)
-				.returning({ id: chatSessions.id });
+				.returning();
 
 			return { updated: !!updated };
 		}),
@@ -134,7 +134,7 @@ export const chatRouter = {
 						eq(chatSessions.createdBy, ctx.session.user.id),
 					),
 				)
-				.returning({ id: chatSessions.id });
+				.returning();
 
 			return { deleted: !!deleted };
 		}),
@@ -183,7 +183,7 @@ export const chatRouter = {
 						eq(chatSessions.createdBy, ctx.session.user.id),
 					),
 				)
-				.returning({ id: chatSessions.id });
+				.returning();
 
 			return { updated: !!updated };
 		}),

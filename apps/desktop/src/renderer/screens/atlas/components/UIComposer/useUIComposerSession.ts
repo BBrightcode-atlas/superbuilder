@@ -20,10 +20,13 @@ const SENTINEL = "___UI_COMPOSER_DONE___";
  */
 const AGENT_PROMPT_COMMANDS: Record<AgentType, (filePath: string) => string> = {
 	claude: (fp) => `claude --dangerously-skip-permissions -p "$(cat '${fp}')"`,
+	amp: (fp) => `amp "$(cat '${fp}')"`,
 	codex: (fp) =>
 		`codex -c model_reasoning_effort="high" --dangerously-bypass-approvals-and-sandbox -q -- "$(cat '${fp}')"`,
 	gemini: (fp) => `gemini --yolo "$(cat '${fp}')"`,
+	mastracode: (fp) => `mastracode "$(cat '${fp}')"`,
 	opencode: (fp) => `opencode --prompt "$(cat '${fp}')"`,
+	pi: (fp) => `pi "$(cat '${fp}')"`,
 	copilot: (fp) => `copilot -i "$(cat '${fp}')" --yolo`,
 	"cursor-agent": (fp) => `cursor-agent --yolo "$(cat '${fp}')"`,
 };
