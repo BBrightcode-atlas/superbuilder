@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { SUPERSET_MANAGED_BINARIES } from "./agent-wrappers-common";
+import {
+	SUPERSET_MANAGED_BINARIES,
+	type SupersetManagedBinary,
+} from "./desktop-agent-capabilities";
 import { BASH_DIR, BIN_DIR, ZSH_DIR } from "./paths";
 
 export interface ShellWrapperPaths {
@@ -85,7 +88,7 @@ function buildManagedCommandPrelude(shellName: string, binDir: string): string {
 	if (shellName === "fish") {
 		const escapedBinDir = escapeFishDoubleQuoted(binDir);
 		return SUPERSET_MANAGED_BINARIES.map(
-			(name) =>
+			(name: SupersetManagedBinary) =>
 				`functions -q ${name}; and functions -e ${name}
 function ${name}
   set -l _superset_wrapper "${escapedBinDir}/${name}"
@@ -99,7 +102,7 @@ end`,
 	}
 
 	return SUPERSET_MANAGED_BINARIES.map(
-		(name) =>
+		(name: SupersetManagedBinary) =>
 			`unalias ${name} 2>/dev/null || true
 ${name}() {
   _superset_wrapper=${quoteShellLiteral(`${binDir}/${name}`)}
@@ -215,6 +218,15 @@ ${SUPERSET_ENV_RESTORE}
 ${buildZshPrecmdHook(paths.BIN_DIR)}
 ${buildPathPrependFunction(paths.BIN_DIR)}
 rehash 2>/dev/null || true
+# One-shot shell-ready marker for preset command timing.
+# Uses precmd so it fires AFTER direnv and other hooks complete,
+# right before the first prompt is displayed.
+_superset_shell_ready() {
+  precmd_functions=(\${precmd_functions:#_superset_shell_ready})
+  printf '\\033]777;superset-shell-ready\\007'
+}
+# Keep our hook LAST so it fires after direnv and other precmd hooks complete.
+precmd_functions=(\${precmd_functions[@]} _superset_shell_ready)
 export ZDOTDIR="$_superset_home"
 `;
 	const wroteZlogin = writeFileIfChanged(zloginPath, zloginScript, 0o644);
@@ -258,6 +270,33 @@ ${buildPathPrependFunction(paths.BIN_DIR)}
 hash -r 2>/dev/null || true
 # Minimal prompt (path/env shown in toolbar) - emerald to match app theme
 export PS1=$'\\[\\e[1;38;2;52;211;153m\\]❯\\[\\e[0m\\] '
+# One-shot shell-ready marker for preset command timing.
+# Uses PROMPT_COMMAND so it fires AFTER direnv and other hooks complete.
+# Supports both scalar and array PROMPT_COMMAND (Bash 5.1+).
+_superset_shell_ready() {
+  printf '\\033]777;superset-shell-ready\\007'
+  if [[ "$(declare -p PROMPT_COMMAND 2>/dev/null)" == "declare -a"* ]]; then
+    local -a _new=()
+    for _cmd in "\${PROMPT_COMMAND[@]}"; do
+      [[ "$_cmd" != "_superset_shell_ready" ]] && _new+=("$_cmd")
+    done
+    PROMPT_COMMAND=("\${_new[@]}")
+  else
+    PROMPT_COMMAND="\${_superset_orig_prompt_cmd}"
+    unset _superset_orig_prompt_cmd
+  fi
+  unset -f _superset_shell_ready
+}
+if [[ "$(declare -p PROMPT_COMMAND 2>/dev/null)" == "declare -a"* ]]; then
+  PROMPT_COMMAND=("\${PROMPT_COMMAND[@]}" "_superset_shell_ready")
+else
+  _superset_orig_prompt_cmd="\${PROMPT_COMMAND}"
+  if [[ -n "\${_superset_orig_prompt_cmd}" ]]; then
+    PROMPT_COMMAND="\${_superset_orig_prompt_cmd};_superset_shell_ready"
+  else
+    PROMPT_COMMAND="_superset_shell_ready"
+  fi
+fi
 `;
 	const changed = writeFileIfChanged(rcfilePath, script, 0o644);
 	console.log(`[agent-setup] ${changed ? "Updated" : "Verified"} bash wrapper`);
@@ -293,7 +332,7 @@ export function getShellArgs(
 		return [
 			"-l",
 			"--init-command",
-			`set -l _superset_bin "${escapedBinDir}"; contains -- "$_superset_bin" $PATH; or set -gx PATH "$_superset_bin" $PATH`,
+			`set -l _superset_bin "${escapedBinDir}"; contains -- "$_superset_bin" $PATH; or set -gx PATH "$_superset_bin" $PATH; function _superset_shell_ready --on-event fish_prompt; printf '\\033]777;superset-shell-ready\\007'; functions -e _superset_shell_ready; end`,
 		];
 	}
 	if (["zsh", "sh", "ksh"].includes(shellName)) {

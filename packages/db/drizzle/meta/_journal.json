@@ -208,15 +208,29 @@
     {
       "idx": 29,
       "version": "7",
-      "when": 1773580047114,
-      "tag": "0029_add_composer_projects",
+      "when": 1773379684617,
+      "tag": "0028_v2_workspace_changes",
       "breakpoints": true
     },
     {
       "idx": 30,
       "version": "7",
+      "when": 1773580047114,
+      "tag": "0029_add_composer_projects",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
       "when": 1773656151659,
       "tag": "0030_add_feature_queue_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1774280966321,
+      "tag": "0029_use_v2_workspace_id",
       "breakpoints": true
     }
   ]

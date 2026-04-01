@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it } from "bun:test";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import type { SearchPatchEvent } from "./search";
 import {
 	invalidateAllSearchIndexes,
 	patchSearchIndexesForRoot,
 	searchFiles,
 } from "./search";
-import type { WorkspaceFsWatchEvent } from "./types";
 
 const tempRoots: string[] = [];
 
@@ -28,16 +28,8 @@ async function createTempRoot(): Promise<string> {
 	return rootPath;
 }
 
-function createFileEvent(
-	event: Omit<
-		Extract<WorkspaceFsWatchEvent, { type: "create" | "update" | "delete" }>,
-		"workspaceId"
-	>,
-): Extract<WorkspaceFsWatchEvent, { type: "create" | "update" | "delete" }> {
-	return {
-		workspaceId: "workspace-test",
-		...event,
-	};
+function createPatchEvent(event: SearchPatchEvent): SearchPatchEvent {
+	return event;
 }
 
 describe("patchSearchIndexesForRoot", () => {
@@ -57,11 +49,10 @@ describe("patchSearchIndexesForRoot", () => {
 		await fs.writeFile(betaPath, "export const beta = 2;\n");
 
 		patchSearchIndexesForRoot(rootPath, [
-			createFileEvent({
-				type: "create",
+			createPatchEvent({
+				kind: "create",
 				absolutePath: betaPath,
 				isDirectory: false,
-				revision: 1,
 			}),
 		]);
 
@@ -86,11 +77,10 @@ describe("patchSearchIndexesForRoot", () => {
 		await fs.rm(alphaPath);
 
 		patchSearchIndexesForRoot(rootPath, [
-			createFileEvent({
-				type: "delete",
+			createPatchEvent({
+				kind: "delete",
 				absolutePath: alphaPath,
 				isDirectory: false,
-				revision: 1,
 			}),
 		]);
 
@@ -118,11 +108,10 @@ describe("patchSearchIndexesForRoot", () => {
 		await fs.writeFile(hiddenPath, "SECRET_TOKEN=1\n");
 
 		patchSearchIndexesForRoot(rootPath, [
-			createFileEvent({
-				type: "create",
+			createPatchEvent({
+				kind: "create",
 				absolutePath: hiddenPath,
 				isDirectory: false,
-				revision: 1,
 			}),
 		]);
 
@@ -140,5 +129,116 @@ describe("patchSearchIndexesForRoot", () => {
 		expect(hiddenResults.map((result) => result.absolutePath)).toContain(
 			hiddenPath,
 		);
+	});
+
+	it("rebuilds search indexes after a directory rename", async () => {
+		const rootPath = await createTempRoot();
+		const oldDirectoryPath = path.join(rootPath, "old-dir");
+		const newDirectoryPath = path.join(rootPath, "new-dir");
+		const oldFilePath = path.join(oldDirectoryPath, "target.ts");
+		const newFilePath = path.join(newDirectoryPath, "target.ts");
+
+		await fs.mkdir(oldDirectoryPath, { recursive: true });
+		await fs.writeFile(oldFilePath, "export const target = 1;\n");
+
+		await searchFiles({
+			rootPath,
+			query: "old-dir/target.ts",
+		});
+
+		await fs.rename(oldDirectoryPath, newDirectoryPath);
+
+		patchSearchIndexesForRoot(rootPath, [
+			createPatchEvent({
+				kind: "rename",
+				absolutePath: newDirectoryPath,
+				oldAbsolutePath: oldDirectoryPath,
+				isDirectory: true,
+			}),
+		]);
+
+		const oldPathResults = await searchFiles({
+			rootPath,
+			query: "old-dir/target.ts",
+		});
+		const newPathResults = await searchFiles({
+			rootPath,
+			query: "new-dir/target.ts",
+		});
+
+		expect(
+			oldPathResults.some(
+				(result) => result.relativePath === "old-dir/target.ts",
+			),
+		).toEqual(false);
+		expect(newPathResults[0]?.absolutePath).toEqual(newFilePath);
+		expect(newPathResults[0]?.relativePath).toEqual("new-dir/target.ts");
+	});
+});
+
+describe("searchFiles", () => {
+	it("prioritizes exact filename matches ahead of fuzzy path matches", async () => {
+		const rootPath = await createTempRoot();
+		const exactMatchPath = path.join(rootPath, "WorkspaceFiles.tsx");
+		const fuzzyMatchPath = path.join(rootPath, "hooks", "useWorkspaceFiles.ts");
+
+		await fs.mkdir(path.dirname(fuzzyMatchPath), { recursive: true });
+		await fs.writeFile(exactMatchPath, "export const exact = true;\n");
+		await fs.writeFile(fuzzyMatchPath, "export const fuzzy = true;\n");
+
+		const results = await searchFiles({
+			rootPath,
+			query: "WorkspaceFiles.tsx",
+			limit: 5,
+		});
+
+		expect(results[0]?.absolutePath).toEqual(exactMatchPath);
+		expect(results).toHaveLength(1);
+
+		const fuzzyResults = await searchFiles({
+			rootPath,
+			query: "useWorkspaceFiles",
+			limit: 5,
+		});
+
+		expect(fuzzyResults[0]?.absolutePath).toEqual(fuzzyMatchPath);
+	});
+
+	it("normalizes exact relative path queries before lookup", async () => {
+		const rootPath = await createTempRoot();
+		const targetPath = path.join(rootPath, "src", "file.ts");
+
+		await fs.mkdir(path.dirname(targetPath), { recursive: true });
+		await fs.writeFile(targetPath, "export const value = true;\n");
+
+		const results = await searchFiles({
+			rootPath,
+			query: "./src/file.ts",
+			limit: 5,
+		});
+
+		expect(results[0]?.absolutePath).toEqual(targetPath);
+		expect(results[0]?.relativePath).toEqual("src/file.ts");
+	});
+
+	it("returns every compact path collision instead of dropping later entries", async () => {
+		const rootPath = await createTempRoot();
+		const nestedPath = path.join(rootPath, "foo", "bar.ts");
+		const flatPath = path.join(rootPath, "foo-bar.ts");
+
+		await fs.mkdir(path.dirname(nestedPath), { recursive: true });
+		await fs.writeFile(nestedPath, "export const nested = true;\n");
+		await fs.writeFile(flatPath, "export const flat = true;\n");
+
+		const results = await searchFiles({
+			rootPath,
+			query: "foobarts",
+			limit: 5,
+		});
+
+		expect(results.map((result) => result.absolutePath)).toEqual([
+			flatPath,
+			nestedPath,
+		]);
 	});
 });

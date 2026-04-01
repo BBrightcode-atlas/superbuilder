@@ -12,6 +12,7 @@
 import { mock } from "bun:test";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { z } from "zod";
 
 process.env.NODE_ENV = "test";
 process.env.SKIP_ENV_VALIDATION = "1";
@@ -151,6 +152,36 @@ mock.module("main/lib/analytics", () => ({
 
 const mockTable = (name: string) => ({ id: `${name}_id` });
 
+const agentPresetOverrideSchema = z.object({
+	id: z.string(),
+	enabled: z.boolean().optional(),
+	label: z.string().optional(),
+	description: z.string().nullable().optional(),
+	command: z.string().optional(),
+	promptCommand: z.string().optional(),
+	promptCommandSuffix: z.string().nullable().optional(),
+	taskPromptTemplate: z.string().optional(),
+	model: z.string().optional(),
+});
+
+const agentPresetOverrideEnvelopeSchema = z.object({
+	version: z.literal(1),
+	presets: z.array(agentPresetOverrideSchema),
+});
+
+const agentCustomDefinitionSchema = z.object({
+	id: z.string().regex(/^custom:/),
+	kind: z.literal("terminal"),
+	label: z.string(),
+	description: z.string().optional(),
+	command: z.string(),
+	promptCommand: z.string().optional(),
+	promptCommandSuffix: z.string().optional(),
+	promptTransport: z.enum(["argv", "stdin"]).optional(),
+	taskPromptTemplate: z.string(),
+	enabled: z.boolean().optional(),
+});
+
 const localDbMock = () => ({
 	projects: mockTable("projects"),
 	workspaces: mockTable("workspaces"),
@@ -161,6 +192,10 @@ const localDbMock = () => ({
 	organizationMembers: mockTable("organization_members"),
 	tasks: mockTable("tasks"),
 	workspaceSections: mockTable("workspace_sections"),
+	agentPresetOverrideSchema,
+	agentPresetOverrideEnvelopeSchema,
+	agentCustomDefinitionSchema,
+	PROMPT_TRANSPORTS: ["argv", "stdin"],
 	EXTERNAL_APPS: [],
 	EXECUTION_MODES: ["sequential", "parallel"],
 	BRANCH_PREFIX_MODES: ["none", "github", "author", "custom"],

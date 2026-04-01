@@ -9,11 +9,11 @@ export type SettingsSection =
 	| "keyboard"
 	| "behavior"
 	| "git"
+	| "agents"
 	| "terminal"
 	| "models"
 	| "integrations"
 	| "billing"
-	| "devices"
 	| "apikeys"
 	| "permissions"
 	| "project";

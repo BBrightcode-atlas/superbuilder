@@ -7,7 +7,9 @@ import {
 	projects,
 	type SelectProject,
 	settings,
+	workspaceSections,
 	workspaces,
+	worktrees,
 } from "@superset/local-db";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray, isNotNull, isNull, not } from "drizzle-orm";
@@ -27,6 +29,7 @@ import { resolveDefaultEditor } from "../external";
 import {
 	activateProject,
 	getBranchWorkspace,
+	selectNextActiveWorkspace,
 	setLastActiveWorkspace,
 	touchWorkspace,
 } from "../workspaces/utils/db-helpers";
@@ -40,6 +43,7 @@ import {
 	sanitizeAuthorPrefix,
 } from "../workspaces/utils/git";
 import { getSimpleGitWithShellPath } from "../workspaces/utils/git-client";
+import { execWithShellEnv } from "../workspaces/utils/shell-env";
 import { getDefaultProjectColor } from "./utils/colors";
 import { discoverAndSaveProjectIcon } from "./utils/favicon-discovery";
 import { fetchGitHubOwner, getGitHubAvatarUrl } from "./utils/github";
@@ -53,6 +57,44 @@ type OpenNewResult =
 	| { canceled: false; project: Project }
 	| { canceled: false; needsGitInit: true; selectedPath: string }
 	| OpenNewError;
+
+/**
+ * Parses and transforms raw GitHub PR data from CLI output.
+ * Filters valid PR objects and maps them to our internal format.
+ */
+function isRawPullRequest(item: unknown): item is {
+	number: number;
+	title: string;
+	url: string;
+	state: string;
+	isDraft: boolean;
+} {
+	if (typeof item !== "object" || item === null) return false;
+
+	const value = item as Record<string, unknown>;
+	return (
+		typeof value.number === "number" &&
+		typeof value.title === "string" &&
+		typeof value.url === "string" &&
+		typeof value.state === "string" &&
+		typeof value.isDraft === "boolean"
+	);
+}
+
+function parsePullRequests(raw: unknown) {
+	if (!Array.isArray(raw)) return [];
+
+	return raw.filter(isRawPullRequest).map((pr) => ({
+		prNumber: pr.number,
+		title: pr.title,
+		url: pr.url,
+		state: pr.isDraft
+			? "draft"
+			: pr.state === "OPEN"
+				? "open"
+				: pr.state.toLowerCase(),
+	}));
+}
 
 type FolderOutcome =
 	| { status: "success"; project: Project }
@@ -295,6 +337,206 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 				.orderBy(desc(projects.lastOpenedAt))
 				.all();
 		}),
+
+		listPullRequests: publicProcedure
+			.input(z.object({ projectId: z.string() }))
+			.query(async ({ input }) => {
+				const project = localDb
+					.select()
+					.from(projects)
+					.where(eq(projects.id, input.projectId))
+					.get();
+				if (!project) return [];
+
+				try {
+					const { stdout } = await execWithShellEnv(
+						"gh",
+						[
+							"pr",
+							"list",
+							"--state",
+							"open",
+							"--limit",
+							"30",
+							"--json",
+							"number,title,url,state,isDraft",
+						],
+						{ cwd: project.mainRepoPath },
+					);
+					const raw: unknown = JSON.parse(stdout.trim() || "[]");
+					return parsePullRequests(raw);
+				} catch (err) {
+					console.warn("[listPullRequests] Failed to list PRs:", err);
+					return [];
+				}
+			}),
+
+		searchPullRequests: publicProcedure
+			.input(
+				z.object({
+					projectId: z.string(),
+					query: z.string(),
+				}),
+			)
+			.query(async ({ input }) => {
+				const project = localDb
+					.select()
+					.from(projects)
+					.where(eq(projects.id, input.projectId))
+					.get();
+				if (!project) return [];
+
+				try {
+					const { stdout } = await execWithShellEnv(
+						"gh",
+						[
+							"pr",
+							"list",
+							"--state",
+							"all",
+							"--search",
+							input.query,
+							"--limit",
+							"100",
+							"--json",
+							"number,title,url,state,isDraft",
+						],
+						{ cwd: project.mainRepoPath, timeout: 10_000 },
+					);
+					const raw: unknown = JSON.parse(stdout.trim() || "[]");
+					return parsePullRequests(raw);
+				} catch (err) {
+					console.warn("[searchPullRequests] Failed to search PRs:", err);
+					return [];
+				}
+			}),
+
+		listIssues: publicProcedure
+			.input(z.object({ projectId: z.string() }))
+			.query(async ({ input }) => {
+				const project = localDb
+					.select()
+					.from(projects)
+					.where(eq(projects.id, input.projectId))
+					.get();
+				if (!project) return [];
+
+				try {
+					const { stdout } = await execWithShellEnv(
+						"gh",
+						[
+							"issue",
+							"list",
+							"--state",
+							"open",
+							"--limit",
+							"30",
+							"--json",
+							"number,title,url,state,labels",
+						],
+						{ cwd: project.mainRepoPath, timeout: 10000 },
+					);
+					const raw: unknown = JSON.parse(stdout.trim() || "[]");
+
+					// Runtime validation with zod schema
+					const IssueListItemSchema = z.object({
+						number: z.number(),
+						title: z.string(),
+						url: z.string(),
+						state: z.string(),
+						labels: z.array(z.unknown()).optional(),
+					});
+
+					const issuesArray = z.array(IssueListItemSchema).safeParse(raw);
+					if (!issuesArray.success) {
+						console.warn(
+							"[listIssues] Invalid response format:",
+							issuesArray.error,
+						);
+						return [];
+					}
+
+					return issuesArray.data.map((issue) => ({
+						issueNumber: issue.number,
+						title: issue.title,
+						url: issue.url,
+						state: issue.state === "OPEN" ? "open" : issue.state.toLowerCase(),
+					}));
+				} catch (err) {
+					console.warn("[listIssues] Failed to list issues:", err);
+					return [];
+				}
+			}),
+
+		getIssueContent: publicProcedure
+			.input(
+				z.object({
+					projectId: z.string(),
+					issueNumber: z.number().int().positive(),
+				}),
+			)
+			.query(async ({ input }) => {
+				const project = localDb
+					.select()
+					.from(projects)
+					.where(eq(projects.id, input.projectId))
+					.get();
+				if (!project) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: `Project ${input.projectId} not found`,
+					});
+				}
+
+				try {
+					const { stdout } = await execWithShellEnv(
+						"gh",
+						[
+							"issue",
+							"view",
+							String(input.issueNumber),
+							"--json",
+							"number,title,body,url,state,author,createdAt,updatedAt",
+						],
+						{ cwd: project.mainRepoPath, timeout: 10000 },
+					);
+					const raw: unknown = JSON.parse(stdout.trim() || "{}");
+
+					// Runtime validation with zod schema
+					const IssueSchema = z.object({
+						number: z.number(),
+						title: z.string(),
+						body: z.string(),
+						url: z.string(),
+						state: z.string(),
+						author: z.object({ login: z.string() }).optional(),
+						createdAt: z.string().optional(),
+						updatedAt: z.string().optional(),
+					});
+
+					const issue = IssueSchema.parse(raw);
+
+					return {
+						number: issue.number,
+						title: issue.title,
+						body: issue.body || "",
+						url: issue.url,
+						state: issue.state === "OPEN" ? "open" : issue.state.toLowerCase(),
+						author: issue.author?.login,
+						createdAt: issue.createdAt,
+						updatedAt: issue.updatedAt,
+					};
+				} catch (err) {
+					console.warn(
+						`[getIssueContent] Failed to fetch issue #${input.issueNumber}:`,
+						err,
+					);
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: `Failed to fetch issue #${input.issueNumber}: ${err instanceof Error ? err.message : String(err)}`,
+					});
+				}
+			}),
 
 		selectDirectory: publicProcedure
 			.input(
@@ -1337,12 +1579,19 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 						.run();
 				}
 
-				// Hide the project by setting tabOrder to null
 				localDb
-					.update(projects)
-					.set({ tabOrder: null })
-					.where(eq(projects.id, input.id))
+					.delete(worktrees)
+					.where(eq(worktrees.projectId, input.id))
 					.run();
+
+				localDb
+					.delete(workspaceSections)
+					.where(eq(workspaceSections.projectId, input.id))
+					.run();
+
+				deleteProjectIcon(input.id);
+
+				localDb.delete(projects).where(eq(projects.id, input.id)).run();
 
 				// Update active workspace if it was in this project
 				const currentSettings = localDb.select().from(settings).get();
@@ -1350,19 +1599,7 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 					currentSettings?.lastActiveWorkspaceId &&
 					closedWorkspaceIds.includes(currentSettings.lastActiveWorkspaceId)
 				) {
-					const remainingWorkspaces = localDb
-						.select()
-						.from(workspaces)
-						.orderBy(desc(workspaces.lastOpenedAt))
-						.all();
-
-					localDb
-						.update(settings)
-						.set({
-							lastActiveWorkspaceId: remainingWorkspaces[0]?.id ?? null,
-						})
-						.where(eq(settings.id, 1))
-						.run();
+					setLastActiveWorkspace(selectNextActiveWorkspace());
 				}
 
 				const terminalWarning =

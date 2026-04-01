@@ -1,13 +1,11 @@
+import { useCurrentPlan } from "renderer/hooks/useCurrentPlan";
 import { authClient } from "renderer/lib/auth-client";
 import type { GatedFeature } from "./constants";
 import { paywall } from "./Paywall";
 
-type UserPlan = "free" | "pro" | "enterprise";
-
 export function usePaywall() {
 	const { data: session } = authClient.useSession();
-
-	const userPlan: UserPlan = (session?.session?.plan as UserPlan) ?? "free";
+	const userPlan = useCurrentPlan();
 
 	function hasAccess(_feature: GatedFeature): boolean {
 		// Superbuilder: all features unlocked in local desktop mode
