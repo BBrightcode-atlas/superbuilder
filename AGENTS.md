@@ -105,6 +105,20 @@ bun run clean:workspaces   # Clean all workspace node_modules
 - `biome format` = format only
 - Use `bun run lint:fix` to fix all issues automatically
 
+## 에이전트 팀 조직
+
+3개 팀 + Tech Lead 체제로 운영. 상세: `docs/superpowers/specs/2026-04-01-team-organization-design.md`
+
+| 역할 | 스킬 호출 | 책임 | Linear 접두어 |
+|---|---|---|---|
+| **Tech Lead** | `/superbuilder-tech-lead` | 아키텍처 결정, ADR, 팀 간 정렬 | `TL:` |
+| **Desktop Team** | `/superbuilder-desktop-team` | Electron UI, 렌더러, tRPC 라우터 | `DT:` |
+| **Engine Team** | `/superbuilder-engine-team` | atlas-engine, compose pipeline, 배포 | `EG:` |
+| **Ecosystem Team** | `/superbuilder-ecosystem-team` | features, template, 크로스레포 정합성 | `EC:` |
+
+각 팀은 Design / Build / Quality 디비전 + SENTINEL(Codex 독립 검증) 구조.
+Linear 프로젝트: SBD (https://linear.app/bbrightcode/team/SBD/all)
+
 ## Agent Rules
 1. **Type safety** - avoid `any` unless necessary
 2. **Prefer `gh` CLI** - when performing git operations (PRs, issues, checkout, etc.), prefer the GitHub CLI (`gh`) over raw `git` commands where possible
