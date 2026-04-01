@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "team": "engine",
+  "techLead": "superbuilder-tech-lead",
+  "linearProject": "SBD",
+  "linearPrefix": "EG:",
+  "currentMilestone": null,
+  "currentPhase": null,
+  "currentStep": null,
+  "spec": null,
+  "plan": null,
+  "milestones": {}
+}

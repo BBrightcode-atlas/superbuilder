@@ -74,6 +74,20 @@ Desktop UI 없이 CLI에서 직접 프로젝트를 생성한다. `@superbuilder/
 
 ---
 
+## 팀 조직
+
+| 커맨드 | 설명 |
+|--------|------|
+| `/superbuilder-tech-lead` | Tech Lead — 아키텍처 결정, ADR, 팀 간 정렬 |
+| `/superbuilder-desktop-team` | Desktop Team — Electron UI, 렌더러, tRPC 라우터 |
+| `/superbuilder-engine-team` | Engine Team — atlas-engine, compose pipeline, 배포 |
+| `/superbuilder-ecosystem-team` | Ecosystem Team — features, template, 크로스레포 정합성 |
+
+각 팀은 Design / Build / Quality 디비전 + SENTINEL(Codex 독립 검증) 구조.
+상세: `docs/superpowers/specs/2026-04-01-team-organization-design.md`
+
+---
+
 ## 코드 품질 & CI
 
 | 커맨드 | 설명 |

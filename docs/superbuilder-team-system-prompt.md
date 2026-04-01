@@ -1,7 +1,12 @@
 # Superbuilder 자동화 개발 시스템 — 전체 프롬프트
 
-> Flotter 엔진 팀에서 검증된 에이전트 기반 자동화 개발 시스템.
-> 이 문서는 superbuilder 팀에 동일 시스템을 적용하기 위한 전체 정책/프로세스/프로토콜 레퍼런스.
+> **DEPRECATED** — 이 문서는 Flotter에서 가져온 초기 참조용입니다.
+> **Canonical source:** `docs/superpowers/specs/2026-04-01-team-organization-design.md`
+> 팀 조직, SENTINEL, Gate, dev-state.json 스키마는 canonical source를 따르세요.
+> 이 문서는 히스토리 참조용으로만 보존합니다.
+
+> ~~Flotter 엔진 팀에서 검증된 에이전트 기반 자동화 개발 시스템.~~
+> ~~이 문서는 superbuilder 팀에 동일 시스템을 적용하기 위한 전체 정책/프로세스/프로토콜 레퍼런스.~~
 
 ---
 

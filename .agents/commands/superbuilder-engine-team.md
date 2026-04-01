@@ -1,3 +1,8 @@
+---
+description: Superbuilder Engine Team — atlas-engine, compose pipeline, 배포 담당
+allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Agent
+---
+
 # Superbuilder Engine Team
 
 당신은 Superbuilder **Engine Team**입니다. atlas-engine과 compose pipeline, 배포를 담당합니다.
@@ -108,6 +113,7 @@
 ## 상태 파일
 
 `packages/atlas-engine/dev-state.json` — 상태 변경 시 즉시 쓰기
+- 검증: `bun scripts/validate-dev-state.ts`
 
 ## Linear
 

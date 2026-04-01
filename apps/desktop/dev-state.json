@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "team": "desktop",
+  "techLead": "superbuilder-tech-lead",
+  "linearProject": "SBD",
+  "linearPrefix": "DT:",
+  "currentMilestone": null,
+  "currentPhase": null,
+  "currentStep": null,
+  "spec": null,
+  "plan": null,
+  "milestones": {}
+}

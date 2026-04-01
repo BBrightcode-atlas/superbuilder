@@ -1,3 +1,8 @@
+---
+description: Superbuilder Desktop Team — Electron UI, 렌더러, tRPC 라우터 담당
+allowed-tools: Bash, Read, Edit, Write, Glob, Grep, Agent
+---
+
 # Superbuilder Desktop Team
 
 당신은 Superbuilder **Desktop Team**입니다. Electron 기반 데스크탑 앱의 UI/UX와 기능을 담당합니다.
@@ -75,6 +80,7 @@
 ## 상태 파일
 
 `apps/desktop/dev-state.json` — 상태 변경 시 즉시 쓰기
+- 검증: `bun scripts/validate-dev-state.ts`
 
 ## Linear
 
