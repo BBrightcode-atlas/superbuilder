@@ -11,8 +11,14 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import type { Socket } from "node:net";
 import * as path from "node:path";
-import { getShellArgs } from "../lib/agent-setup/shell-wrappers";
+import { DEFAULT_TERMINAL_SCROLLBACK } from "shared/constants";
+import {
+	getCommandShellArgs,
+	getShellArgs,
+} from "../lib/agent-setup/shell-wrappers";
+import { raceWithAbort, throwIfAborted } from "../lib/terminal/abort";
 import { buildSafeEnv } from "../lib/terminal/env";
+import { isTerminalAttachCanceledError } from "../lib/terminal/errors";
 import { HeadlessEmulator } from "../lib/terminal-host/headless-emulator";
 import type {
 	CreateOrAttachRequest,
@@ -28,6 +34,7 @@ import {
 	createFrameHeader,
 	PtySubprocessFrameDecoder,
 	PtySubprocessIpcType,
+	SHELL_READY_MARKER,
 } from "./pty-subprocess-ipc";
 
 // =============================================================================
@@ -46,6 +53,40 @@ const ATTACH_FLUSH_TIMEOUT_MS = 500;
  * 2MB is generous - typical large paste is ~50KB.
  */
 const MAX_SUBPROCESS_STDIN_QUEUE_BYTES = 2_000_000;
+
+/**
+ * Emulator backlog high-water mark.
+ * Once crossed, pause reading PTY output until the headless emulator catches up.
+ *
+ * This keeps PTY -> daemon -> renderer backpressure end-to-end instead of
+ * letting Session accumulate unbounded terminal output in memory.
+ */
+const EMULATOR_WRITE_QUEUE_HIGH_WATERMARK_BYTES = 1_000_000;
+
+/**
+ * Emulator backlog low-water mark for resuming PTY reads after a pause.
+ * Kept well below the high-water mark to avoid pause/resume thrash.
+ */
+const EMULATOR_WRITE_QUEUE_LOW_WATERMARK_BYTES = 250_000;
+
+/**
+ * How long to wait for the shell-ready marker before unblocking writes.
+ * 15s covers heavy setups like Nix-based devenv via direnv. On timeout,
+ * buffered writes flush immediately (same behavior as before this feature).
+ */
+const SHELL_READY_TIMEOUT_MS = 15_000;
+
+/** Shells whose wrapper files inject a {@link SHELL_READY_MARKER}. */
+const SHELLS_WITH_READY_MARKER = new Set(["zsh", "bash", "fish"]);
+
+/**
+ * Shell readiness lifecycle:
+ * - `pending`     — shell is initializing; user writes are buffered, escape sequences dropped
+ * - `ready`       — marker detected; buffered writes have been flushed
+ * - `timed_out`   — marker never arrived within timeout; writes unblocked
+ * - `unsupported` — shell has no marker (sh, ksh); writes pass through from the start
+ */
+type ShellReadyState = "pending" | "ready" | "timed_out" | "unsupported";
 
 type SpawnProcess = (
 	command: string,
@@ -70,6 +111,7 @@ export interface SessionOptions {
 	workspaceName?: string;
 	workspacePath?: string;
 	rootPath?: string;
+	command?: string;
 	scrollbackLines?: number;
 	spawnProcess?: SpawnProcess;
 }
@@ -77,6 +119,7 @@ export interface SessionOptions {
 export interface AttachedClient {
 	socket: Socket;
 	attachedAt: number;
+	attachToken: symbol;
 }
 
 // =============================================================================
@@ -89,6 +132,7 @@ export class Session {
 	readonly paneId: string;
 	readonly tabId: string;
 	readonly shell: string;
+	readonly command?: string;
 	readonly createdAt: Date;
 	private readonly spawnProcess: SpawnProcess;
 
@@ -107,10 +151,24 @@ export class Session {
 	private subprocessStdinQueuedBytes = 0;
 	private subprocessStdinDrainArmed = false;
 	private ptyPid: number | null = null;
+	private emulatorWriteBackpressured = false;
 
 	// Promise that resolves when PTY is ready to accept writes
 	private ptyReadyPromise: Promise<void>;
 	private ptyReadyResolve: (() => void) | null = null;
+
+	// Shell readiness — gates write() until the shell's first prompt.
+	// See ShellReadyState for lifecycle docs.
+	private shellReadyState: ShellReadyState;
+	private shellReadyTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	private preReadyStdinQueue: string[] = [];
+	// Marker scanner — tracks how many characters of SHELL_READY_MARKER
+	// we've matched so far. Held bytes are withheld from terminal output
+	// until we confirm a full match (discard them) or a mismatch (flush
+	// them as regular output). This prevents partial OSC sequences from
+	// ever reaching the renderer, even when the marker spans two Data frames.
+	private markerMatchPos = 0;
+	private markerHeldBytes = "";
 
 	private emulatorWriteQueue: string[] = [];
 	private emulatorWriteQueuedBytes = 0;
@@ -139,6 +197,7 @@ export class Session {
 		this.paneId = options.paneId;
 		this.tabId = options.tabId;
 		this.shell = options.shell || this.getDefaultShell();
+		this.command = options.command;
 		this.createdAt = new Date();
 		this.lastAttachedAt = new Date();
 		this.spawnProcess = options.spawnProcess ?? spawn;
@@ -148,19 +207,33 @@ export class Session {
 			this.ptyReadyResolve = resolve;
 		});
 
+		// zsh/bash/fish get shell-ready markers via our wrappers in
+		// shell-wrappers.ts. Other shells skip the gating entirely.
+		const shellName = this.shell.split("/").pop() || this.shell;
+		this.shellReadyState = SHELLS_WITH_READY_MARKER.has(shellName)
+			? "pending"
+			: "unsupported";
+
 		// Create headless emulator
 		this.emulator = new HeadlessEmulator({
 			cols: options.cols,
 			rows: options.rows,
-			scrollback: options.scrollbackLines ?? 2000,
+			scrollback: options.scrollbackLines ?? DEFAULT_TERMINAL_SCROLLBACK,
 		});
 
 		// Set initial CWD
 		this.emulator.setCwd(options.cwd);
 
-		// Listen for emulator output (query responses)
+		// The headless emulator responds to terminal queries (e.g. DA1,
+		// DSR) when no renderer client is attached. These responses must
+		// be forwarded to the subprocess immediately — even during shell
+		// init — because shells like fish send DA1 at startup and wait
+		// up to 10 seconds for a reply before disabling optional features.
+		// Unlike renderer-generated responses (which go through write()
+		// and are correctly dropped during init to avoid appearing as
+		// typed text), headless emulator responses are written directly
+		// to the PTY and consumed by the shell as protocol data.
 		this.emulator.onData((data) => {
-			// If no clients attached, send responses back to PTY
 			if (
 				this.attachedClients.size === 0 &&
 				this.subprocess &&
@@ -192,7 +265,9 @@ export class Session {
 		const processEnv = buildSafeEnv(envSource);
 		processEnv.TERM = "xterm-256color";
 
-		const shellArgs = getShellArgs(this.shell);
+		const shellArgs = this.command
+			? getCommandShellArgs(this.shell, this.command)
+			: getShellArgs(this.shell);
 		const subprocessPath = path.join(__dirname, "pty-subprocess.js");
 
 		// Spawn subprocess with filtered env to prevent leaking NODE_ENV etc.
@@ -233,6 +308,14 @@ export class Session {
 			this.handleSubprocessExit(-1);
 		});
 
+		// If the marker never arrives (broken wrapper, unsupported config),
+		// the timeout unblocks writes so the session degrades gracefully.
+		if (this.shellReadyState === "pending") {
+			this.shellReadyTimeoutId = setTimeout(() => {
+				this.resolveShellReady("timed_out");
+			}, SHELL_READY_TIMEOUT_MS);
+		}
+
 		// Store pending spawn config
 		this.pendingSpawn = {
 			shell: this.shell,
@@ -242,6 +325,9 @@ export class Session {
 			rows,
 			env: processEnv,
 		};
+
+		// Command is now passed via shell args (e.g., bash -lc "command"),
+		// so the PTY process exits when the command finishes.
 	}
 
 	private pendingSpawn: {
@@ -280,7 +366,37 @@ export class Session {
 
 			case PtySubprocessIpcType.Data: {
 				if (payload.length === 0) break;
-				const data = payload.toString("utf8");
+				let data = payload.toString("utf8");
+
+				// Scan for SHELL_READY_MARKER one character at a time.
+				// Matching bytes are held back from output; on full match
+				// they're discarded and readiness resolves. On mismatch
+				// they're flushed as regular terminal output.
+				if (this.shellReadyState === "pending") {
+					let output = "";
+					for (let i = 0; i < data.length; i++) {
+						if (data[i] === SHELL_READY_MARKER[this.markerMatchPos]) {
+							this.markerHeldBytes += data[i];
+							this.markerMatchPos++;
+							if (this.markerMatchPos === SHELL_READY_MARKER.length) {
+								// Full match — discard held bytes, resolve
+								this.markerHeldBytes = "";
+								this.markerMatchPos = 0;
+								this.resolveShellReady("ready");
+								output += data.slice(i + 1);
+								break;
+							}
+						} else {
+							// Mismatch — flush held bytes as regular output
+							output += this.markerHeldBytes + data[i];
+							this.markerHeldBytes = "";
+							this.markerMatchPos = 0;
+						}
+					}
+					data = output;
+				}
+
+				if (data.length === 0) break;
 
 				this.enqueueEmulatorWrite(data);
 
@@ -354,6 +470,7 @@ export class Session {
 			this.ptyReadyResolve();
 			this.ptyReadyResolve = null;
 		}
+		this.resolveShellReady("timed_out");
 
 		this.resetProcessState();
 	}
@@ -488,7 +605,8 @@ export class Session {
 
 	private enqueueEmulatorWrite(data: string): void {
 		this.emulatorWriteQueue.push(data);
-		this.emulatorWriteQueuedBytes += data.length;
+		this.emulatorWriteQueuedBytes += Buffer.byteLength(data, "utf8");
+		this.maybePauseSubprocessStdoutForEmulatorBackpressure();
 		this.scheduleEmulatorWrite();
 	}
 
@@ -529,17 +647,30 @@ export class Session {
 
 			let chunk = this.emulatorWriteQueue[0];
 			if (chunk.length > MAX_CHUNK_CHARS) {
-				this.emulatorWriteQueue[0] = chunk.slice(MAX_CHUNK_CHARS);
-				chunk = chunk.slice(0, MAX_CHUNK_CHARS);
+				let splitAt = MAX_CHUNK_CHARS;
+				const prev = chunk.charCodeAt(splitAt - 1);
+				const next = chunk.charCodeAt(splitAt);
+				if (
+					prev >= 0xd800 &&
+					prev <= 0xdbff &&
+					next >= 0xdc00 &&
+					next <= 0xdfff
+				) {
+					splitAt--;
+				}
+				this.emulatorWriteQueue[0] = chunk.slice(splitAt);
+				chunk = chunk.slice(0, splitAt);
 			} else {
 				this.emulatorWriteQueue.shift();
 				this.emulatorWriteProcessedItems++;
 				this.resolveReachedSnapshotBoundaryWaiters();
 			}
 
-			this.emulatorWriteQueuedBytes -= chunk.length;
+			this.emulatorWriteQueuedBytes -= Buffer.byteLength(chunk, "utf8");
 			this.emulator.write(chunk);
 		}
+
+		this.maybeResumeSubprocessStdoutForEmulatorBackpressure();
 
 		if (this.emulatorWriteQueue.length > 0) {
 			setImmediate(() => {
@@ -672,48 +803,89 @@ export class Session {
 	/**
 	 * Attach a client to this session
 	 */
-	async attach(socket: Socket): Promise<TerminalSnapshot> {
+	async attach(
+		socket: Socket,
+		signal?: AbortSignal,
+	): Promise<TerminalSnapshot> {
 		if (this.disposed) {
 			throw new Error("Session disposed");
 		}
+		throwIfAborted(signal);
 
-		this.attachedClients.set(socket, {
+		const attachedClient: AttachedClient = {
 			socket,
 			attachedAt: Date.now(),
-		});
+			attachToken: Symbol("attach"),
+		};
+		this.attachedClients.set(socket, attachedClient);
 		this.lastAttachedAt = new Date();
 
 		// Use snapshot boundary flush for consistent state with continuous output.
 		// This ensures we capture all data received BEFORE attach was called,
 		// even if new data continues to arrive during the flush.
-		const reachedBoundary = await this.flushToSnapshotBoundary(
-			ATTACH_FLUSH_TIMEOUT_MS,
-		);
-
-		if (!reachedBoundary) {
-			console.warn(
-				`[Session ${this.sessionId}] Attach flush timeout after ${ATTACH_FLUSH_TIMEOUT_MS}ms`,
+		try {
+			const reachedBoundary = await raceWithAbort(
+				this.flushToSnapshotBoundary(ATTACH_FLUSH_TIMEOUT_MS),
+				signal,
 			);
-		}
 
-		return this.emulator.getSnapshotAsync();
+			if (!reachedBoundary) {
+				console.warn(
+					`[Session ${this.sessionId}] Attach flush timeout after ${ATTACH_FLUSH_TIMEOUT_MS}ms`,
+				);
+			}
+
+			await raceWithAbort(this.emulator.flush(), signal);
+			throwIfAborted(signal);
+			return this.emulator.getSnapshot();
+		} catch (error) {
+			if (isTerminalAttachCanceledError(error)) {
+				this.detachAttachedClient(socket, attachedClient);
+				throw error;
+			}
+			throw error;
+		}
 	}
 
 	/**
 	 * Detach a client from this session
 	 */
 	detach(socket: Socket): void {
+		this.detachAttachedClient(socket);
+	}
+
+	private detachAttachedClient(
+		socket: Socket,
+		attachedClient?: AttachedClient,
+	): void {
+		const currentClient = this.attachedClients.get(socket);
+		if (attachedClient && currentClient !== attachedClient) {
+			return;
+		}
 		this.attachedClients.delete(socket);
 		this.clientSocketsWaitingForDrain.delete(socket);
-		this.maybeResumeSubprocessStdout();
+		this.updateSubprocessStdoutFlow();
 	}
 
 	/**
-	 * Write data to PTY (non-blocking - sent to subprocess)
+	 * Write data to the PTY's stdin.
+	 *
+	 * While the shell is initializing (`pending` state), writes are triaged:
+	 * - **Escape sequences** (`\x1b`-prefixed) are dropped. These are stale
+	 *   responses from the renderer's xterm to terminal queries the shell
+	 *   sent during startup (DA, DSR). If queued and flushed later they
+	 *   appear as typed text like `?62;4;9;22c`.
+	 * - **Everything else** (preset commands, user input) is buffered and
+	 *   flushed in FIFO order once readiness resolves.
 	 */
 	write(data: string): void {
 		if (!this.subprocess || !this.subprocessReady) {
 			throw new Error("PTY not spawned");
+		}
+		if (this.shellReadyState === "pending") {
+			if (data.startsWith("\x1b")) return;
+			this.preReadyStdinQueue.push(data);
+			return;
 		}
 		this.sendWriteToSubprocess(data);
 	}
@@ -838,10 +1010,22 @@ export class Session {
 		this.subprocess = null;
 		this.subprocessReady = false;
 		this.subprocessDecoder = null;
+		const shellName = this.shell.split("/").pop() || this.shell;
+		this.shellReadyState = SHELLS_WITH_READY_MARKER.has(shellName)
+			? "pending"
+			: "unsupported";
+		if (this.shellReadyTimeoutId) {
+			clearTimeout(this.shellReadyTimeoutId);
+			this.shellReadyTimeoutId = null;
+		}
+		this.preReadyStdinQueue = [];
+		this.markerMatchPos = 0;
+		this.markerHeldBytes = "";
 		this.subprocessStdinQueue = [];
 		this.subprocessStdinQueuedBytes = 0;
 		this.subprocessStdinDrainArmed = false;
 		this.subprocessStdoutPaused = false;
+		this.emulatorWriteBackpressured = false;
 
 		this.emulatorWriteQueue = [];
 		this.emulatorWriteQueuedBytes = 0;
@@ -868,6 +1052,36 @@ export class Session {
 	// ===========================================================================
 
 	/**
+	 * Transition out of `pending`. Flushes any partially-matched marker
+	 * bytes as terminal output (they weren't a real marker), then sends
+	 * all buffered stdin writes to the PTY in order. Idempotent.
+	 */
+	private resolveShellReady(state: "ready" | "timed_out"): void {
+		if (this.shellReadyState !== "pending") return;
+		this.shellReadyState = state;
+		if (this.shellReadyTimeoutId) {
+			clearTimeout(this.shellReadyTimeoutId);
+			this.shellReadyTimeoutId = null;
+		}
+		// Flush held marker bytes — they weren't part of a full marker
+		if (this.markerHeldBytes.length > 0) {
+			this.enqueueEmulatorWrite(this.markerHeldBytes);
+			this.broadcastEvent("data", {
+				type: "data",
+				data: this.markerHeldBytes,
+			} satisfies TerminalDataEvent);
+			this.markerHeldBytes = "";
+		}
+		this.markerMatchPos = 0;
+		// Flush queued writes in FIFO order
+		const queue = this.preReadyStdinQueue;
+		this.preReadyStdinQueue = [];
+		for (const data of queue) {
+			this.sendWriteToSubprocess(data);
+		}
+	}
+
+	/**
 	 * Broadcast an event to all attached clients with backpressure awareness.
 	 */
 	private broadcastEvent(
@@ -887,45 +1101,79 @@ export class Session {
 			try {
 				const canWrite = socket.write(message);
 				if (!canWrite) {
-					// Socket buffer full - data will be queued but may cause memory pressure
-					// In production, could track this and pause PTY output temporarily
-					console.warn(
-						`[Session ${this.sessionId}] Client socket buffer full, output may be delayed`,
-					);
 					this.handleClientBackpressure(socket);
 				}
 			} catch {
 				this.attachedClients.delete(socket);
 				this.clientSocketsWaitingForDrain.delete(socket);
+				this.updateSubprocessStdoutFlow();
 			}
 		}
 	}
 
 	private handleClientBackpressure(socket: Socket): void {
-		// If the client can’t keep up, pause reading from the subprocess stdout.
-		// This will backpressure the subprocess stdout pipe, which in turn pauses
-		// PTY reads inside the subprocess (preventing runaway buffering/CPU).
-		if (!this.subprocessStdoutPaused && this.subprocess?.stdout) {
-			this.subprocessStdoutPaused = true;
-			this.subprocess.stdout.pause();
-		}
-
 		if (this.clientSocketsWaitingForDrain.has(socket)) return;
 		this.clientSocketsWaitingForDrain.add(socket);
+		this.updateSubprocessStdoutFlow();
 
-		socket.once("drain", () => {
+		const clearBackpressure = () => {
+			socket.off("drain", clearBackpressure);
+			socket.off("close", clearBackpressure);
+			socket.off("error", clearBackpressure);
 			this.clientSocketsWaitingForDrain.delete(socket);
-			this.maybeResumeSubprocessStdout();
-		});
+			this.updateSubprocessStdoutFlow();
+		};
+
+		socket.once("drain", clearBackpressure);
+		socket.once("close", clearBackpressure);
+		socket.once("error", clearBackpressure);
 	}
 
-	private maybeResumeSubprocessStdout(): void {
-		if (this.clientSocketsWaitingForDrain.size > 0) return;
-		if (!this.subprocessStdoutPaused) return;
-		if (!this.subprocess?.stdout) return;
+	private maybePauseSubprocessStdoutForEmulatorBackpressure(): void {
+		if (this.emulatorWriteBackpressured) return;
+		if (
+			this.emulatorWriteQueuedBytes < EMULATOR_WRITE_QUEUE_HIGH_WATERMARK_BYTES
+		) {
+			return;
+		}
 
+		this.emulatorWriteBackpressured = true;
+		console.warn(
+			`[Session ${this.sessionId}] Emulator backlog reached ${this.emulatorWriteQueuedBytes} bytes, pausing PTY reads`,
+		);
+		this.updateSubprocessStdoutFlow();
+	}
+
+	private maybeResumeSubprocessStdoutForEmulatorBackpressure(): void {
+		if (!this.emulatorWriteBackpressured) return;
+		if (
+			this.emulatorWriteQueuedBytes > EMULATOR_WRITE_QUEUE_LOW_WATERMARK_BYTES
+		) {
+			return;
+		}
+
+		this.emulatorWriteBackpressured = false;
+		this.updateSubprocessStdoutFlow();
+	}
+
+	private updateSubprocessStdoutFlow(): void {
+		const stdout = this.subprocess?.stdout;
+		if (!stdout) return;
+
+		const shouldPause =
+			this.clientSocketsWaitingForDrain.size > 0 ||
+			this.emulatorWriteBackpressured;
+
+		if (shouldPause) {
+			if (this.subprocessStdoutPaused) return;
+			this.subprocessStdoutPaused = true;
+			stdout.pause();
+			return;
+		}
+
+		if (!this.subprocessStdoutPaused) return;
 		this.subprocessStdoutPaused = false;
-		this.subprocess.stdout.resume();
+		stdout.resume();
 	}
 
 	/**
@@ -960,5 +1208,6 @@ export function createSession(request: CreateOrAttachRequest): Session {
 		workspaceName: request.workspaceName,
 		workspacePath: request.workspacePath,
 		rootPath: request.rootPath,
+		command: request.command,
 	});
 }

@@ -3,6 +3,7 @@ import {
 	processQueue,
 	type QueueApi,
 	type QueueProcessorCallbacks,
+	type UpdateItemResult,
 } from "@superbuilder/atlas-engine";
 import type { AppRouter } from "@superset/trpc";
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
@@ -184,7 +185,7 @@ export const createAtlasFeatureQueueRouter = () =>
 							params as Parameters<
 								typeof apiClient.featureQueue.updateItemStatus.mutate
 							>[0],
-						) as unknown as Promise<void>,
+						) as unknown as Promise<UpdateItemResult | undefined>,
 				};
 
 				const callbacks: QueueProcessorCallbacks = {

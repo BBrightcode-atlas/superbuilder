@@ -109,7 +109,7 @@ export async function PUT(
 						isNull(chatSessions.workspaceId),
 					),
 				)
-				.returning({ id: chatSessions.id });
+				.returning();
 		} catch (error) {
 			console.warn("[chat] failed to ensure workspace_id on session", {
 				sessionId,

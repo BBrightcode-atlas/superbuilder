@@ -12,50 +12,59 @@ import { useCreateWorkspace } from "renderer/react-query/workspaces/useCreateWor
 import { useOpenExternalWorktree } from "renderer/react-query/workspaces/useOpenExternalWorktree";
 import { useOpenTrackedWorktree } from "renderer/react-query/workspaces/useOpenTrackedWorktree";
 
-export type NewWorkspaceModalTab =
-	| "prompt"
-	| "issues"
-	| "pull-requests"
-	| "branches";
+export type LinkedIssue = {
+	slug: string; // "#123" for GitHub, "SUP-123" for internal
+	title: string;
+	source?: "github" | "internal";
+	url?: string; // GitHub issue URL
+	taskId?: string; // Internal task ID for navigation
+	number?: number; // GitHub issue number
+	state?: "open" | "closed";
+};
+
+export type LinkedPR = {
+	prNumber: number;
+	title: string;
+	url: string;
+	state: string;
+};
 
 export interface NewWorkspaceModalDraft {
-	activeTab: NewWorkspaceModalTab;
 	selectedProjectId: string | null;
 	prompt: string;
+	compareBaseBranch: string | null;
+	runSetupScript: boolean;
+	workspaceName: string;
+	workspaceNameEdited: boolean;
 	branchName: string;
 	branchNameEdited: boolean;
-	baseBranch: string | null;
-	showAdvanced: boolean;
-	runSetupScript: boolean;
-	branchSearch: string;
-	issuesQuery: string;
-	pullRequestsQuery: string;
-	branchesQuery: string;
+	linkedIssues: LinkedIssue[];
+	linkedPR: LinkedPR | null;
 }
 
 interface NewWorkspaceModalDraftState extends NewWorkspaceModalDraft {
 	draftVersion: number;
+	resetKey: number;
 }
 
 const initialDraft: NewWorkspaceModalDraft = {
-	activeTab: "prompt",
 	selectedProjectId: null,
 	prompt: "",
+	compareBaseBranch: null,
+	runSetupScript: true,
+	workspaceName: "",
+	workspaceNameEdited: false,
 	branchName: "",
 	branchNameEdited: false,
-	baseBranch: null,
-	showAdvanced: false,
-	runSetupScript: true,
-	branchSearch: "",
-	issuesQuery: "",
-	pullRequestsQuery: "",
-	branchesQuery: "",
+	linkedIssues: [],
+	linkedPR: null,
 };
 
 function buildInitialDraftState(): NewWorkspaceModalDraftState {
 	return {
 		...initialDraft,
 		draftVersion: 0,
+		resetKey: 0,
 	};
 }
 
@@ -65,9 +74,14 @@ interface NewWorkspaceModalActionMessages {
 	error: (err: unknown) => string;
 }
 
+interface NewWorkspaceModalActionOptions {
+	closeAndReset?: boolean;
+}
+
 interface NewWorkspaceModalDraftContextValue {
 	draft: NewWorkspaceModalDraft;
 	draftVersion: number;
+	resetKey: number;
 	closeModal: () => void;
 	closeAndResetDraft: () => void;
 	createWorkspace: ReturnType<typeof useCreateWorkspace>;
@@ -77,10 +91,10 @@ interface NewWorkspaceModalDraftContextValue {
 	runAsyncAction: <T>(
 		promise: Promise<T>,
 		messages: NewWorkspaceModalActionMessages,
+		options?: NewWorkspaceModalActionOptions,
 	) => Promise<T>;
 	updateDraft: (patch: Partial<NewWorkspaceModalDraft>) => void;
 	resetDraft: () => void;
-	resetDraftIfVersion: (draftVersion: number) => void;
 }
 
 const NewWorkspaceModalDraftContext =
@@ -110,18 +124,8 @@ export function NewWorkspaceModalDraftProvider({
 		setState((state) => ({
 			...initialDraft,
 			draftVersion: state.draftVersion + 1,
+			resetKey: state.resetKey + 1,
 		}));
-	}, []);
-
-	const resetDraftIfVersion = useCallback((draftVersion: number) => {
-		setState((state) =>
-			state.draftVersion !== draftVersion
-				? state
-				: {
-						...initialDraft,
-						draftVersion: state.draftVersion + 1,
-					},
-		);
 	}, []);
 
 	const closeAndResetDraft = useCallback(() => {
@@ -130,41 +134,41 @@ export function NewWorkspaceModalDraftProvider({
 	}, [onClose, resetDraft]);
 
 	const runAsyncAction = useCallback(
-		<T,>(promise: Promise<T>, messages: NewWorkspaceModalActionMessages) => {
-			const submitDraftVersion = state.draftVersion;
-			onClose();
+		<T,>(
+			promise: Promise<T>,
+			messages: NewWorkspaceModalActionMessages,
+			options?: NewWorkspaceModalActionOptions,
+		) => {
+			if (options?.closeAndReset !== false) {
+				onClose();
+				resetDraft();
+			}
 			toast.promise(promise, {
 				loading: messages.loading,
 				success: messages.success,
 				error: (err) => messages.error(err),
 			});
-			void promise
-				.then(() => {
-					resetDraftIfVersion(submitDraftVersion);
-				})
-				.catch(() => undefined);
 			return promise;
 		},
-		[onClose, resetDraftIfVersion, state.draftVersion],
+		[onClose, resetDraft],
 	);
 
 	const value = useMemo<NewWorkspaceModalDraftContextValue>(
 		() => ({
 			draft: {
-				activeTab: state.activeTab,
 				selectedProjectId: state.selectedProjectId,
 				prompt: state.prompt,
+				compareBaseBranch: state.compareBaseBranch,
+				runSetupScript: state.runSetupScript,
+				workspaceName: state.workspaceName,
+				workspaceNameEdited: state.workspaceNameEdited,
 				branchName: state.branchName,
 				branchNameEdited: state.branchNameEdited,
-				baseBranch: state.baseBranch,
-				showAdvanced: state.showAdvanced,
-				runSetupScript: state.runSetupScript,
-				branchSearch: state.branchSearch,
-				issuesQuery: state.issuesQuery,
-				pullRequestsQuery: state.pullRequestsQuery,
-				branchesQuery: state.branchesQuery,
+				linkedIssues: state.linkedIssues,
+				linkedPR: state.linkedPR,
 			},
 			draftVersion: state.draftVersion,
+			resetKey: state.resetKey,
 			closeModal: onClose,
 			closeAndResetDraft,
 			createWorkspace,
@@ -174,7 +178,6 @@ export function NewWorkspaceModalDraftProvider({
 			runAsyncAction,
 			updateDraft,
 			resetDraft,
-			resetDraftIfVersion,
 		}),
 		[
 			closeAndResetDraft,
@@ -184,7 +187,6 @@ export function NewWorkspaceModalDraftProvider({
 			openTrackedWorktree,
 			onClose,
 			resetDraft,
-			resetDraftIfVersion,
 			runAsyncAction,
 			state,
 			updateDraft,

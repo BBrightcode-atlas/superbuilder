@@ -1,0 +1,986 @@
+{
+  "version": "1.0.0",
+  "source": "BBrightcode-atlas/feature-atlas",
+  "features": {
+    "agent-desk": {
+      "name": "agent-desk",
+      "type": "agent",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "agentDesk",
+        "import": "agentDeskRouter",
+        "from": "@repo/features/agent-desk"
+      },
+      "server": {
+        "module": "packages/features-server/features/agent-desk/agent-desk.module.ts",
+        "router": "packages/features-server/features/agent-desk/agent-desk.router.ts",
+        "controller": "packages/features-server/features/agent-desk/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/agent-desk/"
+      },
+      "schema": {
+        "tables": [
+          "agent_desk_sessions",
+          "agent_desk_files",
+          "agent_desk_messages",
+          "agent_desk_executions",
+          "agent_desk_requirement_sources",
+          "agent_desk_normalized_requirements",
+          "agent_desk_linear_publish_jobs"
+        ],
+        "path": "packages/drizzle/src/schema/features/agent-desk/"
+      },
+      "agentServer": {}
+    },
+    "ai": {
+      "name": "ai",
+      "type": "agent",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "ai",
+        "import": "aiRouter",
+        "from": "@repo/features/ai"
+      },
+      "server": {
+        "module": "packages/features-server/features/ai/ai.module.ts",
+        "router": "packages/features-server/features/ai/ai.router.ts",
+        "controller": "packages/features-server/features/ai/controller/"
+      },
+      "client": {},
+      "schema": {
+        "tables": [
+          "agent_agents",
+          "agent_threads",
+          "agent_messages",
+          "agent_usage_logs"
+        ],
+        "path": "packages/drizzle/src/schema/features/agent/"
+      },
+      "agentServer": {}
+    },
+    "ai-image": {
+      "name": "ai-image",
+      "type": "agent",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "aiImage",
+        "import": "aiImageRouter",
+        "from": "@repo/features/ai-image"
+      },
+      "server": {
+        "module": "packages/features-server/features/ai-image/ai-image.module.ts",
+        "router": "packages/features-server/features/ai-image/ai-image.router.ts",
+        "controller": "packages/features-server/features/ai-image/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/ai-image/"
+      },
+      "schema": {
+        "tables": [
+          "ai_image_style_templates",
+          "ai_image_content_themes",
+          "ai_image_generations"
+        ],
+        "path": "packages/drizzle/src/schema/features/ai-image/"
+      },
+      "agentServer": {}
+    },
+    "analytics": {
+      "name": "analytics",
+      "type": "page",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "analytics",
+        "import": "analyticsRouter",
+        "from": "@repo/features/analytics"
+      },
+      "server": {
+        "module": "packages/features-server/features/analytics/analytics.module.ts",
+        "router": "packages/features-server/features/analytics/analytics.router.ts",
+        "controller": "packages/features-server/features/analytics/controller/"
+      },
+      "client": {
+        "admin": "apps/feature-admin/src/features/analytics/"
+      },
+      "schema": {
+        "tables": [
+          "system_analytics_events",
+          "system_daily_metrics"
+        ],
+        "path": "packages/drizzle/src/schema/features/analytics/"
+      }
+    },
+    "audit-log": {
+      "name": "audit-log",
+      "type": "page",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "auditLog",
+        "import": "auditLogRouter",
+        "from": "@repo/features/audit-log"
+      },
+      "server": {
+        "module": "packages/features-server/features/audit-log/audit-log.module.ts",
+        "router": "packages/features-server/features/audit-log/audit-log.router.ts",
+        "controller": "packages/features-server/features/audit-log/controller/"
+      },
+      "client": {
+        "admin": "apps/feature-admin/src/features/audit-log/"
+      },
+      "schema": {
+        "tables": [
+          "system_audit_logs"
+        ],
+        "path": "packages/drizzle/src/schema/features/audit-log/"
+      }
+    },
+    "blog": {
+      "name": "blog",
+      "type": "page",
+      "icon": "Box",
+      "group": "content",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "blog",
+        "import": "blogRouter",
+        "from": "@repo/features/blog"
+      },
+      "server": {
+        "module": "packages/features-server/features/blog/blog.module.ts",
+        "router": "packages/features-server/features/blog/blog.router.ts",
+        "controller": "packages/features-server/features/blog/controller/"
+      },
+      "client": {},
+      "schema": {
+        "tables": [
+          "blog_posts",
+          "blog_tags",
+          "blog_post_tags",
+          "blog_claps",
+          "blog_responses",
+          "blog_bookmarks"
+        ],
+        "path": "packages/drizzle/src/schema/features/blog/"
+      }
+    },
+    "board": {
+      "name": "board",
+      "type": "page",
+      "icon": "Box",
+      "group": "community",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "board",
+        "import": "boardRouter",
+        "from": "@repo/features/board"
+      },
+      "server": {
+        "module": "packages/features-server/features/board/board.module.ts",
+        "router": "packages/features-server/features/board/board.router.ts",
+        "controller": "packages/features-server/features/board/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/board/",
+        "admin": "apps/feature-admin/src/features/board/"
+      },
+      "schema": {
+        "tables": [
+          "board_boards",
+          "board_posts",
+          "board_post_attachments"
+        ],
+        "path": "packages/drizzle/src/schema/features/board/"
+      }
+    },
+    "booking": {
+      "name": "booking",
+      "type": "page",
+      "icon": "Box",
+      "group": "commerce",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "booking",
+        "import": "bookingMainRouter",
+        "from": "@repo/features/booking"
+      },
+      "server": {
+        "module": "packages/features-server/features/booking/booking.module.ts",
+        "router": "packages/features-server/features/booking/booking.router.ts",
+        "controller": "packages/features-server/features/booking/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/booking/",
+        "admin": "apps/feature-admin/src/features/booking/"
+      },
+      "schema": {
+        "tables": [
+          "booking_categories",
+          "booking_providers",
+          "booking_provider_categories",
+          "booking_session_products",
+          "booking_provider_products",
+          "booking_weekly_schedules",
+          "booking_schedule_overrides",
+          "booking_bookings",
+          "booking_refund_policy"
+        ],
+        "path": "packages/drizzle/src/schema/features/booking/"
+      }
+    },
+    "bookmark": {
+      "name": "bookmark",
+      "type": "widget",
+      "icon": "Box",
+      "group": "community",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "bookmark",
+        "import": "bookmarkRouter",
+        "from": "@repo/features/bookmark"
+      },
+      "server": {
+        "module": "packages/features-server/features/bookmark/bookmark.module.ts",
+        "router": "packages/features-server/features/bookmark/bookmark.router.ts",
+        "controller": "packages/features-server/features/bookmark/controller/"
+      },
+      "client": {},
+      "schema": {
+        "tables": [
+          "bookmark_bookmarks"
+        ],
+        "path": "packages/drizzle/src/schema/features/bookmark/"
+      },
+      "widget": {
+        "path": "packages/widgets/src/bookmark/",
+        "export": "@repo/widgets/bookmark"
+      }
+    },
+    "comment": {
+      "name": "comment",
+      "type": "widget",
+      "icon": "Box",
+      "group": "community",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "comment",
+        "import": "commentRouter",
+        "from": "@repo/features/comment"
+      },
+      "server": {
+        "module": "packages/features-server/features/comment/comment.module.ts",
+        "router": "packages/features-server/features/comment/comment.router.ts",
+        "controller": "packages/features-server/features/comment/controller/"
+      },
+      "client": {},
+      "schema": {
+        "tables": [
+          "comment_comments"
+        ],
+        "path": "packages/drizzle/src/schema/features/comment/"
+      },
+      "widget": {
+        "path": "packages/widgets/src/comment/",
+        "export": "@repo/widgets/comment"
+      }
+    },
+    "community": {
+      "name": "community",
+      "type": "page",
+      "icon": "Box",
+      "group": "community",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "community",
+        "import": "communityMainRouter",
+        "from": "@repo/features/community"
+      },
+      "server": {
+        "module": "packages/features-server/features/community/community.module.ts",
+        "router": "packages/features-server/features/community/community.router.ts",
+        "controller": "packages/features-server/features/community/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/community/",
+        "admin": "apps/feature-admin/src/features/community/"
+      },
+      "schema": {
+        "tables": [
+          "community_communities",
+          "community_posts",
+          "community_comments",
+          "community_votes",
+          "community_memberships",
+          "community_moderators",
+          "community_rules",
+          "community_flairs",
+          "community_reports",
+          "community_bans",
+          "community_mod_logs",
+          "community_saved_posts",
+          "community_user_karma"
+        ],
+        "path": "packages/drizzle/src/schema/features/community/"
+      }
+    },
+    "content-studio": {
+      "name": "content-studio",
+      "type": "page",
+      "icon": "Box",
+      "group": "content",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "contentStudio",
+        "import": "contentStudioRouter",
+        "from": "@repo/features/content-studio"
+      },
+      "server": {
+        "module": "packages/features-server/features/content-studio/content-studio.module.ts",
+        "router": "packages/features-server/features/content-studio/content-studio.router.ts",
+        "controller": "packages/features-server/features/content-studio/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/content-studio/",
+        "admin": "apps/feature-admin/src/features/content-studio/"
+      },
+      "schema": {
+        "tables": [
+          "studio_studios",
+          "studio_topics",
+          "studio_contents",
+          "studio_content_seo",
+          "studio_content_analysis",
+          "studio_recurrences",
+          "studio_edges",
+          "studio_ai_recurrences",
+          "studio_brand_profiles",
+          "studio_tone_presets"
+        ],
+        "path": "packages/drizzle/src/schema/features/content-studio/"
+      }
+    },
+    "coupon": {
+      "name": "coupon",
+      "type": "page",
+      "icon": "Box",
+      "group": "commerce",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "coupon",
+        "import": "couponRouter",
+        "from": "@repo/features/coupon"
+      },
+      "server": {
+        "module": "packages/features-server/features/coupon/coupon.module.ts",
+        "router": "packages/features-server/features/coupon/coupon.router.ts",
+        "controller": "packages/features-server/features/coupon/controller/"
+      },
+      "client": {
+        "admin": "apps/feature-admin/src/features/coupon/"
+      },
+      "schema": {
+        "tables": [],
+        "path": ""
+      }
+    },
+    "course": {
+      "name": "course",
+      "type": "page",
+      "icon": "Box",
+      "group": "commerce",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "course",
+        "import": "courseRouter",
+        "from": "@repo/features/course"
+      },
+      "server": {
+        "module": "packages/features-server/features/course/course.module.ts",
+        "router": "packages/features-server/features/course/course.router.ts",
+        "controller": "packages/features-server/features/course/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/course/",
+        "admin": "apps/feature-admin/src/features/course/"
+      },
+      "schema": {
+        "tables": [
+          "course_topics",
+          "course_courses",
+          "course_sections",
+          "course_lessons",
+          "course_enrollments",
+          "course_lesson_progress",
+          "course_attachments"
+        ],
+        "path": "packages/drizzle/src/schema/features/course/"
+      }
+    },
+    "data-tracker": {
+      "name": "data-tracker",
+      "type": "page",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "dataTracker",
+        "import": "dataTrackerRouter",
+        "from": "@repo/features/data-tracker"
+      },
+      "server": {
+        "module": "packages/features-server/features/data-tracker/data-tracker.module.ts",
+        "router": "packages/features-server/features/data-tracker/data-tracker.router.ts",
+        "controller": "packages/features-server/features/data-tracker/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/data-tracker/",
+        "admin": "apps/feature-admin/src/features/data-tracker/"
+      },
+      "schema": {
+        "tables": [
+          "data_tracker_trackers",
+          "data_tracker_columns",
+          "data_tracker_entries"
+        ],
+        "path": "packages/drizzle/src/schema/features/data-tracker/"
+      }
+    },
+    "email": {
+      "name": "email",
+      "type": "page",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "email",
+        "import": "emailRouter",
+        "from": "@repo/features/email"
+      },
+      "server": {
+        "module": "packages/features-server/features/email/email.module.ts",
+        "router": "packages/features-server/features/email/email.router.ts",
+        "controller": "packages/features-server/features/email/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/email/",
+        "admin": "apps/feature-admin/src/features/email/"
+      },
+      "schema": {
+        "tables": [
+          "email_logs"
+        ],
+        "path": "packages/drizzle/src/schema/features/email/"
+      }
+    },
+    "family": {
+      "name": "family",
+      "type": "page",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "family",
+        "import": "familyRouter",
+        "from": "@repo/features/family"
+      },
+      "server": {
+        "module": "packages/features-server/features/family/family.module.ts",
+        "router": "packages/features-server/features/family/family.router.ts",
+        "controller": "packages/features-server/features/family/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/family/"
+      },
+      "schema": {
+        "tables": [
+          "family_groups",
+          "family_members",
+          "family_invitations",
+          "family_children",
+          "family_child_assignments"
+        ],
+        "path": "packages/drizzle/src/schema/features/family/"
+      }
+    },
+    "feature-catalog": {
+      "name": "feature-catalog",
+      "type": "page",
+      "icon": "Box",
+      "group": "content",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "featureCatalog",
+        "import": "featureCatalogRouter",
+        "from": "@repo/features/feature-catalog"
+      },
+      "server": {
+        "module": "packages/features-server/features/feature-catalog/feature-catalog.module.ts",
+        "router": "packages/features-server/features/feature-catalog/feature-catalog.router.ts",
+        "controller": "packages/features-server/features/feature-catalog/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/feature-catalog/",
+        "admin": "apps/feature-admin/src/features/feature-catalog/"
+      },
+      "schema": {
+        "tables": [
+          "catalog_features",
+          "catalog_dependencies"
+        ],
+        "path": "packages/drizzle/src/schema/features/feature-catalog/"
+      }
+    },
+    "file-manager": {
+      "name": "file-manager",
+      "type": "widget",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "fileManager",
+        "import": "fileManagerRouter",
+        "from": "@repo/features/file-manager"
+      },
+      "server": {
+        "module": "packages/features-server/features/file-manager/file-manager.module.ts",
+        "router": "packages/features-server/features/file-manager/file-manager.router.ts",
+        "controller": "packages/features-server/features/file-manager/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/file-manager/",
+        "admin": "apps/feature-admin/src/features/file-manager/"
+      },
+      "schema": {
+        "tables": [],
+        "path": ""
+      },
+      "widget": {
+        "path": "packages/widgets/src/file-manager/",
+        "export": "@repo/widgets/file-manager"
+      }
+    },
+    "hello-world": {
+      "name": "hello-world",
+      "type": "page",
+      "icon": "Box",
+      "group": "template",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "helloWorld",
+        "import": "helloWorldRouter",
+        "from": "@repo/features/hello-world"
+      },
+      "server": {
+        "module": "packages/features-server/features/hello-world/hello-world.module.ts",
+        "router": "packages/features-server/features/hello-world/hello-world.router.ts",
+        "controller": "packages/features-server/features/hello-world/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/hello-world/",
+        "admin": "apps/feature-admin/src/features/hello-world/"
+      },
+      "schema": {
+        "tables": [],
+        "path": ""
+      }
+    },
+    "marketing": {
+      "name": "marketing",
+      "type": "page",
+      "icon": "Box",
+      "group": "content",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "marketing",
+        "import": "marketingMainRouter",
+        "from": "@repo/features/marketing"
+      },
+      "server": {
+        "module": "packages/features-server/features/marketing/marketing.module.ts",
+        "router": "packages/features-server/features/marketing/marketing.router.ts",
+        "controller": "packages/features-server/features/marketing/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/marketing/",
+        "admin": "apps/feature-admin/src/features/marketing/"
+      },
+      "schema": {
+        "tables": [
+          "marketing_campaigns",
+          "marketing_sns_accounts",
+          "marketing_contents",
+          "marketing_platform_variants",
+          "marketing_publications"
+        ],
+        "path": "packages/drizzle/src/schema/features/marketing/"
+      }
+    },
+    "notification": {
+      "name": "notification",
+      "type": "widget",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "notification",
+        "import": "notificationRouter",
+        "from": "@repo/features/notification"
+      },
+      "server": {
+        "module": "packages/features-server/features/notification/notification.module.ts",
+        "router": "packages/features-server/features/notification/notification.router.ts",
+        "controller": "packages/features-server/features/notification/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/notification/"
+      },
+      "schema": {
+        "tables": [
+          "notification_notifications",
+          "notification_settings"
+        ],
+        "path": "packages/drizzle/src/schema/features/notification/"
+      },
+      "widget": {
+        "path": "packages/widgets/src/notification/",
+        "export": "@repo/widgets/notification"
+      }
+    },
+    "payment": {
+      "name": "payment",
+      "type": "page",
+      "icon": "Box",
+      "group": "commerce",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "payment",
+        "import": "paymentRouter",
+        "from": "@repo/features/payment"
+      },
+      "server": {
+        "module": "packages/features-server/features/payment/payment.module.ts",
+        "router": "packages/features-server/features/payment/payment.router.ts",
+        "controller": "packages/features-server/features/payment/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/payment/",
+        "admin": "apps/feature-admin/src/features/payment/"
+      },
+      "schema": {
+        "tables": [
+          "payment_products",
+          "payment_orders",
+          "payment_subscriptions",
+          "payment_licenses",
+          "payment_webhook_events",
+          "payment_refund_requests"
+        ],
+        "path": "packages/drizzle/src/schema/features/payment/"
+      }
+    },
+    "profile": {
+      "name": "profile",
+      "type": "page",
+      "icon": "Box",
+      "group": "core",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "profile",
+        "import": "profileRouter",
+        "from": "@repo/features/profile"
+      },
+      "server": {
+        "module": "packages/features-server/features/profile/profile.module.ts",
+        "router": "packages/features-server/features/profile/profile.router.ts",
+        "controller": "packages/features-server/features/profile/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/profile/",
+        "admin": "apps/feature-admin/src/features/profile/"
+      },
+      "schema": {
+        "tables": [
+          "profile_withdrawal_reasons"
+        ],
+        "path": "packages/drizzle/src/schema/features/profile/"
+      }
+    },
+    "reaction": {
+      "name": "reaction",
+      "type": "widget",
+      "icon": "Box",
+      "group": "community",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "reaction",
+        "import": "reactionRouter",
+        "from": "@repo/features/reaction"
+      },
+      "server": {
+        "module": "packages/features-server/features/reaction/reaction.module.ts",
+        "router": "packages/features-server/features/reaction/reaction.router.ts",
+        "controller": "packages/features-server/features/reaction/controller/"
+      },
+      "client": {},
+      "schema": {
+        "tables": [
+          "reaction_reactions"
+        ],
+        "path": "packages/drizzle/src/schema/features/reaction/"
+      },
+      "widget": {
+        "path": "packages/widgets/src/reaction/",
+        "export": "@repo/widgets/reaction"
+      }
+    },
+    "review": {
+      "name": "review",
+      "type": "widget",
+      "icon": "Box",
+      "group": "community",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "review",
+        "import": "reviewRouter",
+        "from": "@repo/features/review"
+      },
+      "server": {
+        "module": "packages/features-server/features/review/review.module.ts",
+        "router": "packages/features-server/features/review/review.router.ts",
+        "controller": "packages/features-server/features/review/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/review/",
+        "admin": "apps/feature-admin/src/features/review/"
+      },
+      "schema": {
+        "tables": [],
+        "path": ""
+      },
+      "widget": {
+        "path": "packages/widgets/src/review/",
+        "export": "@repo/widgets/review"
+      }
+    },
+    "role-permission": {
+      "name": "role-permission",
+      "type": "page",
+      "icon": "Box",
+      "group": "core",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "rolePermission",
+        "import": "rolePermissionRouter",
+        "from": "@repo/features/role-permission"
+      },
+      "server": {
+        "module": "packages/features-server/features/role-permission/role-permission.module.ts",
+        "router": "packages/features-server/features/role-permission/role-permission.router.ts",
+        "controller": "packages/features-server/features/role-permission/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/role-permission/",
+        "admin": "apps/feature-admin/src/features/role-permission/"
+      },
+      "schema": {
+        "tables": [],
+        "path": ""
+      }
+    },
+    "scheduled-job": {
+      "name": "scheduled-job",
+      "type": "page",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "scheduledJob",
+        "import": "scheduledJobRouter",
+        "from": "@repo/features/scheduled-job"
+      },
+      "server": {
+        "module": "packages/features-server/features/scheduled-job/scheduled-job.module.ts",
+        "router": "packages/features-server/features/scheduled-job/scheduled-job.router.ts",
+        "controller": "packages/features-server/features/scheduled-job/controller/"
+      },
+      "client": {
+        "admin": "apps/feature-admin/src/features/scheduled-job/"
+      },
+      "schema": {
+        "tables": [
+          "system_scheduled_jobs",
+          "system_job_runs"
+        ],
+        "path": "packages/drizzle/src/schema/features/scheduled-job/"
+      }
+    },
+    "story-studio": {
+      "name": "story-studio",
+      "type": "page",
+      "icon": "Box",
+      "group": "content",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "storyStudio",
+        "import": "storyStudioRouter",
+        "from": "@repo/features/story-studio"
+      },
+      "server": {
+        "module": "packages/features-server/features/story-studio/story-studio.module.ts",
+        "router": "packages/features-server/features/story-studio/story-studio.router.ts",
+        "controller": "packages/features-server/features/story-studio/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/story-studio/"
+      },
+      "schema": {
+        "tables": [
+          "story_studio_projects",
+          "story_studio_chapters",
+          "story_studio_graph_nodes",
+          "story_studio_graph_edges",
+          "story_studio_flags",
+          "story_studio_characters",
+          "story_studio_dialogues",
+          "story_studio_beat_templates",
+          "story_studio_beats",
+          "story_studio_endings",
+          "story_studio_events"
+        ],
+        "path": "packages/drizzle/src/schema/features/story-studio/"
+      }
+    },
+    "task": {
+      "name": "task",
+      "type": "page",
+      "icon": "Box",
+      "group": "system",
+      "description": "",
+      "dependencies": [],
+      "optionalDependencies": [],
+      "router": {
+        "key": "task",
+        "import": "taskRouter",
+        "from": "@repo/features/task"
+      },
+      "server": {
+        "module": "packages/features-server/features/task/task.module.ts",
+        "router": "packages/features-server/features/task/task.router.ts",
+        "controller": "packages/features-server/features/task/controller/"
+      },
+      "client": {
+        "app": "apps/features-app/src/features/task/"
+      },
+      "schema": {
+        "tables": [
+          "task_projects",
+          "task_cycles",
+          "task_labels",
+          "task_tasks",
+          "task_task_labels",
+          "task_comments",
+          "task_activities"
+        ],
+        "path": "packages/drizzle/src/schema/features/task/"
+      }
+    }
+  },
+  "core": [
+    "profile",
+    "role-permission"
+  ],
+  "groups": {
+    "core": {
+      "label": "코어",
+      "order": 0
+    },
+    "content": {
+      "label": "콘텐츠",
+      "order": 1
+    },
+    "commerce": {
+      "label": "상거래",
+      "order": 2
+    },
+    "community": {
+      "label": "커뮤니티",
+      "order": 3
+    },
+    "system": {
+      "label": "시스템",
+      "order": 4
+    },
+    "template": {
+      "label": "템플릿",
+      "order": 5
+    }
+  }
+}

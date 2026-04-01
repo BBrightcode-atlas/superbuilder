@@ -4,8 +4,8 @@ import {
 	HiOutlineBell,
 	HiOutlineBuildingOffice2,
 	HiOutlineCommandLine,
+	HiOutlineCpuChip,
 	HiOutlineCreditCard,
-	HiOutlineDevicePhoneMobile,
 	HiOutlineKey,
 	HiOutlinePaintBrush,
 	HiOutlinePuzzlePiece,
@@ -29,11 +29,11 @@ type SettingsRoute =
 	| "/settings/keyboard"
 	| "/settings/behavior"
 	| "/settings/git"
+	| "/settings/agents"
 	| "/settings/terminal"
 	| "/settings/models"
 	| "/settings/integrations"
 	| "/settings/billing"
-	| "/settings/devices"
 	| "/settings/api-keys"
 	| "/settings/permissions";
 
@@ -96,6 +96,12 @@ const SECTION_GROUPS: SectionGroup[] = [
 				icon: <LuGitBranch className="h-4 w-4" />,
 			},
 			{
+				id: "/settings/agents",
+				section: "agents",
+				label: "Agents",
+				icon: <HiOutlineCpuChip className="h-4 w-4" />,
+			},
+			{
 				id: "/settings/terminal",
 				section: "terminal",
 				label: "Terminal",
@@ -129,12 +135,6 @@ const SECTION_GROUPS: SectionGroup[] = [
 				section: "billing",
 				label: "Billing",
 				icon: <HiOutlineCreditCard className="h-4 w-4" />,
-			},
-			{
-				id: "/settings/devices",
-				section: "devices",
-				label: "Devices",
-				icon: <HiOutlineDevicePhoneMobile className="h-4 w-4" />,
 			},
 			{
 				id: "/settings/api-keys",

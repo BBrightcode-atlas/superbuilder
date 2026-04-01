@@ -298,7 +298,7 @@ webhooks.on(
 					eq(githubPullRequests.prNumber, pr.number),
 				),
 			)
-			.returning({ id: githubPullRequests.id });
+			.returning();
 
 		if (result.length === 0) {
 			console.log(

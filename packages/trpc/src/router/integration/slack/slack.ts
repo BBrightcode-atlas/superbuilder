@@ -46,7 +46,7 @@ export const slackRouter = {
 						eq(integrationConnections.provider, "slack"),
 					),
 				)
-				.returning({ id: integrationConnections.id });
+				.returning();
 
 			if (result.length === 0) {
 				return { success: false, error: "No connection found" };

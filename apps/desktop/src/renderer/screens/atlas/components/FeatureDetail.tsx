@@ -10,8 +10,8 @@ interface FeatureDetailProps {
 		group: string;
 		dependencies: string[];
 		optionalDependencies: string[];
-		server: { module: string; router: string; controller: string };
-		client: { app?: string; admin?: string };
+		server: { module: string; router?: string; controller?: string };
+		client: Record<string, string>;
 		schema: { path: string; tables?: string[] };
 		widget?: { path: string };
 		env?: { infrastructure?: string[]; feature?: string[] };

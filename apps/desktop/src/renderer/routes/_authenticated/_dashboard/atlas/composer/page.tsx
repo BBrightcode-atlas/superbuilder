@@ -253,9 +253,14 @@ function ComposerPage() {
 				path: pipeline.result.projectDir,
 			});
 
-			if (openResult.canceled || openResult.error || !openResult.project) {
-				// If project needs git init, it should already be initialized by scaffold
-				throw new Error(openResult.error ?? "프로젝트를 열 수 없습니다");
+			if (openResult.canceled) {
+				throw new Error("프로젝트를 열 수 없습니다");
+			}
+			if ("error" in openResult && openResult.error) {
+				throw new Error(openResult.error);
+			}
+			if (!("project" in openResult) || !openResult.project) {
+				throw new Error("프로젝트를 열 수 없습니다");
 			}
 
 			const project = openResult.project;

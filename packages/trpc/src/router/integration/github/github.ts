@@ -44,7 +44,7 @@ export const githubRouter = {
 			const result = await db
 				.delete(githubInstallations)
 				.where(eq(githubInstallations.organizationId, input.organizationId))
-				.returning({ id: githubInstallations.id });
+				.returning();
 
 			if (result.length === 0) {
 				return { success: false, error: "No installation found" };
