@@ -6,21 +6,32 @@
 
 각 에이전트는 자기 담당 repo가 명확하다. AGENT.md에 정의됨.
 
-| CLI | 로컬 경로 (Mac Studio) | GitHub remote | 작업 브랜치 | PR 타겟 |
-|-----|----------------------|---------------|-----------|---------|
-| cos-hq | /Users/papert/Projects/company-os | BBrightcode-atlas/company-os | main | - (직접 커밋) |
-| flotter-engine | /Users/papert/Projects/flotter/.worktrees/engine | BBrightcode-atlas/flotter | ai/flotter-engine | develop |
-| flotter-platform | /Users/papert/Projects/flotter/.worktrees/saas | BBrightcode-atlas/flotter | ai/flotter-saas | develop |
-| flotter-growth | /Users/papert/Projects/flotter/.worktrees/growth | BBrightcode-atlas/flotter | ai/flotter-growth | develop |
-| superbuilder | /Users/papert/Projects/superbuilder | BBrightcode-atlas/superbuilder | develop | main |
-| revenue-ops | /Users/papert/Projects/company-os-rev | BBrightcode-atlas/company-os | ai/company-os-rev | develop |
+| CLI | GitHub remote | PR 타겟 |
+|-----|---------------|---------|
+| cos-hq | BBrightcode-atlas/company-os | - (main 직접 커밋) |
+| flotter-engine | BBrightcode-atlas/flotter | develop |
+| flotter-platform | BBrightcode-atlas/flotter | develop |
+| flotter-growth | BBrightcode-atlas/flotter | develop |
+| superbuilder | BBrightcode-atlas/superbuilder | develop |
+| revenue-ops | BBrightcode-atlas/company-os | develop |
+
+**브랜치 네이밍:**
+```
+{에이전트명}/{타입}/{작업이름영문}
+```
+- 타입: `feature`, `fix`, `refactor`, `chore`, `docs`
+- 예시:
+  - `cyrus/feature/react-binding-m7`
+  - `felix/fix/auth-session-expiry`
+  - `luna/feature/landing-seo-optimization`
+  - `rex/refactor/compose-pipeline`
+  - `claire/feature/quote-automation`
 
 **브랜치 규칙:**
-- 에이전트는 **자기 작업 브랜치에서만** 커밋한다. 다른 브랜치 checkout 금지.
-- PR은 **develop 브랜치**로 생성한다: `gh pr create --base develop`
+- 작업 시작 시 develop에서 새 브랜치 생성: `git checkout -b cyrus/feature/xxx develop`
+- PR은 **develop 브랜치**로 생성: `gh pr create --base develop`
 - develop → main 머지는 **사람만** 한다.
 - cos-hq는 문서 전용이라 main에 직접 커밋 허용.
-- superbuilder는 develop에서 작업, PR은 main으로 (develop이 기본 작업 브랜치).
 - push 전 반드시 빌드/테스트 통과.
 - 자기 repo 외 다른 repo의 파일을 수정하지 않는다.
 
