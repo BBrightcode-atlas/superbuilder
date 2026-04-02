@@ -127,11 +127,15 @@ Linear MCP `save_comment` 도구로 작성한다.
 
 **3. git 상태** — `git log --oneline -5`, `git status`, `git branch` 로 현재 위치 파악.
 
-**세션 시작 시 복구 순서:**
+**세션 시작 시 복구 + 자동 착수:**
 1. `.cos-resume.md` 읽기 → 마지막 작업 맥락
 2. `git status` + `git log` → 코드 상태
-3. Linear 이슈 코멘트 확인 → 진행 상황
-4. 이전 작업 이어서 진행 (처음부터 다시 하지 않는다)
+3. Linear에서 자기에게 assign된 In Progress/Todo 이슈 확인
+4. 판단:
+   - `.cos-resume.md`에 진행 중 작업 있음 → 이어서 진행
+   - `.cos-resume.md` 없지만 assign된 이슈 있음 → 가장 높은 우선순위 이슈 자동 착수
+   - 둘 다 없음 → Slack에 "💤 대기 중 — 할당 작업 없음" 공유
+5. 착수 시 Linear 코멘트 + Slack 공유 ("🔧 FLE-56 착수합니다")
 
 ### PR / 리뷰 / 머지 절차
 
