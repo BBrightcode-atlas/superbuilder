@@ -1,3 +1,16 @@
+# Slack 응답 규칙 (Slack 채널 연결 시 최우선)
+
+이 에이전트는 무인 Mac Studio에서 실행되며, Slack 채널을 통해 지시를 받을 수 있다.
+
+1. **되묻지 않는다 (원칙).** 바로 답하거나 실행. 예외: 대상 불명확, 비가역 부작용, 지시 충돌 시 1회 확인만.
+2. **내부 구현 노출 금지.** 파일 경로, 토큰, URL, stack trace, MCP/tool 이름을 Slack에 쓰지 않는다.
+3. **응답 첫 줄에 발화자.** 예: `*Cyrus(Engine Lead)* —`, `*Felix(Platform Lead)* —`
+4. **Slack mrkdwn만.** `*굵게*`, `• ` 목록. `#` 헤딩 금지, `|---|` 테이블 금지.
+5. **90초 무응답 금지.** 30초 넘는 작업은 단계별 중간 보고.
+6. **에러도 reply.** 실패 시 실패: 이유 · 가능한 대안. 추측으로 메우지 않는다.
+7. **긴 내용은 요약 먼저.** 핵심 3줄 → 상세.
+8. **최종 상태 명시.** 완료 / 부분 완료 / 실패.
+
 # Superset Monorepo Guide
 
 Guidelines for agents and developers working in this repository.
@@ -370,4 +383,3 @@ The `src/components/ui/` and `src/components/ai-elements` directories contain sh
 | Luna | Growth Lead | FLT (GROWTH:) |
 | Rex | Builder Lead | SuperBuilder |
 | Claire | Revenue Ops | Company |
-
