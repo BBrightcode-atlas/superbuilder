@@ -6,19 +6,22 @@
 
 각 에이전트는 자기 담당 repo가 명확하다. AGENT.md에 정의됨.
 
-| CLI | 로컬 경로 (Mac Studio) | GitHub remote | 브랜치 |
-|-----|----------------------|---------------|--------|
-| cos-hq | /Users/papert/Projects/company-agent-desk | BBrightcode-atlas/company-os | main |
-| flotter-engine | /Users/papert/Projects/flotter/.worktrees/engine | BBrightcode-atlas/flotter | ai/flotter-engine |
-| flotter-platform | /Users/papert/Projects/flotter/.worktrees/saas | BBrightcode-atlas/flotter | ai/flotter-platform |
-| flotter-growth | /Users/papert/Projects/flotter/.worktrees/growth | BBrightcode-atlas/flotter | ai/flotter-growth |
-| superbuilder | /Users/papert/Projects/superbuilder | BBrightcode-atlas/superbuilder | develop |
-| revenue-ops | /Users/papert/Projects/company-os-rev | BBrightcode-atlas/company-os | ai/company-os-rev |
+| CLI | 로컬 경로 (Mac Studio) | GitHub remote | 작업 브랜치 | PR 타겟 |
+|-----|----------------------|---------------|-----------|---------|
+| cos-hq | /Users/papert/Projects/company-os | BBrightcode-atlas/company-os | main | - (직접 커밋) |
+| flotter-engine | /Users/papert/Projects/flotter/.worktrees/engine | BBrightcode-atlas/flotter | ai/flotter-engine | main |
+| flotter-platform | /Users/papert/Projects/flotter/.worktrees/saas | BBrightcode-atlas/flotter | ai/flotter-saas | main |
+| flotter-growth | /Users/papert/Projects/flotter/.worktrees/growth | BBrightcode-atlas/flotter | ai/flotter-growth | main |
+| superbuilder | /Users/papert/Projects/superbuilder | BBrightcode-atlas/superbuilder | develop | main |
+| revenue-ops | /Users/papert/Projects/company-os-rev | BBrightcode-atlas/company-os | ai/company-os-rev | main |
 
-**규칙:**
-- 자기 repo 외 다른 repo의 파일을 수정하지 않는다
-- push 전 반드시 빌드/테스트 통과
-- main 브랜치 직접 머지는 사람만 한다 (superbuilder: develop까지만)
+**브랜치 규칙:**
+- 에이전트는 **자기 작업 브랜치에서만** 커밋한다. 다른 브랜치 checkout 금지.
+- PR은 **PR 타겟 브랜치**로 생성한다: `gh pr create --base main`
+- main 브랜치에 직접 커밋/머지 금지 (cos-hq 제외 — 문서 전용이라 직접 커밋 허용).
+- superbuilder는 develop에서 작업, PR은 main으로.
+- push 전 반드시 빌드/테스트 통과.
+- 자기 repo 외 다른 repo의 파일을 수정하지 않는다.
 
 ## 2. 역할 범위
 
@@ -79,6 +82,26 @@ Linear MCP `save_comment` 도구로 작성한다.
 | 완료 | 결과 요약 + PR/커밋 | "완료. 519 tests pass. 커밋: abc1234" |
 
 **최소 기준: 착수 1회 + 완료 1회. 1시간+ 작업이면 중간에 1회 이상.**
+
+### PR / 리뷰 / 머지 절차
+
+```
+1. 에이전트: 작업 완료 → 커밋 + push → PR 생성 (gh pr create)
+2. 에이전트: Linear 이슈에 코멘트 "PR #N 생성. 리뷰 요청."
+3. 에이전트: /codex challenge 실행 → 비판적 리뷰
+4. 에이전트: Linear 이슈에 코멘트 "Codex 리뷰 결과: N건 지적, M건 수정"
+5. 에이전트: 지적 사항 수정 → 추가 커밋 + push
+6. 에이전트: Linear 이슈에 코멘트 "리뷰 반영 완료. 머지 대기."
+7. 에이전트: Slack 채널에 "📋 PR #N — 리뷰 완료, 머지 대기"
+8. CEO(사람): PR 확인 → 머지
+```
+
+**규칙:**
+- PR 생성은 에이전트가 직접 한다. CEO 지시 불필요.
+- 리뷰는 `/codex challenge` (비판적 모드)로 필수. 리뷰 없이 머지 요청 금지.
+- 리뷰 결과와 수정 내역은 **Linear 이슈 코멘트**에 남긴다.
+- 머지는 **사람만** 한다. 에이전트가 `git merge`, `gh pr merge` 실행 금지.
+- superbuilder는 develop 브랜치까지만. main 머지는 사람이.
 
 ### Slack 필수 공유 (자기 채널)
 
