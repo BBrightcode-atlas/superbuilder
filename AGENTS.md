@@ -19,6 +19,66 @@ Guidelines for agents and developers working in this repository.
 
 Superbuilder는 **SaaS 프로젝트 빌더**이다. 단순한 scaffold 도구가 아니라, 재사용 가능한 feature를 축적하고 순환시키는 플랫폼.
 
+## 운영 ownership
+
+Superbuilder의 planning/execution ownership은 아래처럼 고정한다.
+
+```text
+Sophia(Product Strategist)
+  → Initiative Brief
+Rex(Builder Lead)
+  → Project Brief + execution priority
+Rex(Builder Lead)
+  → Issue Tree + delivery
+```
+
+원칙:
+- Superbuilder에는 별도 Chief of Staff를 두지 않는다.
+- Initiative는 Sophia가 관리하지만, Superbuilder Project 구조와 실행 우선순위는 Rex가 정한다.
+- 새 Project가 필요하면 다른 실행자가 임의로 만들지 않고 Rex가 정의한다.
+- 승인된 Project Brief 아래에서만 Issue Tree를 분해한다.
+
+예시:
+
+```text
+*Rex — Superbuilder Project Brief Proposal*
+2026-04-03
+
+*Initiative*
+• Faster Compose Delivery
+
+*제안 Project*
+• Compose Pipeline Latency Cut
+• Template Stability Hardening
+• Feature Registry DX Cleanup
+
+*우선순위*
+1. Compose Pipeline Latency Cut
+2. Template Stability Hardening
+3. Feature Registry DX Cleanup
+
+*승인 필요*
+• 반영 / 수정 / 보류
+```
+
+```text
+*Rex — Superbuilder Issue Tree Proposal*
+2026-04-03
+
+*Project*
+• Compose Pipeline Latency Cut
+
+*Issue 분해*
+• SBD-101 measure current compose path
+• SBD-102 cache manifest resolution
+• SBD-103 benchmark and validate
+
+*delivery 기준*
+• 평균 compose time 30% 감소
+```
+
+## 기본 라이프사이클
+
 ```
 SB Compose (feature 선택 + 프로젝트 생성)
   → 기본 틀 생성 (auth, DB, 인프라 + 선택한 SB feature)
@@ -135,7 +195,7 @@ Linear 프로젝트: SBD (https://linear.app/bbrightcode/team/SBD/all)
 ## Agent Rules
 1. **Type safety** - avoid `any` unless necessary
 2. **Prefer `gh` CLI** - when performing git operations (PRs, issues, checkout, etc.), prefer the GitHub CLI (`gh`) over raw `git` commands where possible
-7. **GitHub repo 삭제 금지** — `gh repo delete`는 **이 세션에서 직접 생성한 테스트용 임시 repo**(`compose-e2e-*` 등)만 삭제 가능하다. `superbuilder`, `superbuilder-features`, `superbuilder-app-template` 및 **그 외 모든 기존 repo는 절대 삭제하지 않는다.** 연관 없는 repo, 모르는 repo, 확인되지 않은 repo는 삭제 대상이 아니다.
+7. **GitHub repo 삭제 금지** — `gh repo delete`는 **`sb-test-*` prefix가 붙은 테스트용 repo만** 삭제 가능하다. Compose 테스트 시 프로젝트명은 반드시 `sb-test-` prefix를 사용한다 (예: `sb-test-myapp`, `sb-test-e2e-0330`). `superbuilder`, `superbuilder-features`, `superbuilder-app-template` 및 **그 외 모든 기존 repo는 절대 삭제하지 않는다.** Neon 브랜치, Vercel 프로젝트도 동일한 `sb-test-*` prefix 규칙을 따른다.
 3. **Shared command source** - keep command definitions in `.agents/commands/` only. `.claude/commands` and `.cursor/commands` should be symlinks to `../.agents/commands`. (`packages/chat` discovers slash commands from `.claude/commands`.)
 4. **Workspace MCP config** - keep shared MCP servers in `.mcp.json`; `.cursor/mcp.json` should link to `../.mcp.json`. Codex uses `.codex/config.toml` (run with `CODEX_HOME=.codex codex ...`). OpenCode uses `opencode.json` and should mirror the same MCP set using OpenCode's `remote`/`local` schema.
 5. **Mastracode fork workflow** - for Superset's internal `mastracode` fork bundle and release process, follow `docs/mastracode-fork-workflow.md`.
